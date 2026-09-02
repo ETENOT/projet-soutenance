@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/Devis.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Devis extends Model
 {
     // Même souci que "Cours" : "Devis" au pluriel reste "devis" en français,

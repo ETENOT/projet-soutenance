@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/Particulier.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Particulier extends Model
 {
     protected $fillable = ['telephone', 'date_de_naissance'];

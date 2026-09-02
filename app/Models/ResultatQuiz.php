@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/ResultatQuiz.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class ResultatQuiz extends Model
 {
     // Sans ça, Eloquent chercherait "resultat_quizzes" au lieu de "resultats_quiz"

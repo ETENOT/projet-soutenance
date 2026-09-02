@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/Classe.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Classe extends Model
 {
     protected $fillable = ['nom', 'capacite_max', 'date_debut', 'date_fin', 'cours_id'];

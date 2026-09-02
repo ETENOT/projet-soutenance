@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/Quiz.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Quiz extends Model
 {
     protected $fillable = ['date', 'heure_debut', 'heure_fin', 'cours_id'];

@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/Entreprise.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Entreprise extends Model
 {
     protected $fillable = ['raison_sociale', 'adresse', 'contact_principal', 'secteur_activite'];

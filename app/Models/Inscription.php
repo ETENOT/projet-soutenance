@@ -1,6 +1,11 @@
 <?php
 
 // app/Models/Inscription.php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
 class Inscription extends Model
 {
     protected $fillable = ['date_inscription', 'utilisateur_id', 'classe_id'];
