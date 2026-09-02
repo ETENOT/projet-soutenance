@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('inscriptions', function (Blueprint $table) {
             $table->id();
             $table->date('date_inscription');
-            $table->string('statut')->default('en_attente');
 
             $table->foreignId('utilisateur_id')
                 ->constrained('utilisateurs')
@@ -28,6 +27,7 @@ return new class extends Migration
         });
     }
 
+    
     public function down(): void
     {
         Schema::dropIfExists('inscriptions');

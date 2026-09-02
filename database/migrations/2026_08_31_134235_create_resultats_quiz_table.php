@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('resultats_quiz', function (Blueprint $table) {
             $table->id();
+            //signifie que le score max peut aller jusqu'à 255 et est obligatoirement un entier positif
             $table->unsignedTinyInteger('score');
 
             $table->foreignId('quiz_id')

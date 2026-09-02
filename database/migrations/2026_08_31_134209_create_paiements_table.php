@@ -20,6 +20,9 @@ return new class extends Migration
         });
     }
 
+    // Supprime la table "paiements" si elle existe.
+    // Cette méthode est appelée lorsque l'on annule (rollback)
+    // la migration avec : php artisan migrate:rollback
     public function down(): void
     {
         Schema::dropIfExists('paiements');

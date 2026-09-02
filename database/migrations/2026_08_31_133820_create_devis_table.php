@@ -16,11 +16,13 @@ return new class extends Migration
             $table->foreignId('entreprise_id')
                 ->constrained('entreprises')
                 ->cascadeOnDelete();
-
             $table->timestamps();
         });
     }
 
+    // Supprime la table "devis" si elle existe.
+    // Cette méthode est appelée lorsque l'on annule (rollback)
+    // la migration avec : php artisan migrate:rollback
     public function down(): void
     {
         Schema::dropIfExists('devis');

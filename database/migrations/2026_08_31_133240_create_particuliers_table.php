@@ -10,12 +10,15 @@ return new class extends Migration
     {
         Schema::create('particuliers', function (Blueprint $table) {
             $table->id();
-            $table->string('telephone')->nullable();
-            $table->date('date_de_naissance')->nullable();
+            $table->string('telephone');
+            $table->date('date_de_naissance');
             $table->timestamps();
         });
     }
 
+    // Supprime la table "particuliers" si elle existe.
+    // Cette méthode est appelée lorsque l'on annule (rollback)
+    // la migration avec : php artisan migrate:rollback
     public function down(): void
     {
         Schema::dropIfExists('particuliers');

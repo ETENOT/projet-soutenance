@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
             $table->text('enonce');
-            $table->text('reponse')->nullable();
 
             $table->foreignId('cours_id')
                 ->constrained('cours')
@@ -21,6 +20,9 @@ return new class extends Migration
         });
     }
 
+    // Supprime la table "questions" si elle existe.
+    // Cette méthode est appelée lorsque l'on annule (rollback)
+    // la migration avec : php artisan migrate:rollback
     public function down(): void
     {
         Schema::dropIfExists('questions');
