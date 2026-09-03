@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
-    protected $fillable = ['message', 'est_lue', 'utilisateur_id'];
+    protected $fillable = ['message', 'est_lue', 'user_id'];
 
-    // La table "notifications" a utilisateur_id -> belongsTo
-    public function utilisateur()
+    // La table "notifications" a user_id -> belongsTo
+    public function user()
     {
-        return $this->belongsTo(Utilisateur::class);
+        return $this->belongsTo(User::class);
     }
 }

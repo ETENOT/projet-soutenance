@@ -21,4 +21,10 @@ class Quiz extends Model
     {
         return $this->hasMany(ResultatQuiz::class);
     }
+
+    // belongsTo car "quizzes" contient aussi user_id
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
