@@ -10,10 +10,10 @@ class Entreprise extends Model
 {
     protected $fillable = ['raison_sociale', 'adresse', 'contact_principal', 'secteur_activite'];
 
-    // Une Entreprise peut avoir PLUSIEURS Utilisateurs (contacts)
-    public function utilisateurs()
+    // Une Entreprise peut avoir PLUSIEURS Users (contacts)
+    public function users()
     {
-        return $this->hasMany(Utilisateur::class);
+        return $this->hasMany(User::class);
     }
 
     // Une Entreprise peut avoir PLUSIEURS Devis

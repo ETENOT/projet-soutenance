@@ -12,11 +12,11 @@ class Role extends Model
     // quand on fait Role::create([...])
     protected $fillable = ['nom'];
 
-    // Un Role peut avoir PLUSIEURS Utilisateurs (1 rôle -> N utilisateurs)
+    // Un Role peut avoir PLUSIEURS Users (1 rôle -> N users)
     // hasMany = "j'ai plusieurs..."
-    // Ça permet de faire : $role->utilisateurs pour récupérer tous les users de ce rôle
-    public function utilisateurs()
+    // Ça permet de faire : $role->users pour récupérer tous les users de ce rôle
+    public function users()
     {
-        return $this->hasMany(Utilisateur::class);
+        return $this->hasMany(User::class);
     }
 }
