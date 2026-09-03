@@ -11,8 +11,19 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+       {{--
+    Assets Velzon (Bootstrap) déjà compilés par yarn build.
+    Pas de directive Vite ici : ce layout vient de Breeze par défaut et pointait vers
+    resources/css/app.css, qui n'existe pas dans notre config Vite (Velzon
+    utilise des fichiers .scss, pas ce app.css-là) -> erreur "Unable to locate
+    file in Vite manifest". On charge donc les CSS directement, comme le fait
+    déjà layouts/head-css.blade.php pour le reste du site.
+--}}
+<link href="{{ URL::asset('build/css/bootstrap.min.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ URL::asset('build/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ URL::asset('build/css/app.min.css') }}" rel="stylesheet" type="text/css" />
+<link href="{{ URL::asset('build/css/custom.min.css') }}" rel="stylesheet" type="text/css" />
+
     </head>
     <body class="font-sans text-gray-900 antialiased">
         <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
