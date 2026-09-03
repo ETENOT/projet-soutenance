@@ -13,7 +13,12 @@ return new class extends Migration
             $table->string('nom');
             $table->timestamps();
         });
+
+           //à effacer lors de la mise en production, juste pour les tests
+        Role::create(['nom' => 'admin']);
+
     }
+
 
 
     // Supprime la table "roles" si elle existe.
