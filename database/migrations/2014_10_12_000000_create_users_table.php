@@ -1,19 +1,28 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class CreateUsersTable extends Migration
 {
-    public function up(): void
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
     {
-        Schema::create('utilisateurs', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('nom');
+            $table->string('name');
             $table->string('email')->unique();
-            $table->string('mot_de_passe');
-
+            //pour enregistrer la date et l'heure auxquelles l'adresse e-mail d'un utilisateur a été vérifiée.
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password');
+            $table->text('avatar')->nullable();
             $table->foreignId('role_id')
                 ->constrained('roles')
                 // Empêche la suppression d'un rôle s'il est encore utilisé par un utilisateur dans cette table.
@@ -34,16 +43,23 @@ return new class extends Migration
                 // Si le entreprise est supprimé, "entreprise_id" sera automatiquement mis à NULL.
                 ->nullOnDelete();
 
+            //elle sert à mémoriser la connexion d'un utilisateur.
+            $table->rememberToken();
             $table->timestamps();
         });
+        //à effacer lors de la mise en production, juste pour les tests
+        User::create(['name' => 'admin','email' => 'admin@themesbrand.com','password' => Hash::make('12345678'),'email_verified_at'=>'2022-01-02 17:04:58','avatar' => 'avatar-1.jpg','created_at' => now(),]);
     }
-
-
-    // Supprime la table "utilisateurs" si elle existe.
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    // Supprime la table "users" si elle existe.
     // Cette méthode est appelée lorsque l'on annule (rollback)
     // la migration avec : php artisan migrate:rollback
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('utilisateurs');
+        Schema::dropIfExists('users');
     }
-};
+}

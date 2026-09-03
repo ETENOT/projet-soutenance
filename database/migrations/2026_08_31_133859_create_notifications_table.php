@@ -13,8 +13,8 @@ return new class extends Migration
             $table->text('message');
             $table->boolean('est_lue')->default(false);
 
-            $table->foreignId('utilisateur_id')
-                ->constrained('utilisateurs')
+            $table->foreignId('user_id')
+                ->constrained('users')
                 ->cascadeOnDelete();
 
             $table->timestamps();

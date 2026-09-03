@@ -17,8 +17,8 @@ return new class extends Migration
                 ->constrained('quizzes')
                 ->cascadeOnDelete();
 
-            $table->foreignId('utilisateur_id')
-                ->constrained('utilisateurs')
+            $table->foreignId('user_id')
+                ->constrained('users')
                 ->cascadeOnDelete();
 
             $table->timestamps();

@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->date('date_inscription');
 
-            $table->foreignId('utilisateur_id')
-                ->constrained('utilisateurs')
+            $table->foreignId('user_id')
+                ->constrained('users')
                 ->cascadeOnDelete();
 
             $table->foreignId('classe_id')
@@ -23,7 +23,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Empêche un même utilisateur de s'inscrire deux fois à la même classe
-            $table->unique(['utilisateur_id', 'classe_id']);
+            $table->unique(['user_id', 'classe_id']);
         });
     }
 
