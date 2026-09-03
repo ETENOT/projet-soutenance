@@ -46,8 +46,7 @@ class CreateUsersTable extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
-        //à effacer lors de la mise en production, juste pour les tests
-        User::create(['name' => 'admin','email' => 'admin@themesbrand.com','password' => Hash::make('12345678'),'email_verified_at'=>'2022-01-02 17:04:58','avatar' => 'avatar-1.jpg','created_at' => now(), 'role_id' => '1']);
+      
     }
     /**
      * Reverse the migrations.

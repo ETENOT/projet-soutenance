@@ -7,12 +7,16 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
-     *
-     * @return void
+     * Point d'entrée unique de tous les seeders.
+     * Appelé automatiquement par : php artisan migrate:fresh --seed
      */
-    public function run()
+    public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // L'ORDRE COMPTE : RoleSeeder doit tourner avant UserSeeder,
+        // car UserSeeder a besoin qu'un rôle "admin" existe déjà en base
+        $this->call([
+            RoleSeeder::class,
+            UserSeeder::class,
+        ]);
     }
 }

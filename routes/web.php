@@ -13,7 +13,9 @@ use Illuminate\Support\Facades\Auth;
 |
 */
 
-Auth::routes();
+// Charge toutes les routes d'authentification (login, register, logout)
+// définies séparément dans routes/auth.php pour garder ce fichier lisible
+require __DIR__.'/auth.php';
 //Language Translation
 Route::get('index/{locale}', [App\Http\Controllers\HomeController::class, 'lang']);
 
