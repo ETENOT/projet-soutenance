@@ -46,17 +46,18 @@ class RegisteredUserController extends Controller
             // Verrouille la valeur à l'une des deux seules options du <select>
             'role' => ['required', 'in:particulier,entreprise'],
 
-            // required_if:role,particulier => ces champs ne sont obligatoires
-            // QUE si l'utilisateur a choisi "particulier" dans le formulaire.
-            // Si "entreprise" est choisi, ils peuvent rester vides sans erreur.
-            'telephone' => ['required_if:role,particulier', 'string', 'max:20'],
-            'date_de_naissance' => ['required_if:role,particulier', 'date'],
+            // 'nullable' en premier : autorise explicitement le champ à être absent/null
+            // (cas normal quand le JS désactive le bloc du rôle non choisi, cf.
+            // register.blade.php). required_if:role,particulier prend le dessus et
+            // redevient obligatoire UNIQUEMENT si le rôle choisi est "particulier".
+            'telephone' => ['nullable', 'required_if:role,particulier', 'string', 'max:20'],
+            'date_de_naissance' => ['nullable', 'required_if:role,particulier', 'date'],
 
             // Même logique inversée pour les champs "entreprise"
-            'raison_sociale' => ['required_if:role,entreprise', 'string', 'max:255'],
-            'adresse' => ['required_if:role,entreprise', 'string', 'max:255'],
-            'contact_principal' => ['required_if:role,entreprise', 'string', 'max:255'],
-            'secteur_activite' => ['required_if:role,entreprise', 'string', 'max:255'],
+            'raison_sociale' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'adresse' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'contact_principal' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'secteur_activite' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
         ]);
 
         // Champs communs à tout User, quel que soit le rôle
