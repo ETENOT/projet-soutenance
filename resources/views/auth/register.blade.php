@@ -69,10 +69,12 @@
         </div>
 
         <!--
-            Bloc de champs "entreprise" : caché par défaut (class="hidden", utilitaire Tailwind).
+            Bloc de champs "entreprise" : caché par défaut (class="d-none", utilitaire Bootstrap
+            déjà compilé dans build/css/bootstrap.min.css — PAS "hidden", qui est une classe
+            Tailwind et n'a aucun effet ici puisque Tailwind n'est pas compilé dans ce projet).
             Alimente ensuite Entreprise::create() côté contrôleur.
         -->
-        <div id="entreprise-fields" class="hidden">
+        <div id="entreprise-fields" class="d-none">
             <div class="mt-4">
                 <x-input-label for="raison_sociale" :value="__('Raison sociale')" />
                 <x-text-input id="raison_sociale" class="block mt-1 w-full" type="text" name="raison_sociale" :value="old('raison_sociale')" />
@@ -106,14 +108,44 @@
     </form>
 
     <script>
-        // Affiche uniquement le bloc de champs correspondant au rôle sélectionné,
-        // masque l'autre. Pas d'Alpine.js utilisé ici : présent dans package.json
-        // mais jamais démarré (pas d'Alpine.start() dans resources/js/app.js),
-        // donc on reste en JS natif pour ne rien casser.
+        // Affiche/masque le bloc de champs correspondant au rôle sélectionné,
+        // ET désactive les <input> du bloc masqué.
+        //
+        // Pourquoi désactiver en plus de masquer :
+        // un champ simplement caché en CSS (d-none) reste quand même présent dans
+        // le formulaire et le navigateur l'envoie dans la requête POST avec une
+        // valeur vide "" (voire une valeur résiduelle si l'utilisateur a tapé
+        // quelque chose avant de changer de rôle). C'est ce qui obligeait à
+        // remplir les champs "entreprise" même en choisissant "particulier".
+        // Un <input disabled>, lui, n'est JAMAIS envoyé par le navigateur : côté
+        // Laravel, le champ sera totalement absent de la requête (donc `null`),
+        // ce qui est exactement le comportement voulu puisque le contrôleur ne
+        // lit que le bloc correspondant au rôle choisi.
+        //
+        // On utilise "d-none" (Bootstrap, réellement compilé dans
+        // build/css/bootstrap.min.css) et non "hidden" (classe Tailwind : absente
+        // de la stack CSS de ce projet, donc sans effet visuel — cf. correctif précédent).
+        // Pas d'Alpine.js utilisé ici : présent dans package.json mais jamais
+        // démarré (pas d'Alpine.start() dans resources/js/app.js), donc JS natif.
         function toggleRoleFields() {
             const role = document.getElementById('role').value;
-            document.getElementById('particulier-fields').classList.toggle('hidden', role !== 'particulier');
-            document.getElementById('entreprise-fields').classList.toggle('hidden', role !== 'entreprise');
+            const isParticulier = role === 'particulier';
+            const isEntreprise = role === 'entreprise';
+
+            const particulierBlock = document.getElementById('particulier-fields');
+            const entrepriseBlock = document.getElementById('entreprise-fields');
+
+            // 1) Affichage
+            particulierBlock.classList.toggle('d-none', !isParticulier);
+            entrepriseBlock.classList.toggle('d-none', !isEntreprise);
+
+            // 2) Activation/désactivation réelle des champs (voir explication ci-dessus)
+            particulierBlock.querySelectorAll('input').forEach(input => {
+                input.disabled = !isParticulier;
+            });
+            entrepriseBlock.querySelectorAll('input').forEach(input => {
+                input.disabled = !isEntreprise;
+            });
         }
 
         // Appliquer l'état correct dès le chargement de la page (utile si le
