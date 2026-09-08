@@ -140,15 +140,40 @@
                                         -->
                                         <div id="particulier-fields">
                                             <div class="mb-3">
-                                                <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
-                                                <input type="text" class="form-control @error('telephone') is-invalid @enderror"
-                                                    name="telephone" id="telephone" value="{{ old('telephone') }}"
-                                                    placeholder="Entrez votre téléphone" required>
-                                                @error('telephone')
-                                                    <span class="invalid-feedback" role="alert">
+                                                <label for="telephone" class="form-label">Téléphone : <span class="text-danger">*</span></label>
+                                                {{--
+                                                    Champ VISIBLE : pas de "name", donc jamais soumis tel quel.
+                                                    La bibliothèque intl-tel-input (cf. @section('script') plus bas)
+                                                    s'attache à ce champ pour :
+                                                      1) afficher un sélecteur de pays "drapeau + nom + indicatif"
+                                                         (ex. "Gabon 🇬🇦 +241") devant le champ,
+                                                      2) adapter le placeholder (ex. "01 23 45 67") et le nombre de
+                                                         chiffres attendus/autorisés au pays choisi, en direct,
+                                                      3) valider le numéro (longueur/format) selon l'indicatif choisi.
+                                                    "class=@error(...)" reste utile : la classe is-invalid s'applique
+                                                    encore à CE champ visible si le serveur renvoie une erreur sur
+                                                    "telephone" après une tentative d'inscription.
+                                                --}}
+                                                <input type="tel" class="form-control @error('telephone') is-invalid @enderror"
+                                                    id="telephone" required>
+                                                {{--
+                                                    Un seul bloc "invalid-feedback" (Bootstrap n'affiche pas
+                                                    seulement le premier : TOUS les .invalid-feedback qui suivent
+                                                    un input .is-invalid/:invalid seraient montrés en même temps,
+                                                    d'où un seul élément ici plutôt que deux blocs séparés) :
+                                                      - message @error du serveur si Laravel en a renvoyé un
+                                                        (ex. contrainte métier future sur ce champ),
+                                                      - sinon message générique, déclenché côté client par
+                                                        .was-validated + :invalid quand le champ est vide ou que
+                                                        setCustomValidity() (script plus bas) l'a marqué invalide.
+                                                --}}
+                                                <div class="invalid-feedback">
+                                                    @error('telephone')
                                                         <strong>{{ $message }}</strong>
-                                                    </span>
-                                                @enderror
+                                                    @else
+                                                        Veuillez entrer un numéro de téléphone valide pour le pays sélectionné.
+                                                    @enderror
+                                                </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="date_de_naissance" class="form-label">Date de naissance <span class="text-danger">*</span></label>
@@ -258,12 +283,105 @@
     </div>
     <!-- end auth-page-wrapper -->
 @endsection
+@section('css')
+    {{-- Styles du sélecteur de pays (drapeaux, liste déroulante) d'intl-tel-input.
+         Copié dans public/build/libs/intl-tel-input/ par le plugin Vite "copy-specific-packages"
+         (cf. package-copy-config.json) à partir de node_modules/intl-tel-input/dist/. --}}
+    <link rel="stylesheet" href="{{ URL::asset('build/libs/intl-tel-input/css/intlTelInput.min.css') }}">
+@endsection
 @section('script')
     <script src="{{ URL::asset('build/libs/particles.js/particles.js') }}"></script>
     <script src="{{ URL::asset('build/js/pages/particles.app.js') }}"></script>
     <script src="{{ URL::asset('build/js/pages/form-validation.init.js') }}"></script>
+    {{-- Variante "WithUtils" : inclut directement la librairie de validation/formatage
+         (~260 Ko), donc isValidNumber()/le placeholder par pays fonctionnent dès le
+         chargement de la page, sans requête réseau supplémentaire ni configuration
+         "loadUtils" à part. --}}
+    <script src="{{ URL::asset('build/libs/intl-tel-input/js/intlTelInputWithUtils.min.js') }}"></script>
 
     <script>
+        // ------------------------------------------------------------------
+        // intl-tel-input : sélecteur d'indicatif "drapeau + nom du pays +
+        // indicatif" (ex. "🇬🇦 Gabon +241" dans la liste déroulante) devant
+        // le champ Téléphone, avec adaptation automatique du placeholder et
+        // de la validité au nombre de chiffres attendu pour le pays choisi.
+        // ------------------------------------------------------------------
+        const telInputEl = document.getElementById('telephone');
+        const iti = window.intlTelInput(telInputEl, {
+            // "Gabon" en tête de liste par défaut : contexte principal de la plateforme.
+            initialCountry: 'ga',
+            // Fait remonter Gabon et France en haut de la liste déroulante
+            // (le reste des pays garde l'ordre standard en dessous).
+            countryOrder: ['ga', 'fr'],
+            // Noms de pays affichés en français dans la liste ("Allemagne" et non
+            // "Germany") via l'API native Intl.DisplayNames du navigateur.
+            countryNameLocale: 'fr',
+            // Affiche l'indicatif (+241) à côté du drapeau, non modifiable
+            // directement dans le champ de saisie (évite qu'il tape "+241" à la
+            // fois dans l'indicatif ET dans le numéro).
+            separateDialCode: true,
+            // N'autorise que les chiffres (et un "+" en tout début) pendant la
+            // frappe, et plafonne automatiquement à la longueur maximale valide
+            // pour le pays sélectionné : c'est la partie "nombre requis de
+            // chiffres qui s'adapte à l'indicatif" demandée.
+            strictMode: true,
+            // Affiche un exemple de numéro du pays sélectionné en placeholder
+            // (ex. "06 12 34 56 78" pour la France) au lieu d'un texte fixe :
+            // indice visuel supplémentaire sur le format/la longueur attendue.
+            // (fonctionne car on charge la variante "WithUtils", cf. <script> ci-dessus)
+
+            // Le champ #telephone n'a pas de "name" : rien n'est donc envoyé au
+            // serveur depuis lui directement. hiddenInputs crée automatiquement
+            // (au moment du submit du formulaire) un <input type="hidden"
+            // name="telephone"> contenant le numéro complet au format
+            // international (ex. "+24177123456"), qui est ce que reçoit
+            // RegisteredUserController@store dans $request->telephone.
+            hiddenInputs: () => ({ phone: 'telephone' }),
+        });
+
+        {{--
+            Si le formulaire est réaffiché après une erreur de validation sur un
+            AUTRE champ (ex. mot de passe non confirmé), old('telephone') contient
+            le numéro complet au format international précédemment soumis
+            (celui du hidden input "telephone" généré par hiddenInputs ci-dessus).
+            iti.setNumber() sait parser ce format, retrouver automatiquement le
+            bon pays ET ré-afficher le numéro en format national dans le champ.
+        --}}
+        @if(old('telephone'))
+            iti.setNumber(@json(old('telephone')));
+        @endif
+
+        // Marque le champ invalide (via l'API native Constraint Validation,
+        // setCustomValidity) dès que le numéro tapé ne correspond pas au format
+        // attendu pour le pays sélectionné. Combiné à "needs-validation" +
+        // "novalidate" (cf. resources/js/pages/form-validation.init.js), ça
+        // bloque la soumission et affiche le message .invalid-feedback dédié,
+        // exactement comme pour les autres champs required de ce formulaire.
+        function updatePhoneValidity() {
+            if (telInputEl.disabled) {
+                telInputEl.setCustomValidity('');
+                return;
+            }
+            if (telInputEl.value.trim() === '') {
+                // Champ vide : l'attribut natif "required" s'en charge déjà.
+                telInputEl.setCustomValidity('');
+                return;
+            }
+            const valid = iti.isValidNumber();
+            // isValidNumber() peut renvoyer `null` très brièvement le temps que
+            // la validation se mette en place (variante "WithUtils" : quasi
+            // instantané, mais on reste défensif) : dans ce cas on ne bloque pas.
+            telInputEl.setCustomValidity(valid === false
+                ? 'Numéro invalide pour le pays sélectionné.'
+                : '');
+        }
+        telInputEl.addEventListener('input', updatePhoneValidity);
+        // "countrychange" : évènement déclenché par intl-tel-input quand
+        // l'utilisateur change de pays dans la liste déroulante (sans forcément
+        // retoucher au numéro) — la validité doit être réévaluée immédiatement,
+        // puisque la longueur attendue change avec le pays.
+        telInputEl.addEventListener('countrychange', updatePhoneValidity);
+
         // Affiche/masque le bloc de champs correspondant au rôle sélectionné,
         // ET active/désactive réellement les <input> de chaque bloc (cf. commentaires
         // Blade ci-dessus pour le pourquoi du "disabled" en plus du "d-none").
@@ -283,12 +401,19 @@
             //    jamais envoyé par le navigateur (donc `null` côté Laravel) ET est
             //    automatiquement exclu de la vérification "needs-validation" Bootstrap
             //    ci-dessus, même s'il porte l'attribut "required".
-            particulierBlock.querySelectorAll('input').forEach(input => {
+            //    Le champ #telephone est exclu de cette boucle générique : il est
+            //    piloté par iti.setDisabled() juste après, qui désactive à la fois
+            //    le champ ET le bouton drapeau/sélecteur de pays d'intl-tel-input
+            //    (un simple ".disabled = true" sur l'input laisserait le bouton
+            //    drapeau cliquable alors que le champ à côté serait grisé).
+            particulierBlock.querySelectorAll('input:not(#telephone)').forEach(input => {
                 input.disabled = !isParticulier;
             });
             entrepriseBlock.querySelectorAll('input').forEach(input => {
                 input.disabled = !isEntreprise;
             });
+            iti.setDisabled(!isParticulier);
+            updatePhoneValidity();
         }
 
         // Applique l'état correct dès le chargement de la page (utile si le
