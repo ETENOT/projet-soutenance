@@ -59,6 +59,7 @@
         "glightbox": "^3.3.1",
         "gmaps": "^0.4.25",
         "gridjs": "^6.2.0",
+        "intl-tel-input": "^29.2.3",
         "isotope-layout": "^3.0.6",
         "jsvectormap": "1.7.0",
         "leaflet": "^1.9.4",

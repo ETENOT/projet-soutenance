@@ -2058,6 +2058,11 @@ immutable@^5.1.5:
   resolved "https://registry.npmjs.org/immutable/-/immutable-5.1.9.tgz"
   integrity sha512-m8nVez3rwrgmWxtLMt1ZYXB2Lv7OKYn/disyxAlSDYAlKSlFoPPfIAmAM/M5xqL4m4C/wAPw7S2/CNaUii1Hxg==
 
+intl-tel-input@^29.2.3:
+  version "29.2.3"
+  resolved "https://registry.yarnpkg.com/intl-tel-input/-/intl-tel-input-29.2.3.tgz#7f6d4c53a385d8f169c6cc4006540fc7ea26645e"
+  integrity sha512-uwDslWntH/G5HuVlCSly8XdRC2iXVnpAEtj5I3JOFTy3G/7PARGsqbakWBBXfjzh3BjXXLOEOZDvqulvPSG0QQ==
+
 is-array@^1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/is-array/-/is-array-1.0.1.tgz"
