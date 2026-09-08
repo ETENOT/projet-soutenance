@@ -50,7 +50,16 @@ class RegisteredUserController extends Controller
             // (cas normal quand le JS désactive le bloc du rôle non choisi, cf.
             // register.blade.php). required_if:role,particulier prend le dessus et
             // redevient obligatoire UNIQUEMENT si le rôle choisi est "particulier".
-            'telephone' => ['nullable', 'required_if:role,particulier', 'string', 'max:20'],
+            //
+            // regex : le champ envoyé par le formulaire est en réalité le hidden
+            // input rempli par intl-tel-input avec le numéro complet au format
+            // international, ex. "+24177123456" ("+" puis indicatif puis numéro,
+            // 8 à 15 chiffres au total selon les pays — norme E.164). La longueur
+            // exacte attendue pour l'indicatif choisi est déjà vérifiée côté
+            // navigateur (cf. register.blade.php) ; cette regex est un filet de
+            // sécurité serveur si jamais le JS est contourné (ex. requête forgée),
+            // pas une revalidation complète pays par pays.
+            'telephone' => ['nullable', 'required_if:role,particulier', 'string', 'max:20', 'regex:/^\+[1-9]\d{6,14}$/'],
             'date_de_naissance' => ['nullable', 'required_if:role,particulier', 'date'],
 
             // Même logique inversée pour les champs "entreprise"
