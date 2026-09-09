@@ -25,25 +25,9 @@ Route::get('/', [App\Http\Controllers\HomeController::class, 'root'])
     ->name('root');
 
 // Dashboard protégé
-Route::get('/dashboard', function () {
-
-    $user = auth()->user();
-
-    switch ($user->role->nom) {
-
-        case 'admin':
-            return view('dashboards.admin');
-
-        case 'entreprise':
-            return view('dashboards.entreprise');
-
-        case 'particulier':
-            return view('dashboards.particulier');
-
-        default:
-            abort(403);
-    }
-})->middleware('auth')->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware('auth')
+    ->name('dashboard');
 
 // Mise à jour du profil
 Route::post('/update-profile/{id}', [App\Http\Controllers\HomeController::class, 'updateProfile'])

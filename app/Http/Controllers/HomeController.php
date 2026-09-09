@@ -36,7 +36,7 @@ class HomeController extends Controller
 
     public function root()
     {
-        return view('index');
+        return redirect()->route ('dashboard');
     }
 
     /*Language Translation*/
@@ -60,7 +60,7 @@ class HomeController extends Controller
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
         ]);
 
-        $user = User::find($id);
+        $user = Auth::user();
         $user->name = $request->get('name');
         $user->email = $request->get('email');
 
@@ -106,7 +106,7 @@ class HomeController extends Controller
                 'Message' => "Your Current password does not matches with the password you provided. Please try again."
             ], 200); // Status code
         } else {
-            $user = User::find($id);
+            $user = Auth::user();
             $user->password = Hash::make($request->get('password'));
             $user->update();
             if ($user) {
