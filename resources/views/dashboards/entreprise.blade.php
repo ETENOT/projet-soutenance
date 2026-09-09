@@ -8,29 +8,19 @@
 @section('content')
   @component('components.breadcrumb')
     @slot('li_1')
-        FormaPro
+        Formation_neovision
     @endslot
 
     @slot('title')
         Espace entreprise
     @endslot
 @endcomponent
-    @php
-        // TODO : remplacer par le compte des employés rattachés à l'entreprise 
-        $employesInscrits = 24;
-        //TODO : remplacer par $utilisateur->entreprise->devis()->where(...)->count() 
-        $devisEnCours = 4;
-        //ODO : remplacer par le compte des sessions réservées par l'entreprise 
-        $sessionsReservees = 7;
-        // TODO : remplacer par le calcul du budget formation engagé de l'entreprise 
-        $budgetFormation = '12 500 €';
-    @endphp
 
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="fs-16 mb-1">Bonjour {{ $utilisateur->name }}, bienvenue sur FormaPro.</h4>
+                    <h4 class="fs-16 mb-1">Bonjour {{ $utilisateur->name }}, bienvenue sur Formation_neovison.</h4>
                     <p class="text-muted mb-0">Pilotez les collaborateurs, les sessions et le budget formation de votre entreprise.</p>
                 </div>
             </div>
@@ -38,22 +28,8 @@
     </div>
 
     <div class="row">
-        <div class="col-xl-3 col-md-6">
-            <div class="card card-animate">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="fw-medium text-muted mb-0">Employés inscrits</p>
-                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $employesInscrits }}">0</span></h2>
-                            <p class="mb-0 text-muted"><span class="badge bg-light text-success mb-0"><i class="ri-arrow-up-line align-middle"></i> 3 nouveaux</span> ce mois-ci</p>
-                        </div>
-                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-info-subtle rounded-circle fs-2"><i data-feather="users" class="text-info"></i></span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6">
+       
+        <div class="col-xl-4 col-md-6">
             <div class="card card-animate">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -68,7 +44,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-6">
             <div class="card card-animate">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">
@@ -83,7 +59,7 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6">
+        <div class="col-xl-4 col-md-6">
             <div class="card card-animate">
                 <div class="card-body">
                     <div class="d-flex justify-content-between">

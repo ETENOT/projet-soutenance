@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -69,18 +70,58 @@ class DashboardController extends Controller
     ]);
 }
 
-    private function entreprise ($utilisateur){
-        //TODO: employés inscrits, devis en cours, sessions réservées pour l'entreprise
-        return view ('dashboards.entreprise', [
+    private function entreprise($utilisateur)
+{
+    $entreprise = $utilisateur->entreprise;
+
+    // Garde-fou : un compte "entreprise" sans entreprise_id renseigné ne devrait
+    // normalement pas arriver, mais on évite un crash si ça se produit.
+    if (!$entreprise) {
+        return view('dashboards.entreprise', [
             'utilisateur' => $utilisateur,
+            'devisEnCours' => 0,
+            'employesInscrits' => 0,
+            'sessionsReservees' => 0,
+            'budgetFormation' => 0,
         ]);
     }
 
-     private function admin($utilisateur)
+    // Devis en attente de traitement
+    $devisEnCours = $entreprise->devis()->where('statut', 'en_attente')->count();
+
+    // Sessions réservées par n'importe quel employé de cette entreprise
+    $sessionsReservees = \App\Models\Inscription::whereHas('user', function ($q) use ($entreprise) {
+        $q->where('entreprise_id', $entreprise->id);
+    })->count();
+
+    // Total dépensé en formation : somme des paiements liés aux inscriptions
+    // de tous les employés de cette entreprise
+    $budgetFormation = \App\Models\Paiement::whereHas('inscription.user', function ($q) use ($entreprise) {
+        $q->where('entreprise_id', $entreprise->id);
+    })->sum('montant');
+
+    return view('dashboards.entreprise', [
+        'utilisateur' => $utilisateur,
+        'devisEnCours' => $devisEnCours,
+        'sessionsReservees' => $sessionsReservees,
+        'budgetFormation' => $budgetFormation,
+    ]);
+}
+
+    private function admin($utilisateur)
     {
-        // TODO: stats globales (nb utilisateurs, sessions actives, CA, etc.)
+        // Compteurs simples : contexte du volume à gérer, pas des indicateurs business
+        $totalUtilisateurs = User::count();
+        $totalCours = \App\Models\Cours::count();
+        $totalClasses = \App\Models\Classe::count();
+        $totalQuiz = \App\Models\Quiz::count();
+
         return view('dashboards.admin', [
             'utilisateur' => $utilisateur,
+            'totalUtilisateurs' => $totalUtilisateurs,
+            'totalCours' => $totalCours,
+            'totalClasses' => $totalClasses,
+            'totalQuiz' => $totalQuiz,
         ]);
     }
 }   
