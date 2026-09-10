@@ -17,10 +17,9 @@ class HomeController extends Controller
      * @return void
      */
     public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
+{
+    $this->middleware('auth')->except(['root']);
+}
     /**
      * Show the application dashboard.
      *
@@ -34,10 +33,14 @@ class HomeController extends Controller
         return abort(404);
     }
 
-    public function root()
-    {
-        return redirect()->route ('dashboard');
+  public function root()
+{
+    if (Auth::check()) {
+        return redirect()->route('dashboard');
     }
+
+    return view('accueil');
+}
 
     /*Language Translation*/
     public function lang($locale)
