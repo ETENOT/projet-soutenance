@@ -16,7 +16,8 @@ return new class extends Migration
             // 10 = nombre total de chiffres maximum.
             // 2 = nombre de chiffres après la virgule.
             // Exemple : 150000.50
-            $table->decimal('prix', 10, 2);
+            $table->decimal('prix_entreprise', 10, 2);
+            $table->decimal('prix_particulier', 10, 2);
             $table->timestamps();
         });
     }
