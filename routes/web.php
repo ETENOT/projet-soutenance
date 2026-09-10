@@ -42,3 +42,23 @@ Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class
 // Route générale
 Route::get('{any}', [App\Http\Controllers\HomeController::class, 'index'])
     ->name('index');
+
+// Catalogue des cours — accessible à tout le monde, visiteur anonyme ET utilisateur connecté
+// (cf. diagramme de cas d'utilisation : "accéder au programme des cours" est relié aux deux acteurs)
+Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'catalogue'])->name('cours.catalogue');
+
+// Détail d'un cours précis — public aussi, pas besoin d'être connecté pour consulter
+Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])->name('cours.show');
+
+// Gestion des cours (création/modification/suppression) — réservée à l'admin
+// ->middleware(['auth', 'role:admin']) : il faut être connecté ET avoir le rôle admin
+// ->prefix('admin') : toutes les URLs de ce groupe commencent par /admin/...
+// ->name('admin.') : tous les noms de route de ce groupe commencent par admin....
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/cours', [App\Http\Controllers\CoursController::class, 'index'])->name('cours.index');
+    Route::get('/cours/create', [App\Http\Controllers\CoursController::class, 'create'])->name('cours.create');
+    Route::post('/cours', [App\Http\Controllers\CoursController::class, 'store'])->name('cours.store');
+    Route::get('/cours/{cours}/edit', [App\Http\Controllers\CoursController::class, 'edit'])->name('cours.edit');
+    Route::put('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'update'])->name('cours.update');
+    Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])->name('cours.destroy');
+});
