@@ -12,7 +12,7 @@ class Cours extends Model
     // Donc on force le vrai nom de table ici
     protected $table = 'cours';
 
-    protected $fillable = ['titre', 'prix'];
+    protected $fillable = ['titre', 'prix_particulier', 'prix_entreprise'];
 
     // Un Cours a plusieurs Classes (sessions)
     public function classes()
