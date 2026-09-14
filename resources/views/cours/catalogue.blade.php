@@ -31,11 +31,11 @@
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between mb-1">
                                 <span class="text-muted">Particulier</span>
-                                <span class="fw-semibold">{{ number_format($unCours->prix_particulier, 2) }} €</span>
+                                <span class="fw-semibold">{{ number_format($unCours->prix_particulier, 2) }} fcfa</span>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted">Entreprise</span>
-                                <span class="fw-semibold">{{ number_format($unCours->prix_entreprise, 2) }} €</span>
+                                <span class="fw-semibold">{{ number_format($unCours->prix_entreprise, 2) }} fcfa</span>
                             </div>
 
                             <a href="{{ route('cours.show', $unCours) }}" class="btn btn-primary w-100">

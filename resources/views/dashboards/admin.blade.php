@@ -116,11 +116,10 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-3 col-sm-6">
-                            <a href="#" class="text-decoration-none">
+                            <a href="{{ route('admin.cours.index') }}" class="text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
                                     <i data-feather="book-open" class="text-success mb-2"></i>
                                     <p class="mb-1 fw-medium text-body">Gérer les cours</p>
-                                    <span class="badge bg-secondary-subtle text-secondary">Bientôt disponible</span>
                                 </div>
                             </a>
                         </div>

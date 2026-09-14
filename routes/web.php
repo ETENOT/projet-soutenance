@@ -39,10 +39,6 @@ Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class
     ->middleware('auth')
     ->name('updatePassword');
 
-// Route générale
-Route::get('{any}', [App\Http\Controllers\HomeController::class, 'index'])
-    ->name('index');
-
 // Catalogue des cours — accessible à tout le monde, visiteur anonyme ET utilisateur connecté
 // (cf. diagramme de cas d'utilisation : "accéder au programme des cours" est relié aux deux acteurs)
 Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'catalogue'])->name('cours.catalogue');
@@ -50,7 +46,7 @@ Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'ca
 // Détail d'un cours précis — public aussi, pas besoin d'être connecté pour consulter
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])->name('cours.show');
 
-// Gestion des cours (création/modification/suppression) — réservée à l'admin
+// Gestion des cours et des classes (création/modification/suppression) — réservée à l'admin
 // ->middleware(['auth', 'role:admin']) : il faut être connecté ET avoir le rôle admin
 // ->prefix('admin') : toutes les URLs de ce groupe commencent par /admin/...
 // ->name('admin.') : tous les noms de route de ce groupe commencent par admin....
@@ -61,4 +57,26 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cours/{cours}/edit', [App\Http\Controllers\CoursController::class, 'edit'])->name('cours.edit');
     Route::put('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'update'])->name('cours.update');
     Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])->name('cours.destroy');
+
+    // Classes, imbriquées sous un cours (une classe appartient toujours à un cours)
+    Route::prefix('cours/{cours}/classes')->name('cours.classes.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ClasseController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\ClasseController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\ClasseController::class, 'store'])->name('store');
+        Route::get('/{classe}/edit', [App\Http\Controllers\ClasseController::class, 'edit'])->name('edit');
+        Route::put('/{classe}', [App\Http\Controllers\ClasseController::class, 'update'])->name('update');
+        Route::delete('/{classe}', [App\Http\Controllers\ClasseController::class, 'destroy'])->name('destroy');
+
+        // Cas d'utilisation "Reporter sessions d'une classe" — distinct de update()
+        Route::put('/{classe}/reporter', [App\Http\Controllers\ClasseController::class, 'reporter'])->name('reporter');
+
+        // Ajout/retrait manuel d'un utilisateur dans la classe (action admin directe)
+        Route::post('/{classe}/inscrits', [App\Http\Controllers\ClasseController::class, 'ajouterUtilisateur'])->name('inscrits.store');
+        Route::delete('/{classe}/inscrits/{user}', [App\Http\Controllers\ClasseController::class, 'retirerUtilisateur'])->name('inscrits.destroy');
+    });
 });
+
+// Route générale — DOIT rester la toute dernière route du fichier,
+// sinon elle intercepte tout ce qui n'a pas encore été défini avant elle
+Route::get('{any}', [App\Http\Controllers\HomeController::class, 'index'])
+    ->name('index');

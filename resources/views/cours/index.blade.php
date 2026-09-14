@@ -41,8 +41,8 @@
                         @forelse($cours as $unCours)
                             <tr>
                                 <td>{{ $unCours->titre }}</td>
-                                <td>{{ number_format($unCours->prix_particulier, 2) }} €</td>
-                                <td>{{ number_format($unCours->prix_entreprise, 2) }} €</td>
+                                <td>{{ number_format($unCours->prix_particulier, 2) }} fcfa</td>
+                                <td>{{ number_format($unCours->prix_entreprise, 2) }} fcfa</td>
                                 <td class="text-end">
                                     <a href="{{ route('admin.cours.edit', $unCours) }}" class="btn btn-sm btn-soft-primary">
                                         Modifier

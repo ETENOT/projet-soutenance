@@ -31,7 +31,7 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label for="prix_particulier" class="form-label">Prix particulier (€)</label>
+                        <label for="prix_particulier" class="form-label">Prix particulier (fcfa)</label>
                         <input type="number" step="0.01" name="prix_particulier" id="prix_particulier"
                                class="form-control @error('prix_particulier') is-invalid @enderror"
                                value="{{ old('prix_particulier', $cours->prix_particulier) }}">
@@ -41,7 +41,7 @@
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label for="prix_entreprise" class="form-label">Prix entreprise (€)</label>
+                        <label for="prix_entreprise" class="form-label">Prix entreprise (fcfa)</label>
                         <input type="number" step="0.01" name="prix_entreprise" id="prix_entreprise"
                                class="form-control @error('prix_entreprise') is-invalid @enderror"
                                value="{{ old('prix_entreprise', $cours->prix_entreprise) }}">

@@ -61,11 +61,12 @@ $grays: (
 // fusv-enable
 
 // scss-docs-start color-variables
-$blue:       #3577f1;
-$indigo:     #405189;
+// Palette Néovision
+$blue:       #0f9bd6;
+$indigo:     #0b1f2d;
 $purple:     #6559cc;
 $pink:       #f672a7;
-$red:        #f06548;
+$red:        #e53935;
 $orange:     #f1963b;
 $yellow:     #f7b84b;
 $green:      #0ab39c;
@@ -322,8 +323,8 @@ $cyans: (
 // fusv-enable
 
 // scss-docs-start theme-color-variables
-$primary:       $indigo;
-$secondary:     $blue;
+$primary:       $blue;
+$secondary:     $indigo;
 $success:       $green;
 $info:          $cyan;
 $warning:       $yellow;

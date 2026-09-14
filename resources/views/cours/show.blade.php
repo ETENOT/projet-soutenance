@@ -17,11 +17,11 @@
                 <div class="row mb-4">
                     <div class="col-6">
                         <p class="text-muted mb-1">Tarif particulier</p>
-                        <h4>{{ number_format($cours->prix_particulier, 2) }} €</h4>
+                        <h4>{{ number_format($cours->prix_particulier, 2) }} fcfa</h4>
                     </div>
                     <div class="col-6">
                         <p class="text-muted mb-1">Tarif entreprise</p>
-                        <h4>{{ number_format($cours->prix_entreprise, 2) }} €</h4>
+                        <h4>{{ number_format($cours->prix_entreprise, 2) }} fcfa</h4>
                     </div>
                 </div>
 
