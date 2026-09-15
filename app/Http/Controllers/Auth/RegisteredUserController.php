@@ -41,8 +41,9 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-
+            'password' => ['required','confirmed'
+            //,'min:8','regex:/[A-Z]/','regex:/[0-9]/','regex:/[^A-Za-z0-9]/'
+        ],
             // Verrouille la valeur à l'une des deux seules options du <select>
             'role' => ['required', 'in:particulier,entreprise'],
 
@@ -67,7 +68,13 @@ class RegisteredUserController extends Controller
             'adresse' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
             'contact_principal' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
             'secteur_activite' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
-        ]);
+        ],
+        [
+        'password.required' => 'Le mot de passe est obligatoire.',
+        'password.confirmed' => 'Les mots de passe ne correspondent pas.',
+        'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
+        'password.regex' => 'Le mot de passe doit contenir au moins une majuscule, un chiffre et un caractère spécial (exemple : #, ?, !).',
+    ]);
 
         // Champs communs à tout User, quel que soit le rôle
         $userData = [
@@ -119,6 +126,7 @@ class RegisteredUserController extends Controller
         // (comportement standard Breeze : pas besoin de re-taper ses identifiants)
         Auth::login($user);
 
+        return redirect()->route('verification.notice');
         // route('root', ...) et non route('dashboard', ...) : "dashboard" n'existe
         // pas dans ce projet, la vraie page d'accueil protégée s'appelle "root"
         // (cf. routes/web.php -> HomeController@root)

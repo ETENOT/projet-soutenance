@@ -171,7 +171,7 @@
                                             <input
                                                 id="password-input"
                                                 type="password"
-                                                name="password"
+                                                naan me="password"
                                                 class="form-control password-input pe-5 @error('password') is-invalid @enderror"
                                                 placeholder="{{ __('Entrez votre mot de passe') }}"
                                                 required

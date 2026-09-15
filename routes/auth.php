@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\NewPasswordController;
 use Illuminate\Support\Facades\Route;
 
 // Ce fichier remplace l'ancien Auth::routes() (fourni par laravel/ui, qu'on a retiré).
@@ -23,12 +28,47 @@ Route::middleware('guest')->group(function () {
 
     // Traite la soumission du formulaire de connexion
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    // --- Mot de passe oublié ---
+
+    // Affiche le formulaire "Mot de passe oublié" (saisie de l'e-mail)
+    // C'est cette route que le lien du login.blade.php recherche via Route::has('password.request')
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+
+    // Traite l'envoi du lien de réinitialisation par e-mail
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+
+    // Affiche le formulaire de saisie du nouveau mot de passe (lien reçu par e-mail avec token)
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
+
+    // Traite la soumission du nouveau mot de passe
+    // Nom "password.store" (et non "password.update") pour ne pas entrer en conflit
+    // avec la route de changement de mot de passe d'un utilisateur déjà connecté
+    Route::post('reset-password', [NewPasswordController::class, 'store'])
+        ->name('password.store');
 });
 
 // Route accessible UNIQUEMENT si l'utilisateur EST connecté (middleware "auth")
 // Logique : on ne peut pas se déconnecter si on n'est pas connecté
 Route::middleware('auth')->group(function () {
 
+    // Affiche la page de vérification de l'e-mail
+    Route::get('verify-email', EmailVerificationPromptController::class)
+        ->name('verification.notice');
+
+    // Vérifie le code de vérification par e-mail
+    Route::post('verify-email', VerifyEmailController::class)
+        ->middleware('throttle:10,1')
+        ->name('verification.verify');
+
+    // Renvoie le code de vérification par e-mail
+    Route::post('verify-email/resend', [EmailVerificationNotificationController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('verification.send');
+        
     // Déconnecte l'utilisateur et détruit sa session
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });

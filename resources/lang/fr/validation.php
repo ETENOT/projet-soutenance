@@ -1,0 +1,68 @@
+<?php
+
+return [
+
+    'accepted' => 'Le champ :attribute doit être accepté.',
+    'after' => 'Le champ :attribute doit être une date postérieure au :date.',
+    'after_or_equal' => 'Le champ :attribute doit être une date postérieure ou égale au :date.',
+    'alpha' => 'Le champ :attribute ne peut contenir que des lettres.',
+    'alpha_num' => 'Le champ :attribute ne peut contenir que des lettres et des chiffres.',
+    'array' => 'Le champ :attribute doit être un tableau.',
+    'before' => 'Le champ :attribute doit être une date antérieure au :date.',
+    'before_or_equal' => 'Le champ :attribute doit être une date antérieure ou égale au :date.',
+    'between' => [
+        'numeric' => 'Le champ :attribute doit être compris entre :min et :max.',
+        'file' => 'Le fichier :attribute doit être compris entre :min et :max kilo-octets.',
+        'string' => 'Le champ :attribute doit contenir entre :min et :max caractères.',
+        'array' => 'Le tableau :attribute doit contenir entre :min et :max éléments.',
+    ],
+    'boolean' => 'Le champ :attribute doit être vrai ou faux.',
+    'confirmed' => 'La confirmation du champ :attribute ne correspond pas.',
+    'date' => 'Le champ :attribute doit être une date valide.',
+    'date_format' => 'Le champ :attribute doit respecter le format :format.',
+    'different' => 'Les champs :attribute et :other doivent être différents.',
+    'digits' => 'Le champ :attribute doit comporter :digits chiffres.',
+    'email' => 'Le champ :attribute doit être une adresse e-mail valide.',
+    'exists' => 'La valeur sélectionnée pour :attribute est invalide.',
+    'image' => 'Le champ :attribute doit être une image.',
+    'in' => 'La valeur sélectionnée pour :attribute est invalide.',
+    'integer' => 'Le champ :attribute doit être un entier.',
+    'ip' => 'Le champ :attribute doit être une adresse IP valide.',
+    'json' => 'Le champ :attribute doit être une chaîne JSON valide.',
+    'max' => [
+        'numeric' => 'Le champ :attribute ne peut pas être supérieur à :max.',
+        'file' => 'Le fichier :attribute ne peut pas dépasser :max kilo-octets.',
+        'string' => 'Le champ :attribute ne peut pas dépasser :max caractères.',
+        'array' => 'Le tableau :attribute ne peut pas contenir plus de :max éléments.',
+    ],
+    'min' => [
+        'numeric' => 'Le champ :attribute doit être au moins de :min.',
+        'file' => 'Le fichier :attribute doit faire au moins :min kilo-octets.',
+        'string' => 'Le champ :attribute doit contenir au moins :min caractères.',
+        'array' => 'Le tableau :attribute doit contenir au moins :min éléments.',
+    ],
+    'not_in' => 'La valeur sélectionnée pour :attribute est invalide.',
+    'numeric' => 'Le champ :attribute doit être un nombre.',
+    'regex' => 'Le format du champ :attribute est invalide.',
+    'required' => 'Le champ :attribute est obligatoire.',
+    'same' => 'Les champs :attribute et :other doivent correspondre.',
+    'size' => [
+        'numeric' => 'Le champ :attribute doit être :size.',
+        'file' => 'Le fichier :attribute doit faire :size kilo-octets.',
+        'string' => 'Le champ :attribute doit contenir :size caractères.',
+        'array' => 'Le tableau :attribute doit contenir :size éléments.',
+    ],
+    'string' => 'Le champ :attribute doit être une chaîne de caractères.',
+    'unique' => 'Cette :attribute est déjà utilisée.',
+    'url' => 'Le format de :attribute est invalide.',
+    'nullable' => '',
+    'password' => 'Le mot de passe est incorrect.',
+
+    'attributes' => [
+        'name' => 'nom',
+        'email' => 'adresse e-mail',
+        'password' => 'mot de passe',
+        'password_confirmation' => 'confirmation du mot de passe',
+    ],
+
+];

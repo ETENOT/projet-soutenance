@@ -1,25 +1,238 @@
-<x-guest-layout>
-    <div class="mb-4 text-sm text-gray-600">
-        {{ __('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
+@extends('layouts.master-without-nav')
+
+@section('title')
+    @lang('translation.password-reset')
+@endsection
+
+@section('content')
+
+<div class="auth-page-wrapper pt-5">
+
+    <!-- Arrière-plan de la page -->
+    <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
+
+        <div class="bg-overlay"></div>
+
+        <div class="shape">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 version="1.1"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 viewBox="0 0 1440 120">
+
+                <path d="M 0,36 C 144,53.6 432,123.2 720,124
+                         C 1008,124.8 1296,56.8 1440,40
+                         L1440 140 L0 140z">
+                </path>
+
+            </svg>
+        </div>
+
     </div>
 
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('password.email') }}">
-        @csrf
+    <!-- Contenu de la page -->
+    <div class="auth-page-content">
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+        <div class="container">
+
+            <!-- Logo NEO-VISION -->
+            <div class="row">
+
+                <div class="col-lg-12">
+
+                    <div class="text-center mt-sm-5 mb-4 text-white-50">
+
+                        <div>
+                            <a href="{{ url('/') }}"
+                               class="d-inline-block auth-logo">
+
+                                <img src="{{ URL::asset('build/images/logo_neovision.png') }}"
+                                     alt="NEO-VISION"
+                                     height="55">
+
+                            </a>
+                        </div>
+
+                        <p class="mt-3 fs-15 fw-medium">
+                            Voir, Faire et Réaliser Différemment
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Carte de demande de réinitialisation -->
+            <div class="row justify-content-center">
+
+                <div class="col-md-8 col-lg-6 col-xl-5">
+
+                    <div class="card mt-4">
+
+                        <div class="card-body p-4">
+
+                            <!-- Titre + icône animée Velzon -->
+                            <div class="text-center mt-2">
+
+                                <h5 class="text-primary">
+                                    {{ __('Mot de passe oublié ?') }}
+                                </h5>
+
+                                <p class="text-muted">
+                                    {{ __("Pas de souci. Indiquez votre adresse e-mail et nous vous enverrons un lien pour en choisir un nouveau.") }}
+                                </p>
+
+                                <lord-icon
+                                    src="https://cdn.lordicon.com/rhvddzym.json"
+                                    trigger="loop"
+                                    colors="primary:#0ab39c"
+                                    class="avatar-xl">
+                                </lord-icon>
+
+                            </div>
+
+
+                            <!-- Message de statut Breeze (lien envoyé / erreur) -->
+                            <x-auth-session-status
+                                class="mb-3 text-center text-success fw-semibold"
+                                :status="session('status')"
+                            />
+
+
+                            <div class="p-2 mt-4">
+
+                                <!-- FORMULAIRE BREEZE -->
+                                <form method="POST"
+                                      action="{{ route('password.email') }}">
+
+                                    @csrf
+
+                                    <!-- Adresse e-mail -->
+                                    <div class="mb-4">
+
+                                        <label for="email"
+                                               class="form-label">
+
+                                            {{ __('Adresse e-mail') }}
+
+                                            <span class="text-danger">*</span>
+
+                                        </label>
+
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            name="email"
+                                            value="{{ old('email') }}"
+                                            class="form-control @error('email') is-invalid @enderror"
+                                            placeholder="{{ __('Entrez votre adresse e-mail') }}"
+                                            required
+                                            autofocus
+                                        >
+
+                                        @error('email')
+                                            <span class="invalid-feedback" role="alert">
+                                                <strong>{{ $message }}</strong>
+                                            </span>
+                                        @enderror
+
+                                    </div>
+
+
+                                    <!-- Bouton d'envoi -->
+                                    <div class="text-center mt-4">
+
+                                        <button
+                                            class="btn btn-success w-100"
+                                            type="submit">
+
+                                            {{ __('Envoyer le lien de réinitialisation') }}
+
+                                        </button>
+
+                                    </div>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Retour à la connexion -->
+                    <div class="mt-4 text-center">
+
+                        <p class="mb-0">
+
+                            {{ __('Vous vous souvenez de votre mot de passe ?') }}
+
+                            
+                                <a href="{{ route('login') }}"
+                                class="fw-semibold text-primary text-decoration-underline">
+
+                                {{ __('Retour à la connexion') }}
+
+                            </a>
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Email Password Reset Link') }}
-            </x-primary-button>
+    </div>
+
+
+    <!-- Footer -->
+    <footer class="footer">
+
+        <div class="container">
+
+            <div class="row">
+
+                <div class="col-lg-12">
+
+                    <div class="text-center">
+
+                        <p class="mb-0 text-muted">
+
+                            &copy;
+
+                            <script>
+                                document.write(new Date().getFullYear())
+                            </script>
+
+                            NEO-VISION
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
-    </form>
-</x-guest-layout>
+
+    </footer>
+
+</div>
+
+@endsection
+
+
+@section('script')
+
+<script src="{{ URL::asset('build/libs/particles.js/particles.js') }}"></script>
+
+<script src="{{ URL::asset('build/js/pages/particles.app.js') }}"></script>
+
+@endsection
