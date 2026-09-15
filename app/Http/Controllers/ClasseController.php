@@ -87,24 +87,38 @@ class ClasseController extends Controller
      */
     public function ajouterUtilisateur(Request $request, Cours $cours, Classe $classe)
     {
-        $data = $request->validate(['user_id' => ['required', 'exists:users,id']]);
+        $data = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1'],
+            'user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
+        ]);
 
-        // firstOrCreate évite un doublon, cohérent avec la contrainte
-        // UNIQUE(user_id, classe_id) déjà en base
-        Inscription::firstOrCreate(
-            ['user_id' => $data['user_id'], 'classe_id' => $classe->id],
-            ['date_inscription' => now()]
-        );
+        $inscritsIds = $classe->inscriptions()->pluck('user_id');
+        $nouveauxIds = collect($data['user_ids'])->diff($inscritsIds);
 
-        return redirect()->route('admin.cours.classes.index', $cours)
-            ->with('success', 'Utilisateur ajouté à la classe.');
+        // Vérifie la capacité en tenant compte uniquement des nouveaux inscrits.
+        if ($inscritsIds->count() + $nouveauxIds->count() > $classe->capacite_max) {
+            return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+                ->with('error', 'Impossible d\'ajouter ces utilisateurs : la capacité maximale de la classe serait dépassée.');
+        }
+
+        foreach ($nouveauxIds as $userId) {
+            Inscription::firstOrCreate(
+                ['user_id' => $userId, 'classe_id' => $classe->id],
+                ['date_inscription' => now()]
+            );
+        }
+
+        // Retourne sur la page de gestion pour conserver le contexte de la classe.
+        return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+            ->with('success', 'Utilisateurs ajoutés à la classe.');
     }
 
     public function retirerUtilisateur(Cours $cours, Classe $classe, User $user)
     {
         Inscription::where('classe_id', $classe->id)->where('user_id', $user->id)->delete();
 
-        return redirect()->route('admin.cours.classes.index', $cours)
+        // Après le retrait, reste sur la même page pour gérer la classe sans navigation inutile.
+        return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
             ->with('success', 'Utilisateur retiré de la classe.');
     }
 }

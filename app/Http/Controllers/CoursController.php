@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cours;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CoursController extends Controller
 {
@@ -12,11 +13,15 @@ class CoursController extends Controller
      * Accessible à un visiteur anonyme ET à un utilisateur connecté
      * (route sans middleware 'auth', volontairement).
      */
+
+    /**
+     * Affiche le catalogue public avec le nombre de classes et de quiz.
+     */
     public function catalogue()
     {
-        // orderBy('titre') : tri alphabétique, plus agréable à parcourir
-        // qu'un ordre par id qui n'a pas de sens pour le visiteur
-        $cours = Cours::orderBy('titre')->get();
+        $cours = Cours::withCount(['classes', 'quizzes'])
+            ->orderBy('titre')
+            ->get();
 
         return view('cours.catalogue', [
             'cours' => $cours,
@@ -32,8 +37,21 @@ class CoursController extends Controller
      * renvoie directement une 404 — pas besoin d'écrire Cours::findOrFail()
      * à la main.
      */
+ 
+    /**
+     * Affiche le détail public d'un cours avec ses classes et ses quiz.
+     */
     public function show(Cours $cours)
     {
+        $cours->load([
+            'classes' => function ($query) {
+                $query->orderBy('date_debut');
+            },
+            'quizzes' => function ($query) {
+                $query->orderBy('date');
+            },
+        ]);
+
         return view('cours.show', [
             'cours' => $cours,
         ]);
@@ -43,14 +61,17 @@ class CoursController extends Controller
      * Liste des cours côté admin, pour la gestion (pas le catalogue public).
      * Protégée par le middleware role:admin défini dans les routes.
      */
-    public function index()
-    {
-        $cours = Cours::orderBy('titre')->get();
+  public function index()
+{
+    // withCount('classes') ajoute automatiquement un attribut
+    // "classes_count" sur chaque Cours, en une seule requête SQL
+    // (pas de boucle N+1)
+    $cours = Cours::withCount('classes')->orderBy('titre')->get();
 
-        return view('cours.index', [
-            'cours' => $cours,
-        ]);
-    }
+    return view('cours.index', [
+        'cours' => $cours,
+    ]);
+}
 
     /**
      * Affiche le formulaire vide de création d'un cours.
@@ -144,5 +165,17 @@ class CoursController extends Controller
 
         return redirect()->route('admin.cours.index')
             ->with('success', 'Cours supprimé avec succès.');
+    }
+
+    public function mesCours()
+    {
+        $inscriptions = Auth::user()
+            ->inscriptions()
+            ->with('classe.cours')
+            ->get();
+
+        return view('cours.mes_cours', [
+            'inscriptions' => $inscriptions,
+        ]);
     }
 }
