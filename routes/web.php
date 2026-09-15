@@ -39,6 +39,11 @@ Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class
     ->middleware('auth')
     ->name('updatePassword');
 
+//l'utilisateur ne voit que les cours auxquels il est inscrit
+Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours'])
+    ->middleware('auth')
+    ->name('cours.mes');
+
 // Catalogue des cours — accessible à tout le monde, visiteur anonyme ET utilisateur connecté
 // (cf. diagramme de cas d'utilisation : "accéder au programme des cours" est relié aux deux acteurs)
 Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'catalogue'])->name('cours.catalogue');
@@ -57,6 +62,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cours/{cours}/edit', [App\Http\Controllers\CoursController::class, 'edit'])->name('cours.edit');
     Route::put('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'update'])->name('cours.update');
     Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])->name('cours.destroy');
+    // Gestion des utilisateurs réservée à l'administrateur.
+    Route::get('/utilisateurs', [App\Http\Controllers\UserController::class,'index',])->name('users.index');
+    Route::get('/utilisateurs/create', [App\Http\Controllers\UserController::class, 'create'])->name('users.create');
+    Route::post('/utilisateurs', [App\Http\Controllers\UserController::class, 'store'])->name('users.store');
+    Route::get('/utilisateurs/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])->name('users.edit');
+    Route::put('/utilisateurs/{user}', [App\Http\Controllers\UserController::class, 'update'])->name('users.update');
+    Route::delete('/utilisateurs/{user}', [App\Http\Controllers\UserController::class,'destroy',])->name('users.destroy');
 
     // Classes, imbriquées sous un cours (une classe appartient toujours à un cours)
     Route::prefix('cours/{cours}/classes')->name('cours.classes.')->group(function () {
