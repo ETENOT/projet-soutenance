@@ -26,7 +26,7 @@ Route::get('/', [App\Http\Controllers\HomeController::class, 'root'])
 
 // Dashboard protégé
 Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
-    ->middleware('auth')
+    ->middleware('auth', 'verified')
     ->name('dashboard');
 
 // Mise à jour du profil
