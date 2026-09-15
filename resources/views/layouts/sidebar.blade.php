@@ -31,18 +31,45 @@
             <div id="two-column-menu">
             </div>
             <ul class="navbar-nav" id="navbar-nav">
-                <li class="menu-title"><span>@lang('translation.menu')</span></li>
+            <li class="menu-title"><span>@lang('translation.menu')</span></li>
+            <li class="nav-item">
+                <a class="nav-link menu-link" href="{{ route('dashboard') }}">
+                    <i class="ri-dashboard-2-line"></i> <span>Tableau de bord</span>
+                </a>
+            </li>
+            @if (Auth::user()->role->nom === 'admin')
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('dashboard') }}">
-                        <i class="ri-dashboard-2-line"></i> <span>Tableau de bord</span>
+                    <a class="nav-link menu-link" href="{{ route('admin.cours.index') }}">
+                        <i class="ri-settings-2-line"></i> <span>Gérer les cours</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ route('admin.users.index') }}">
+                        <i class="ri-group-line"></i>
+                        <span>Gérer les utilisateurs</span>
+                    </a>
+                </li>
+            @else
+
+                <li class="nav-item">
+                    <a class="nav-link menu-link" href="{{ route('cours.catalogue') }}">
+                        <i class="ri-book-open-line"></i> <span>Programme des cours</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="pages-profile">
-                        <i class="ri-user-line"></i> <span>Mon profil</span>
+                    <a class="nav-link menu-link" href="{{ route('cours.mes') }}">
+                        <i class="ri-graduation-cap-line"></i> <span>Mes cours</span>
                     </a>
                 </li>
-            </ul>
+            @endif
+
+            <li class="nav-item">
+                <a class="nav-link menu-link" href="pages-profile-settings">
+                    <i class="ri-user-line"></i> <span>Mon profil</span>
+                </a>
+            </li>
+        </ul>
         </div>
         <!-- Sidebar -->
     </div>

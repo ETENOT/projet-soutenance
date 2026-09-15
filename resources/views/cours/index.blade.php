@@ -40,7 +40,13 @@
                     <tbody>
                         @forelse($cours as $unCours)
                             <tr>
-                                <td>{{ $unCours->titre }}</td>
+                                <td>
+                                    <a href="{{ route('admin.cours.classes.index', $unCours) }}" class="fw-medium text-body">
+                                        {{ $unCours->titre }}
+                                    </a>
+                                    <br>
+                                    <span class="badge bg-primary-subtle text-primary">{{ $unCours->classes_count }} classe(s)</span>
+                                </td>
                                 <td>{{ number_format($unCours->prix_particulier, 2) }} fcfa</td>
                                 <td>{{ number_format($unCours->prix_entreprise, 2) }} fcfa</td>
                                 <td class="text-end">

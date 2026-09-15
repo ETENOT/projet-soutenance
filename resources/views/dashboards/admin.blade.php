@@ -115,7 +115,7 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-3 col-sm-6">
+                        <div class="col-md-4 col-sm-6">
                             <a href="{{ route('admin.cours.index') }}" class="text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
                                     <i data-feather="book-open" class="text-success mb-2"></i>
@@ -123,25 +123,17 @@
                                 </div>
                             </a>
                         </div>
-                        <div class="col-md-3 col-sm-6">
-                            <a href="#" class="text-decoration-none">
+                    
+                        <div class="col-md-4 col-sm-6">
+                            <a href="{{ route('admin.users.index') }}" class="text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
-                                    <i data-feather="calendar" class="text-warning mb-2"></i>
-                                    <p class="mb-1 fw-medium text-body">Gérer les classes</p>
-                                    <span class="badge bg-secondary-subtle text-secondary">Bientôt disponible</span>
-                                </div>
-                            </a>
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <a href="#" class="text-decoration-none">
-                                <div class="border rounded p-3 text-center h-100">
-                                    <i data-feather="users" class="text-info mb-2"></i>
+                                    <i data-feather="users" class="text-primary mb-2"></i>
                                     <p class="mb-1 fw-medium text-body">Gérer les utilisateurs</p>
-                                    <span class="badge bg-secondary-subtle text-secondary">Bientôt disponible</span>
                                 </div>
                             </a>
                         </div>
-                        <div class="col-md-3 col-sm-6">
+                      
+                        <div class="col-md-4 col-sm-6">
                             <a href="#" class="text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
                                     <i data-feather="help-circle" class="text-danger mb-2"></i>
