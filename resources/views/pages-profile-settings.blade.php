@@ -66,6 +66,63 @@
                                         </div>
                                     </div>
                                     <!--end col-->
+                                </div>
+                                <!--end row-->
+
+                                <div class="row">
+                                {{-- Les champs affichés correspondent au type de profil de l'utilisateur. --}}
+                                @if (Auth::user()->role->nom === 'particulier')
+                                                                {{-- Ce bloc devient visible après l'envoi du code de vérification. --}}
+                                                                <div id="codeVerificationBlock" class="mt-3" style="display: none;">
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label for="telephoneInput" class="form-label">Téléphone</label>
+                                            <input type="text" class="form-control" id="telephoneInput" name="telephone"
+                                                value="{{ Auth::user()->particulier->telephone ?? '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label for="dateNaissanceInput" class="form-label">Date de naissance</label>
+                                            <input type="date" class="form-control" id="dateNaissanceInput" name="date_de_naissance"
+                                                value="{{ Auth::user()->particulier->date_de_naissance ?? '' }}">
+                                        </div>
+                                    </div>
+
+                                @elseif (Auth::user()->role->nom === 'entreprise')
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label for="raisonSocialeInput" class="form-label">Raison sociale</label>
+                                            <input type="text" class="form-control" id="raisonSocialeInput" name="raison_sociale"
+                                                value="{{ Auth::user()->entreprise->raison_sociale ?? '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label for="adresseInput" class="form-label">Siège social</label>
+                                            <input type="text" class="form-control" id="adresseInput" name="adresse"
+                                                value="{{ Auth::user()->entreprise->adresse ?? '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label for="contactPrincipalInput" class="form-label">Contact principal</label>
+                                            <input type="text" class="form-control" id="contactPrincipalInput" name="contact_principal"
+                                                value="{{ Auth::user()->entreprise->contact_principal ?? '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="mb-3">
+                                            <label for="secteurActiviteInput" class="form-label">Secteur d'activité</label>
+                                            <input type="text" class="form-control" id="secteurActiviteInput" name="secteur_activite"
+                                                value="{{ Auth::user()->entreprise->secteur_activite ?? '' }}">
+                                        </div>
+                                    </div>
+                                @endif
+                                </div>
+                                <!--end row-->
+
+                                <div class="row">
                                     <div class="col-lg-12">
                                         <div class="mb-3">
                                             <label for="avatarInput" class="form-label">Photo de profil</label>
@@ -82,8 +139,21 @@
                                 </div>
                                 <!--end row-->
                             </form>
+
+                            <div id="codeVerificationBlock" class="mt-3" style="display: none;">
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-lg-6">
+                                        <label for="passwordCodeInput" class="form-label">Code reçu par email</label>
+                                        <input type="text" class="form-control" id="passwordCodeInput" maxlength="6" placeholder="123456">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <button type="button" id="confirmCodeBtn" class="btn btn-success">Confirmer</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <!--end tab-pane-->
+
                         <div class="tab-pane" id="changePassword" role="tabpanel">
                             <div id="password-feedback"></div>
                             <form id="changePasswordForm">
@@ -137,36 +207,62 @@
         // Soumission du formulaire de mot de passe en AJAX, car le controller
         // renvoie du JSON et non une redirection classique.
         document.getElementById('changePasswordForm').addEventListener('submit', function (e) {
-            e.preventDefault();
+    e.preventDefault();
 
-            const oldPassword = document.getElementById('oldpasswordInput').value;
-            const newPassword = document.getElementById('newpasswordInput').value;
-            const confirmPassword = document.getElementById('confirmpasswordInput').value;
-            const feedback = document.getElementById('password-feedback');
+    const oldPassword = document.getElementById('oldpasswordInput').value;
+    const newPassword = document.getElementById('newpasswordInput').value;
+    const confirmPassword = document.getElementById('confirmpasswordInput').value;
+    const feedback = document.getElementById('password-feedback');
 
-            fetch("{{ route('updatePassword', Auth::user()->id) }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    current_password: oldPassword,
-                    password: newPassword,
-                    password_confirmation: confirmPassword
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                const alertClass = data.isSuccess ? 'alert-success' : 'alert-danger';
-                feedback.innerHTML = `<div class="alert ${alertClass}">${data.Message}</div>`;
-                if (data.isSuccess) {
-                    document.getElementById('changePasswordForm').reset();
-                }
-            })
-            .catch(() => {
-                feedback.innerHTML = `<div class="alert alert-danger">Une erreur est survenue.</div>`;
-            });
-        });
+    fetch("{{ route('updatePassword', Auth::user()->id) }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            current_password: oldPassword,
+            password: newPassword,
+            password_confirmation: confirmPassword
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const alertClass = data.isSuccess ? 'alert-success' : 'alert-danger';
+        feedback.innerHTML = `<div class="alert ${alertClass}">${data.Message}</div>`;
+        if (data.isSuccess && data.requiresCode) {
+            document.getElementById('codeVerificationBlock').style.display = 'block';
+        }
+    })
+    .catch(() => {
+        feedback.innerHTML = `<div class="alert alert-danger">Une erreur est survenue.</div>`;
+    });
+});
+
+document.getElementById('confirmCodeBtn').addEventListener('click', function () {
+    const code = document.getElementById('passwordCodeInput').value;
+    const feedback = document.getElementById('password-feedback');
+
+    fetch("{{ route('confirmPasswordChange') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const alertClass = data.isSuccess ? 'alert-success' : 'alert-danger';
+        feedback.innerHTML = `<div class="alert ${alertClass}">${data.Message}</div>`;
+        if (data.isSuccess) {
+            document.getElementById('changePasswordForm').reset();
+            document.getElementById('codeVerificationBlock').style.display = 'none';
+        }
+    })
+    .catch(() => {
+        feedback.innerHTML = `<div class="alert alert-danger">Une erreur est survenue.</div>`;
+    });
+});
     </script>
 @endsection

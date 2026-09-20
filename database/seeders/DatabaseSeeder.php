@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
+            // Les cours doivent exister avant les classes qui les référencent.
+            CoursSeeder::class,
+            ClasseSeeder::class,
         ]);
     }
 }

@@ -31,7 +31,7 @@
                 </button>
 
                 <!-- App Search-->
-                <form class="app-search d-none d-md-block">
+                <form class="app-search d-none">
                     <div class="position-relative">
                         <input type="text" class="form-control" placeholder="Search..." autocomplete="off" id="search-options" value="">
                         <span class="mdi mdi-magnify search-widget-icon"></span>
@@ -119,7 +119,7 @@
 
             <div class="d-flex align-items-center">
 
-                <div class="dropdown d-md-none topbar-head-dropdown header-item">
+                <div class="dropdown d-none topbar-head-dropdown header-item">
                     <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="page-header-search-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         <i class="bx bx-search fs-22"></i>
                     </button>
@@ -135,7 +135,7 @@
                     </div>
                 </div>
 
-                <div class="dropdown ms-1 topbar-head-dropdown header-item">
+                <div class="dropdown d-none ms-1 topbar-head-dropdown header-item">
                     <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         @switch(Session::get('lang'))
                         @case('ru')
@@ -213,7 +213,7 @@
                     </div>
                 </div>
 
-                <div class="dropdown topbar-head-dropdown ms-1 header-item">
+                <div class="dropdown d-none topbar-head-dropdown ms-1 header-item">
                     <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle" id="page-header-cart-dropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-haspopup="true" aria-expanded="false">
                         <i class='bx bx-shopping-bag fs-22'></i>
                         <span class="position-absolute topbar-badge cartitem-badge fs-10 translate-middle badge rounded-pill bg-info">5</span>
@@ -393,24 +393,28 @@
                                 </div>
                             </div>
 
-                            <div class="px-2 pt-2">
+                           <div class="px-2 pt-2 d-flex align-items-end justify-content-between">
                                 <ul class="nav nav-tabs dropdown-tabs nav-tabs-custom" data-dropdown-tabs="true" id="notificationItemsTab" role="tablist">
                                     <li class="nav-item waves-effect waves-light">
                                         <a class="nav-link active" data-bs-toggle="tab" href="#all-noti-tab" role="tab" aria-selected="true">
-                                            All (4)
-                                        </a>
-                                    </li>
-                                    <li class="nav-item waves-effect waves-light">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#messages-tab" role="tab" aria-selected="false">
-                                            Messages
-                                        </a>
-                                    </li>
-                                    <li class="nav-item waves-effect waves-light">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#alerts-tab" role="tab" aria-selected="false">
-                                            Alerts
+                                            All ({{ $notificationsCount }})
                                         </a>
                                     </li>
                                 </ul>
+
+                                <div class="d-flex align-items-center gap-1 pb-1">
+                                    @if($notificationsCount > 0)
+                                        <form method="POST" action="{{ route('notifications.lues') }}" class="m-0">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-light" title="Tout marquer comme lu">
+                                                <i class="ri-check-double-line"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    <a href="{{ route('notifications.index') }}" class="btn btn-sm btn-light" title="Voir toutes les notifications">
+                                        <i class="ri-external-link-line"></i>
+                                    </a>
+                                </div>
                             </div>
 
                         </div>
@@ -427,7 +431,7 @@
                                                     </span>
                                                 </div>
                                                 <div class="flex-grow-1">
-                                                    <a href="#" class="stretched-link">
+                                                    <a href="{{ route('notifications.show', $notif) }}" class="stretched-link">
                                                         <h6 class="mt-0 mb-2 fs-13 lh-base">{{ $notif->message }}</h6>
                                                     </a>
                                                     <p class="mb-0 fs-11 fw-medium text-uppercase text-muted">
@@ -441,13 +445,7 @@
                                             Aucune notification pour le moment
                                         </div>
                                     @endforelse
-
-                                    <div class="my-3 text-center view-all">
-                                        <button type="button" class="btn btn-soft-success waves-effect waves-light">View
-                                            All Notifications <i class="ri-arrow-right-line align-middle"></i></button>
-                                    </div>
                                 </div>
-
                             </div>
 
                             <div class="tab-pane fade py-2 ps-2" id="messages-tab" role="tabpanel" aria-labelledby="messages-tab">
@@ -574,16 +572,12 @@
                                 </span>
                             </span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-end">
+                       <div class="dropdown-menu dropdown-menu-end">
                             <!-- item-->
                             <h6 class="dropdown-header">Bienvenue {{ Auth::user()->name }} !</h6>
-                            <a class="dropdown-item" href="pages-profile"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Profile</span></a>
-                            <a class="dropdown-item" href="apps-chat"><i class="mdi mdi-message-text-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Messages</span></a>
-                            <a class="dropdown-item" href="apps-tasks-kanban"><i class="mdi mdi-calendar-check-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Taskboard</span></a>
-                            <a class="dropdown-item" href="pages-faqs"><i class="mdi mdi-lifebuoy text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Help</span></a>
+                            <a class="dropdown-item" href="{{ url('pages-profile-settings') }}"><i class="mdi mdi-account-circle text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Mon profil</span></a>
+                            <a class="dropdown-item" href="{{ route('notifications.index') }}"><i class="bx bx-bell text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Mes notifications</span></a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="pages-profile-settings"><span class="badge bg-success-subtle text-success mt-1 float-end">New</span><i class="mdi mdi-cog-outline text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Settings</span></a>
-                            <a class="dropdown-item" href="auth-lockscreen-basic"><i class="mdi mdi-lock text-muted fs-16 align-middle me-1"></i> <span class="align-middle">Lock screen</span></a>
                             <a class="dropdown-item " href="javascript:void();" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"><i class="bx bx-power-off font-size-16 align-middle me-1"></i> <span key="t-logout">@lang('translation.logout')</span></a>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                 @csrf

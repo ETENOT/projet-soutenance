@@ -31,13 +31,21 @@
             <div id="two-column-menu">
             </div>
             <ul class="navbar-nav" id="navbar-nav">
+            {{-- Les liens d'administration et de formation dépendent du rôle courant. --}}
             <li class="menu-title"><span>@lang('translation.menu')</span></li>
             <li class="nav-item">
                 <a class="nav-link menu-link" href="{{ route('dashboard') }}">
                     <i class="ri-dashboard-2-line"></i> <span>Tableau de bord</span>
                 </a>
             </li>
-            @if (Auth::user()->role->nom === 'admin')
+
+            <li class="nav-item">
+                <a class="nav-link menu-link" href="{{ route('cours.catalogue') }}">
+                    <i class="ri-book-open-line"></i> <span>Catalogue des cours</span>
+                </a>
+            </li>
+
+            @if (Auth::user()?->role?->nom === 'admin')
                 <li class="nav-item">
                     <a class="nav-link menu-link" href="{{ route('admin.cours.index') }}">
                         <i class="ri-settings-2-line"></i> <span>Gérer les cours</span>
@@ -53,11 +61,6 @@
             @else
 
                 <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('cours.catalogue') }}">
-                        <i class="ri-book-open-line"></i> <span>Programme des cours</span>
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link menu-link" href="{{ route('cours.mes') }}">
                         <i class="ri-graduation-cap-line"></i> <span>Mes cours</span>
                     </a>
@@ -65,7 +68,7 @@
             @endif
 
             <li class="nav-item">
-                <a class="nav-link menu-link" href="pages-profile-settings">
+                <a class="nav-link menu-link" href="{{ route('index', ['any' => 'pages-profile-settings']) }}">
                     <i class="ri-user-line"></i> <span>Mon profil</span>
                 </a>
             </li>

@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Classe extends Model
 {
-    protected $fillable = ['nom', 'capacite_max', 'date_debut', 'date_fin', 'cours_id'];
+    // Ces champs correspondent aux informations d'une session de formation.
+    protected $fillable = ['nom', 'capacite_max', 'date_debut', 'date_fin', 'lieu', 'cours_id'];
     // Force Laravel à traiter ces colonnes comme des objets Carbon
     // plutôt que de simples chaînes de caractères, pour pouvoir utiliser
     // ->format() directement dans les vues

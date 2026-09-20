@@ -11,6 +11,9 @@ return new class extends Migration
         Schema::create('cours', function (Blueprint $table) {
             $table->id();
             $table->string('titre');
+            // Ces champs alimentent l'affichage et la recherche du catalogue.
+            $table->string('categorie');
+            $table->text('description')->nullable();
 
             // Crée une colonne "prix" de type décimal.
             // 10 = nombre total de chiffres maximum.

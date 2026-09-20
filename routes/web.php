@@ -30,6 +30,10 @@ Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'inde
     ->name('dashboard');
 
 // Mise à jour du profil
+Route::get('/pages-profile', [App\Http\Controllers\HomeController::class, 'index'])
+    ->middleware('auth')
+    ->name('profile.edit');
+
 Route::post('/update-profile/{id}', [App\Http\Controllers\HomeController::class, 'updateProfile'])
     ->middleware('auth')
     ->name('updateProfile');
@@ -39,10 +43,35 @@ Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class
     ->middleware('auth')
     ->name('updatePassword');
 
+// soumission du mot de passe → envoi du code → confirmation.
+Route::post('/confirm-password-change', [App\Http\Controllers\HomeController::class, 'confirmPasswordChange'])
+    ->middleware('auth')
+    ->name('confirmPasswordChange');
+
 //l'utilisateur ne voit que les cours auxquels il est inscrit
 Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours'])
     ->middleware('auth')
     ->name('cours.mes');
+
+// Marque comme lues toutes les notifications non lues de l'utilisateur connecté (bouton "Tout marquer comme lu" de la cloche)
+Route::post('/notifications/lues', [App\Http\Controllers\NotificationController::class, 'marquerToutesLues'])
+    ->middleware('auth')
+    ->name('notifications.lues');
+
+// Lire une notification (affiche son message complet et la marque comme lue)
+Route::get('/notifications/{notification}', [App\Http\Controllers\NotificationController::class, 'show'])
+    ->middleware('auth')
+    ->name('notifications.show');
+
+// Historique de toutes les notifications de l'utilisateur (lues et non lues)
+Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])
+    ->middleware('auth')
+    ->name('notifications.index');
+
+// Action groupée sur les notifications cochées (marquer lues, archiver, restaurer, supprimer)
+Route::post('/notifications/actions', [App\Http\Controllers\NotificationController::class, 'action'])
+    ->middleware('auth')
+    ->name('notifications.action');
 
 // Catalogue des cours — accessible à tout le monde, visiteur anonyme ET utilisateur connecté
 // (cf. diagramme de cas d'utilisation : "accéder au programme des cours" est relié aux deux acteurs)
@@ -50,6 +79,16 @@ Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'ca
 
 // Détail d'un cours précis — public aussi, pas besoin d'être connecté pour consulter
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])->name('cours.show');
+
+// Inscription/désinscription d'un utilisateur connecté à une classe
+// Ces routes protègent l'inscription et la désinscription par authentification.
+Route::post('/classes/{classe}/inscription', [App\Http\Controllers\InscriptionController::class, 'store'])
+    ->middleware('auth')
+    ->name('classes.inscription.store');
+
+Route::delete('/classes/{classe}/inscription', [App\Http\Controllers\InscriptionController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('classes.inscription.destroy');
 
 // Gestion des cours et des classes (création/modification/suppression) — réservée à l'admin
 // ->middleware(['auth', 'role:admin']) : il faut être connecté ET avoir le rôle admin

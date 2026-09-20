@@ -12,7 +12,9 @@ return new class extends Migration
             $table->id();
             $table->text('message');
             $table->boolean('est_lue')->default(false);
-
+            // Une notification archivée sort de la cloche et de la boîte de réception,
+            // mais reste consultable dans l'onglet "Archivées".
+            $table->boolean('archivee')->default(false);
             $table->foreignId('user_id')
                 ->constrained('users')
                 ->cascadeOnDelete();

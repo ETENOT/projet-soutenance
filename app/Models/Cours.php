@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cours extends Model
 {
-    // IMPORTANT : par défaut Laravel met le nom de classe au pluriel 
+    // IMPORTANT : par défaut Laravel met le nom de classe au pluriel
     // pour deviner la table ("Cours" -> il chercherait "cour", ce qui est faux)
     // Donc on force le vrai nom de table ici
     protected $table = 'cours';
 
-    protected $fillable = ['titre', 'prix_particulier', 'prix_entreprise'];
+    // Les champs publics sont remplis par le catalogue et son formulaire d'administration.
+    protected $fillable = ['titre', 'categorie', 'description', 'prix_particulier', 'prix_entreprise'];
 
     // Un Cours a plusieurs Classes (sessions)
     public function classes()
