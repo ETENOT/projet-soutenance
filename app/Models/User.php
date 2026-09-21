@@ -150,7 +150,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * Retourne 0 si aucun code n'est en attente, ou si le délai est écoulé.
      *
      * Calculé à partir de created_at (déjà stocké dans verification_codes
-     * pour l'expiration à 15 min) : pas besoin d'une colonne dédiée pour ce
+     * pour l'expiration à 5 min) : pas besoin d'une colonne dédiée pour ce
      * second délai, plus court, on réutilise la même valeur.
      */
     public function secondsUntilCanResendVerificationCode(): int
