@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
         ->name('verification.verify');
 
     // Renvoie le code de vérification par e-mail
+    // throttle:10,1 = anti brute-force : 10 tentatives par minute maximum.
     Route::post('verify-email/resend', [EmailVerificationNotificationController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
