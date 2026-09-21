@@ -10,6 +10,8 @@ class EmailVerificationNotificationController extends Controller
 {
     public function store(Request $request): RedirectResponse
     {
+        // Si déjà vérifié entre-temps (ex: onglet dupliqué, vérifié dans
+        // l'autre), inutile de renvoyer un code.
         if ($request->user()->hasVerifiedEmail()) {
             return redirect()->intended(route('dashboard', absolute: false));
         }
@@ -26,8 +28,12 @@ class EmailVerificationNotificationController extends Controller
             ]);
         }
 
+        // Génère un NOUVEAU code (écrase l'ancien, cf. updateOrInsert dans
+        // User::generateVerificationCode()) et l'envoie par email.
         $request->user()->sendEmailVerificationNotification();
 
+        // Flash session lu par verify.blade.php pour afficher le message de
+        // confirmation "Un nouveau code vient d'être envoyé."
         return back()->with('status', 'verification-code-sent');
     }
 }

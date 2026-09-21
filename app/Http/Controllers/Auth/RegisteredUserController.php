@@ -41,9 +41,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required','confirmed'
-            //,'min:8','regex:/[A-Z]/','regex:/[0-9]/','regex:/[^A-Za-z0-9]/'
-        ],
+            'password' => ['required','confirmed','min:8','regex:/[A-Z]/','regex:/[0-9]/','regex:/[^A-Za-z0-9]/'],
             // Verrouille la valeur à l'une des deux seules options du <select>
             'role' => ['required', 'in:particulier,entreprise'],
 
