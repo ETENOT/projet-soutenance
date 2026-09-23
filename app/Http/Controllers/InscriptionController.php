@@ -68,14 +68,22 @@ class InscriptionController extends Controller
             ->with('success', 'Inscription confirmée pour "' . $classe->nom . '".');
     }
 
-    /**
+       /**
      * Désinscrit l'utilisateur connecté d'une classe.
+     * Refusé si l'inscription est payée : sa suppression effacerait aussi le paiement
+     * (cascade en base). L'annulation d'une inscription payée passe par l'administration.
      */
     public function destroy(Classe $classe)
     {
-        Inscription::where('classe_id', $classe->id)
+        $inscription = Inscription::where('classe_id', $classe->id)
             ->where('user_id', Auth::id())
-            ->delete();
+            ->first();
+
+        if ($inscription && $inscription->paiement()->exists()) {
+            return back()->with('error', 'Cette inscription est payée : contactez l\'administration pour l\'annuler.');
+        }
+
+        $inscription?->delete();
 
         return back()->with('success', 'Désinscription effectuée.');
     }

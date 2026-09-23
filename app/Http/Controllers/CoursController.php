@@ -185,11 +185,11 @@ class CoursController extends Controller
             ->with('success', 'Cours supprimé avec succès.');
     }
 
-    public function mesCours()
+        public function mesCours()
     {
         $inscriptions = Auth::user()
             ->inscriptions()
-            ->with('classe.cours')
+            ->with('classe.cours', 'paiement')
             ->get();
 
         return view('cours.mes_cours', [

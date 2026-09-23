@@ -125,7 +125,27 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{classe}/inscrits', [App\Http\Controllers\ClasseController::class, 'ajouterUtilisateur'])->name('inscrits.store');
         Route::delete('/{classe}/inscrits/{user}', [App\Http\Controllers\ClasseController::class, 'retirerUtilisateur'])->name('inscrits.destroy');
     });
+
+    // Enregistre le paiement direct (comptoir) d'une inscription
+    Route::post('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'store'])
+        ->name('inscriptions.paiement.store');
 });
+
+// Demande de paiement en ligne d'une inscription : réservée à son propriétaire
+Route::get('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'create'])
+    ->middleware('auth')
+    ->name('inscriptions.paiement.create');
+Route::post('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'payer'])
+    ->middleware('auth')
+    ->name('inscriptions.paiement.payer');
+
+// Retours de l'interface SingPay : la transaction sera vérifiée dans le contrôleur.
+Route::get('/paiement/success', [App\Http\Controllers\PaiementController::class, 'success'])
+    ->middleware('auth')
+    ->name('paiement.singpay.success');
+Route::get('/paiement/error', [App\Http\Controllers\PaiementController::class, 'error'])
+    ->middleware('auth')
+    ->name('paiement.singpay.error');
 
 // Route générale — DOIT rester la toute dernière route du fichier,
 // sinon elle intercepte tout ce qui n'a pas encore été défini avant elle

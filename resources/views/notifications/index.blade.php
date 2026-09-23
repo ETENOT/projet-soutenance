@@ -17,9 +17,6 @@
     <div class="row justify-content-center">
         <div class="col-lg-9">
 
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
             @error('ids')
                 <div class="alert alert-warning">{{ $message }}</div>
             @enderror
