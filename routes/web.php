@@ -53,6 +53,11 @@ Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours
     ->middleware('auth')
     ->name('cours.mes');
 
+//l'utilisateur ne voit que les cours auxquels il est inscrit
+Route::get('/statut-paiement', [App\Http\Controllers\CoursController::class, 'statutPaiement'])
+    ->middleware('auth')
+    ->name('paiements.statut_paiement');
+
 // Marque comme lues toutes les notifications non lues de l'utilisateur connecté (bouton "Tout marquer comme lu" de la cloche)
 Route::post('/notifications/lues', [App\Http\Controllers\NotificationController::class, 'marquerToutesLues'])
     ->middleware('auth')

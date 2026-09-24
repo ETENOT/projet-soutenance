@@ -32,14 +32,17 @@ class DashboardController extends Controller
     $sessionsInscrites = $utilisateur->inscriptions()->count();
 
     // Sessions dont la classe est actuellement en cours (date_debut <= aujourd'hui <= date_fin)
-    $coursEnCours = $utilisateur->inscriptions()
+    $SessionEnCours = $utilisateur->inscriptions()
+    ->whereHas('paiement')
         ->whereHas('classe', function ($q) {
             $q->where('date_debut', '<=', now())
               ->where('date_fin', '>=', now());
         })->count();
 
+        
+// $utilisateur->inscriptions()->whereHas('paiement')
     // La prochaine classe à venir (date_debut la plus proche dans le futur)
-    $prochaineClasse = \App\Models\Classe::whereHas('inscriptions', function ($q) use ($utilisateur) {
+    $prochaineClasse =\App\Models\Classe::whereHas('inscriptions', function ($q) use ($utilisateur) {
             $q->where('user_id', $utilisateur->id);
         })
         ->where('date_debut', '>', now())
@@ -59,8 +62,8 @@ class DashboardController extends Controller
     return view('dashboards.particulier', [
         'utilisateur' => $utilisateur,
         'sessionsInscrites' => $sessionsInscrites,
-        'coursEnCours' => $coursEnCours,
-        'prochaineSession' => $prochaineClasse
+        'SessionEnCours' => $SessionEnCours,
+        'prochaineClasse' => $prochaineClasse
             ? \Carbon\Carbon::parse($prochaineClasse->date_debut)->format('d/m/Y')
             : 'Aucune session prévue',
         'moyenneQuiz' => $moyenneQuiz !== null ? round($moyenneQuiz, 1) : null,
