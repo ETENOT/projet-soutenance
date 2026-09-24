@@ -130,7 +130,7 @@
                                         Payé · {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa · {{ $inscription->paiement->libelle_mode }}
                                     </span>
                                 @else
-                                    <form action="{{ route('admin.inscriptions.paiement.store', $inscription) }}" method="POST"
+                                    <form action="{{ route('paiements.store', $inscription) }}" method="POST"
                                           class="m-0"
                                           onsubmit="return confirm('Enregistrer le paiement de cette inscription ?')">
                                         @csrf

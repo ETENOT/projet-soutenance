@@ -58,6 +58,9 @@ Route::get('/statut-paiement', [App\Http\Controllers\CoursController::class, 'st
     ->middleware('auth')
     ->name('paiements.statut_paiement');
 
+Route::get('/inscriptions/{inscription}/paiement/choix', [App\Http\Controllers\PaiementController::class, 'choix'])
+    ->name('paiements.choix');
+
 // Paiement en ligne d'une inscription — propriétaire vérifié dans le contrôleur
 Route::middleware('auth')->group(function () {
     Route::get('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'create'])

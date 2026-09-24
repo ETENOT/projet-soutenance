@@ -14,6 +14,29 @@ use Illuminate\Support\Str;
 class PaiementController extends Controller
 {
     /**
+ * Affiche la page de choix du mode de paiement.
+ * Réservée au propriétaire de l'inscription.
+ */
+    public function choix(Inscription $inscription)
+    {
+        abort_unless($inscription->user_id === Auth::id(), 403);
+
+        // Si l'inscription est déjà payée, il n'est plus nécessaire
+        // de choisir un mode de paiement.
+        if ($inscription->paiement()->exists()) {
+            return redirect()->route('cours.mes')
+                ->with('error', 'Cette inscription est déjà payée.');
+        }
+
+        $inscription->load('classe.cours');
+
+        return view('paiements.choix', [
+            'inscription' => $inscription,
+            'montant' => $this->montantDe($inscription),
+        ]);
+    }
+    
+    /**
      * Page de paiement en ligne d'une inscription.
      * Réservée au propriétaire de l'inscription.
      */

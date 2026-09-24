@@ -23,52 +23,56 @@ class InscriptionController extends Controller
             return back()->with('error', 'Vous êtes déjà inscrit à cette classe.');
         }
 
-        $inscrit = DB::transaction(function () use ($classe, $user) {
+        $inscription = DB::transaction(function () use ($classe, $user) {
             // lockForUpdate verrouille la ligne "classe" le temps de la transaction :
             // un deuxième clic concurrent sur la même classe attend que celui-ci finisse
             // avant de recompter les places, donc plus de dépassement de capacité.
-            $classeVerrouillee = Classe::where('id', $classe->id)->lockForUpdate()->first();
+            $classeVerrouillee = Classe::where('id', $classe->id)
+                ->lockForUpdate()
+                ->first();
 
             if ($classeVerrouillee->inscriptions()->count() >= $classeVerrouillee->capacite_max) {
                 return false;
             }
 
-            Inscription::create([
+            // Création de l'inscription.
+            // Elle existe immédiatement mais reste impayée tant qu'aucun
+            // enregistrement Paiement n'est créé.
+            $inscription = Inscription::create([
                 'user_id' => $user->id,
                 'classe_id' => $classe->id,
                 'date_inscription' => now(),
             ]);
 
-            // Notification dans l'application. Elle est dans la transaction : si elle échoue,
-            // l'inscription est annulée aussi. Le message est cohérent avec le dashboard :
-            // une inscription sans Paiement compte comme "impayée".
+            // Notification dans l'application.
             Notification::create([
                 'user_id' => $user->id,
                 'message' => 'Inscription enregistrée : « ' . $classe->cours->titre . ' », début le '
                     . $classe->date_debut->format('d/m/Y') . '. Paiement en attente.',
             ]);
 
-            return true;
+            return $inscription;
         });
 
-        if (! $inscrit) {
+        if (! $inscription) {
             return back()->with('error', 'Cette classe est déjà complète.');
         }
 
-        // Email envoyé APRÈS la transaction : un problème d'envoi (SMTP indisponible...)
-        // ne doit jamais annuler une inscription déjà enregistrée. On journalise l'erreur
-        // avec report() au lieu de la laisser remonter à l'utilisateur.
+        // Email envoyé APRÈS la transaction.
+        // Un problème d'envoi ne doit pas annuler l'inscription.
         try {
             $user->notify(new InscriptionEnregistree($classe));
         } catch (\Throwable $e) {
             report($e);
         }
 
-        return redirect()->route('cours.mes')
-            ->with('success', 'Inscription confirmée pour "' . $classe->nom . '".');
+        // L'inscription existe maintenant.
+        // On envoie l'utilisateur vers la page où il choisira
+        // son mode de paiement.
+        return redirect()->route('paiements.choix', $inscription);
     }
 
-       /**
+    /**
      * Désinscrit l'utilisateur connecté d'une classe.
      * Refusé si l'inscription est payée : sa suppression effacerait aussi le paiement
      * (cascade en base). L'annulation d'une inscription payée passe par l'administration.
