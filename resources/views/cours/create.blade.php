@@ -28,6 +28,31 @@
                     @enderror
                 </div>
 
+                <div class="mb-3">
+                    <label for="categorie" class="form-label">Catégorie</label>
+                    <input type="text"
+                        name="categorie"
+                        id="categorie"
+                        class="form-control @error('categorie') is-invalid @enderror"
+                        value="{{ old('categorie') }}">
+
+                    @error('categorie')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea name="description"
+                            id="description"
+                            rows="4"
+                            class="form-control @error('description') is-invalid @enderror">{{ old('description') }}</textarea>
+
+                    @error('description')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="prix_particulier" class="form-label">Prix particulier (fcfa)</label>

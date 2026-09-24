@@ -27,6 +27,8 @@ class ClasseController extends Controller
         return [
             'nom' => ['required', 'string', 'max:255'],
             'capacite_max' => ['required', 'integer', 'min:1', 'max:255'],
+            // le lieu de la formation (colonne "lieu" de la table classes)
+            'lieu' => ['required', 'string', 'max:255'],
             'date_debut' => ['required', 'date'],
             // la date de fin ne peut pas précéder la date de début
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
@@ -46,6 +48,11 @@ class ClasseController extends Controller
 
     public function edit(Cours $cours, Classe $classe)
     {
+        // Charge les inscrits, leur utilisateur et leur paiement en une fois (3 requêtes en tout).
+        // Sans ça, la vue ferait une requête par ligne pour retrouver l'utilisateur
+        // et savoir si l'inscription est payée.
+        $classe->load('inscriptions.user', 'inscriptions.paiement');
+
         return view('classes.edit', ['cours' => $cours, 'classe' => $classe]);
     }
 
@@ -84,6 +91,8 @@ class ClasseController extends Controller
 
     /**
      * Ajout manuel d'un utilisateur (hors flux d'inscription/paiement classique).
+     * Contrairement à InscriptionController::store(), cette action ne crée ni notification
+     * ni email : l'utilisateur ajouté n'est pas prévenu, et l'inscription reste "impayée".
      */
     public function ajouterUtilisateur(Request $request, Cours $cours, Classe $classe)
     {

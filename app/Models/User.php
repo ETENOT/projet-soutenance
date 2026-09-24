@@ -24,11 +24,8 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
-        // Délai minimum (en secondes) entre deux demandes de code, pour éviter
-    // qu'un utilisateur (ou un bot) ne spamme le bouton "Renvoyer le code" —
-    // en plus du throttle:6,1 sur la route, qui limite par IP mais autoriserait
-    // quand même 6 clics rapprochés sans ce délai.
-    private const RESEND_COOLDOWN_SECONDS = 60;
+        // Délai minimum entre deux demandes de code : 2 minutes.
+    private const RESEND_COOLDOWN_SECONDS = 120;
 
     protected $fillable = [
         'name',

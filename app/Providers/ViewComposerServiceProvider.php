@@ -13,21 +13,23 @@ class ViewComposerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('layouts.topbar', function ($view) {
-            // Collection vide par défaut : couvre le cas visiteur non connecté
+            // Valeurs par défaut : couvre le cas visiteur non connecté
             // sans avoir à mettre isset()/?? partout dans le Blade.
             $notifications = collect();
+            $notificationsCount = 0;
 
             if (Auth::check()) {
-                // Les 5 dernières notifications non lues
-                $notifications = Auth::user()->notifications()
-                    ->where('est_lue', false)
-                    ->latest()
-                    ->take(5)
-                    ->get();
+                $nonLues = Auth::user()->notifications()->where('est_lue', false);
+
+                // Le badge affiche le vrai total des non lues...
+                $notificationsCount = (clone $nonLues)->count();
+
+                // ...mais la liste ne montre que les 5 plus récentes.
+                $notifications = $nonLues->latest()->take(5)->get();
             }
 
             $view->with('notifications', $notifications);
-            $view->with('notificationsCount', $notifications->count());
+            $view->with('notificationsCount', $notificationsCount);
         });
     }
 }

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->unsignedTinyInteger('capacite_max');
             $table->date('date_debut');
             $table->date('date_fin');
+            // Le lieu est affiché avec les dates de chaque session.
+            $table->string('lieu');
 
             $table->foreignId('cours_id')
                 ->constrained('cours')

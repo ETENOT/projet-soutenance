@@ -32,10 +32,37 @@
                             au {{ $inscription->classe->date_fin->format('d/m/Y') }}
                         </p>
 
-                        <a href="{{ route('cours.show', $inscription->classe->cours) }}"
-                           class="btn btn-primary btn-sm">
-                            Voir le cours
-                        </a>
+                        {{-- Statut de paiement : "payée" = l'inscription possède un Paiement
+                             (même règle que le tableau de bord). --}}
+                        @if($inscription->paiement)
+                            <p class="mb-3">
+                                <span class="badge bg-success-subtle text-success">Payée</span>
+                                <small class="text-muted d-block mt-1">
+                                    {{ $inscription->paiement->libelle_mode }}
+                                    @if($inscription->paiement->reference)
+                                        · {{ $inscription->paiement->reference }}
+                                    @endif
+                                </small>
+                            </p>
+                        @else
+                            <p class="mb-3">
+                                <span class="badge bg-warning-subtle text-warning">En attente de paiement</span>
+                            </p>
+                        @endif
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ route('cours.show', $inscription->classe->cours) }}"
+                               class="btn btn-primary btn-sm">
+                                Voir le cours
+                            </a>
+
+                            @unless($inscription->paiement)
+                                <a href="{{ route('inscriptions.paiement.create', $inscription) }}"
+                                   class="btn btn-success btn-sm">
+                                    Payer en ligne
+                                </a>
+                            @endunless
+                        </div>
                     </div>
                 </div>
             </div>

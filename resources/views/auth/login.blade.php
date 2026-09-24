@@ -7,6 +7,13 @@
 @section('content')
 
 <div class="auth-page-wrapper pt-5">
+    
+    <!-- Retour à l'accueil (fixe, en haut à gauche) -->
+    <a href="{{ url('/') }}"
+        class="position-fixed top-0 start-0 m-3 m-sm-4 z-3 text-white-50 text-decoration-none fw-medium">
+        <i class="ri-arrow-left-line align-middle me-1"></i>
+        {{ __("Retour à l'accueil") }}
+    </a>
 
     <!-- Arrière-plan de la page -->
     <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
@@ -46,8 +53,7 @@
                             <a href="{{ url('/') }}"
                                class="d-inline-block auth-logo">
 
-                                <img src="{{ URL::asset('build/images/logo-neovision.png') }}"
-                                     alt="NEO-VISION"
+                                <img src="{{ URL::asset('build/images/logo_neovision.png') }}" alt="Néovision"
                                      height="55">
 
                             </a>

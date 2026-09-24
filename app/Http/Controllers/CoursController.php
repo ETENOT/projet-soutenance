@@ -17,14 +17,25 @@ class CoursController extends Controller
     /**
      * Affiche le catalogue public avec le nombre de classes et de quiz.
      */
-    public function catalogue()
+    public function catalogue(Request $request)
     {
+        $search = trim($request->input('search', ''));
+
         $cours = Cours::withCount(['classes', 'quizzes'])
+            // Un seul champ permet de rechercher dans les informations publiques du cours.
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('titre', 'like', '%' . $search . '%')
+                        ->orWhere('categorie', 'like', '%' . $search . '%')
+                        ->orWhere('description', 'like', '%' . $search . '%');
+                });
+            })
             ->orderBy('titre')
             ->get();
 
         return view('cours.catalogue', [
             'cours' => $cours,
+            'search' => $search,
         ]);
     }
 
@@ -45,15 +56,22 @@ class CoursController extends Controller
     {
         $cours->load([
             'classes' => function ($query) {
-                $query->orderBy('date_debut');
+                $query->withCount('inscriptions')->orderBy('date_debut');
             },
             'quizzes' => function ($query) {
                 $query->orderBy('date');
             },
         ]);
 
+        // Classes auxquelles l'utilisateur connecté est déjà inscrit, pour ce cours
+        // (permet d'afficher "Inscrit" au lieu du bouton "S'inscrire" dans la vue).
+        $mesInscriptions = Auth::check()
+            ? Auth::user()->inscriptions()->pluck('classe_id')
+            : collect();
+
         return view('cours.show', [
             'cours' => $cours,
+            'mesInscriptions' => $mesInscriptions,
         ]);
     }
 
@@ -91,12 +109,9 @@ class CoursController extends Controller
     private function validationRules(): array
     {
         return [
-            // required : le champ doit être présent et non vide
-            // string / max:255 : cohérent avec la colonne "titre" en varchar(255) par défaut
             'titre' => ['required', 'string', 'max:255'],
-
-            // numeric : accepte les décimaux (ex: 150.50), pas juste les entiers
-            // min:0 : empêche un prix négatif par erreur de saisie
+            'categorie' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
             'prix_particulier' => ['required', 'numeric', 'min:0'],
             'prix_entreprise' => ['required', 'numeric', 'min:0'],
         ];
@@ -167,11 +182,11 @@ class CoursController extends Controller
             ->with('success', 'Cours supprimé avec succès.');
     }
 
-    public function mesCours()
+        public function mesCours()
     {
         $inscriptions = Auth::user()
             ->inscriptions()
-            ->with('classe.cours')
+            ->with('classe.cours', 'paiement')
             ->get();
 
         return view('cours.mes_cours', [

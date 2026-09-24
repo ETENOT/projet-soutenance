@@ -1,6 +1,17 @@
 <?php
 
 return [
+/* ce code dit à laravel où trouver les paramètres singpay 
+    sans écrire les informations sensibles directement dans le contrôleur
+*/
+    'singpay' => [
+        'base_url' => env('SINGPAY_BASE_URL', 'https://gateway.singpay.ga/v1'),
+        'client_id' => env('SINGPAY_CLIENT_ID'),
+        'client_secret' => env('SINGPAY_CLIENT_SECRET'),
+        'wallet_id' => env('SINGPAY_WALLET_ID'),
+        'public_url' => env('SINGPAY_PUBLIC_URL'),
+        'logo_url' => env('SINGPAY_LOGO_URL'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

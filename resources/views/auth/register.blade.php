@@ -11,7 +11,12 @@
 
 
     <div class="auth-page-wrapper pt-5">
-
+         <!-- Retour à l'accueil (fixe, en haut à gauche) -->
+        <a href="{{ url('/') }}"
+        class="position-fixed top-0 start-0 m-3 m-sm-4 z-3 text-black-50 text-decoration-none fw-medium">
+            <i class="ri-arrow-left-line align-middle me-1"></i>
+            {{ __("Retour à l'accueil") }}
+        </a>
         <!-- auth page bg -->
 
         <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
@@ -52,7 +57,7 @@
 
                                 <a href="index" class="d-inline-block auth-logo">
 
-                                    <img src="{{ URL::asset('build/images/logo-light.png') }}" alt="" height="20">
+                                    <img src="{{ URL::asset('build/images/logo_neovision.png') }}" alt="Néovision" height="55">
 
                                 </a>
 
@@ -152,7 +157,7 @@
 
                                                 name="email" id="email" value="{{ old('email') }}"
 
-                                                placeholder="Entrez votre adresse e-mail" required>
+                                                placeholder="Entrez votre siège social e-mail" required>
 
                                             @error('email')
 
@@ -353,7 +358,7 @@
                                                     <span class="invalid-feedback" role="alert">
 
                                                         <strong>{{ $message }}</strong>
-
+                                                        
                                                     </span>
 
                                                 @enderror
@@ -406,13 +411,13 @@
 
                                             <div class="mb-3">
 
-                                                <label for="adresse" class="form-label">Adresse <span class="text-danger">*</span></label>
+                                                <label for="adresse" class="form-label">Siège social <span class="text-danger">*</span></label>
 
                                                 <input type="text" class="form-control @error('adresse') is-invalid @enderror"
 
                                                     name="adresse" id="adresse" value="{{ old('adresse') }}"
 
-                                                    placeholder="Entrez l'adresse" required disabled>
+                                                    placeholder="Entrez le siège social" required disabled>
 
                                                 @error('adresse')
 

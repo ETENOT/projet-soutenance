@@ -38,13 +38,6 @@
         @endslot
     @endcomponent
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
@@ -129,12 +122,32 @@
                     @forelse($classe->inscriptions as $inscription)
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span>{{ $inscription->user->name }} ({{ $inscription->user->email }})</span>
-                            <form action="{{ route('admin.cours.classes.inscrits.destroy', [$cours, $classe, $inscription->user]) }}" method="POST"
-                                                                    class="m-0">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-sm btn-link text-danger p-0">Retirer</button>
-                            </form>
+
+                            <div class="d-flex align-items-center gap-2">
+                                {{-- Une inscription est "payée" si elle possède un Paiement (même règle que le dashboard). --}}
+                               @if($inscription->paiement)
+                                    <span class="badge bg-success-subtle text-success">
+                                        Payé · {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa · {{ $inscription->paiement->libelle_mode }}
+                                    </span>
+                                @else
+                                    <form action="{{ route('admin.inscriptions.paiement.store', $inscription) }}" method="POST"
+                                          class="m-0"
+                                          onsubmit="return confirm('Enregistrer le paiement de cette inscription ?')">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success">Enregistrer le paiement</button>
+                                    </form>
+                                @endif
+
+                                {{-- Retirer une inscription payée supprime aussi son paiement (cascade en base) :
+                                     on prévient l'administrateur avant. --}}
+                                <form action="{{ route('admin.cours.classes.inscrits.destroy', [$cours, $classe, $inscription->user]) }}" method="POST"
+                                      class="m-0"
+                                      onsubmit="return confirm('{{ $inscription->paiement ? 'Cette inscription est payée : le paiement enregistré sera supprimé avec elle. Continuer ?' : 'Retirer cet utilisateur de la classe ?' }}')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0">Retirer</button>
+                                </form>
+                            </div>
                         </div>
                     @empty
                         <p class="text-muted fs-13">Aucun utilisateur inscrit pour l'instant.</p>

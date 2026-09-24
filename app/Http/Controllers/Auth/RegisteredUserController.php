@@ -72,6 +72,8 @@ class RegisteredUserController extends Controller
         'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         'password.regex' => 'Le mot de passe doit contenir au moins une majuscule, un chiffre et un caractère spécial (exemple : #, ?, !).',
+        'email.lowercase' => 'L\'adresse email doit être en minuscules.',
+        'email.unique' => 'Cette adresse email est déjà utilisée.',
     ]);
 
         // Champs communs à tout User, quel que soit le rôle
