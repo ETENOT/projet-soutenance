@@ -38,7 +38,7 @@
                     <h5 class="card-title mb-0">Paiement sécurisé</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ route('inscriptions.paiement.payer', $inscription) }}" id="form-paiement">
+                    <form method="POST" action="{{ route('paiements.payer', $inscription) }}" id="form-paiement">
                         @csrf
 
                         <p class="text-muted mb-3">

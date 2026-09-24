@@ -34,15 +34,17 @@
 
     <div class="col-xl-4 col-md-6">
         <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Sessions en cours</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $SessionEnCours }}">0</span></h2>
+            <a href="{{ route('cours.mes') }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="fw-medium text-muted mb-0">Sessions en cours</p>
+                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $SessionEnCours }}">0</span></h2>
+                            </div>
+                            <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-primary-subtle rounded-circle fs-2"><i data-feather="book-open" class="text-primary"></i></span></div>
                         </div>
-                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-primary-subtle rounded-circle fs-2"><i data-feather="book-open" class="text-primary"></i></span></div>
                     </div>
-            </div>
+            </a>
         </div>
     </div>
 

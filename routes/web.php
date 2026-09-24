@@ -58,6 +58,27 @@ Route::get('/statut-paiement', [App\Http\Controllers\CoursController::class, 'st
     ->middleware('auth')
     ->name('paiements.statut_paiement');
 
+// Paiement en ligne d'une inscription — propriétaire vérifié dans le contrôleur
+Route::middleware('auth')->group(function () {
+    Route::get('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'create'])
+        ->name('paiements.create');
+
+    Route::post('/inscriptions/{inscription}/paiement/payer', [App\Http\Controllers\PaiementController::class, 'payer'])
+        ->name('paiements.payer');
+
+    // Retours SingPay (redirect_success / redirect_error définis dans PaiementController::payer)
+    Route::get('/paiement/success', [App\Http\Controllers\PaiementController::class, 'success'])
+        ->name('paiements.success');
+
+    Route::get('/paiement/error', [App\Http\Controllers\PaiementController::class, 'error'])
+        ->name('paiements.error');
+});
+
+// Paiement direct au comptoir — réservé à l'admin
+Route::post('/inscriptions/{inscription}/paiement/direct', [App\Http\Controllers\PaiementController::class, 'store'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('paiements.store');
+
 // Marque comme lues toutes les notifications non lues de l'utilisateur connecté (bouton "Tout marquer comme lu" de la cloche)
 Route::post('/notifications/lues', [App\Http\Controllers\NotificationController::class, 'marquerToutesLues'])
     ->middleware('auth')
@@ -84,6 +105,26 @@ Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'ca
 
 // Détail d'un cours précis — public aussi, pas besoin d'être connecté pour consulter
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])->name('cours.show');
+
+// Espace particulier — passage d'un quiz d'auto-évaluation
+// ->middleware(['auth', 'role:particulier']) : il faut être connecté ET avoir le rôle particulier
+Route::middleware(['auth', 'role:particulier'])->group(function () {
+    // Affiche/démarre/reprend une tentative pour un cours donné
+    Route::get('/cours/{cours}/quiz', [App\Http\Controllers\QuizAttemptController::class, 'show'])
+        ->name('quiz.tentative.show');
+
+    // Appelée en AJAX à chaque réponse cochée (pas de rechargement de page)
+    Route::post('/quiz/{quiz}/repondre', [App\Http\Controllers\QuizAttemptController::class, 'repondre'])
+        ->name('quiz.tentative.repondre');
+
+    // Clôture manuelle (bouton "Terminer") ou auto (minuteur à 0)
+    Route::post('/quiz/{quiz}/terminer', [App\Http\Controllers\QuizAttemptController::class, 'terminer'])
+        ->name('quiz.tentative.terminer');
+
+    // Page de résultat + correction, une fois la tentative clôturée
+    Route::get('/mes-resultats/{resultatQuiz}', [App\Http\Controllers\QuizAttemptController::class, 'resultat'])
+        ->name('quiz.resultat');
+});
 
 // Espace particulier — passage d'un quiz d'auto-évaluation
 // ->middleware(['auth', 'role:particulier']) : il faut être connecté ET avoir le rôle particulier

@@ -57,7 +57,7 @@
                             </a>
 
                             @unless($inscription->paiement)
-                                <a href="{{ route('inscriptions.paiement.create', $inscription) }}"
+                                <a href="{{ route('paiements.create', $inscription) }}"
                                    class="btn btn-success btn-sm">
                                     Payer en ligne
                                 </a>
