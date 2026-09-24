@@ -18,15 +18,17 @@
     <div class="row">
     <div class="col-xl-4 col-md-6">
         <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Sessions inscrites</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $sessionsInscrites }}">0</span></h2>
+             <a href="{{ route('cours.mes') }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="fw-medium text-muted mb-0">Sessions inscrites</p>
+                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $sessionsPayees }}">0</span></h2>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-info-subtle rounded-circle fs-2"><i data-feather="calendar" class="text-info"></i></span></div>
                     </div>
-                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-info-subtle rounded-circle fs-2"><i data-feather="calendar" class="text-info"></i></span></div>
                 </div>
-            </div>
+             </a>
         </div>
     </div>
 
@@ -35,30 +37,30 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <p class="fw-medium text-muted mb-0">Cours en cours</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $coursEnCours }}">0</span></h2>
+                        <p class="fw-medium text-muted mb-0">Sessions en cours</p>
+                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $SessionEnCours }}">0</span></h2>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-primary-subtle rounded-circle fs-2"><i data-feather="book-open" class="text-primary"></i></span></div>
                     </div>
-                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-primary-subtle rounded-circle fs-2"><i data-feather="book-open" class="text-primary"></i></span></div>
-                </div>
             </div>
         </div>
     </div>
 
     <div class="col-xl-4 col-md-6">
         <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Prochaine session</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold fs-20">{{ $prochaineSession }}</h2>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="fw-medium text-muted mb-0">Prochaine session</p>
+                            <h2 class="mt-4 ff-secondary fw-semibold fs-20">{{ $prochaineClasse }}</h2>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-warning-subtle rounded-circle fs-2"><i data-feather="clock" class="text-warning"></i></span></div>
                     </div>
-                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-warning-subtle rounded-circle fs-2"><i data-feather="clock" class="text-warning"></i></span></div>
                 </div>
-            </div>
         </div>
     </div>
 
-    <div class="col-xl-4 col-md-6">
+    <!-- <div class="col-xl-4 col-md-6">
         <div class="card card-animate">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
@@ -76,38 +78,42 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <div class="col-xl-4 col-md-6">
         <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Notifications non lues</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $notificationsNonLues }}">0</span></h2>
+            <a href="{{ route('notifications.index') }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">           
+                        <div>
+                            <p class="fw-medium text-muted mb-0">Notifications non lues</p>
+                            <h2 class="mt-4 ff-secondary fw-semibold"><span class="counter-value" data-target="{{ $notificationsNonLues }}">0</span></h2>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-danger-subtle rounded-circle fs-2"><i data-feather="bell" class="text-danger"></i></span></div>
                     </div>
-                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-danger-subtle rounded-circle fs-2"><i data-feather="bell" class="text-danger"></i></span></div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 
     <div class="col-xl-4 col-md-6">
         <div class="card card-animate">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="fw-medium text-muted mb-0">Statut paiement</p>
-                        <h2 class="mt-4 ff-secondary fw-semibold fs-16">
-                            <span class="text-success">{{ $sessionsPayees }} payée(s)</span>
-                            @if($sessionsImpayees > 0)
-                                <br><span class="text-danger fs-14">{{ $sessionsImpayees }} impayée(s)</span>
-                            @endif
-                        </h2>
+            <a href="{{ route('paiements.statut_paiement') }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="fw-medium text-muted mb-0">Statut paiement</p>
+                            <h2 class="mt-4 ff-secondary fw-semibold fs-16">
+                                <span class="text-success">{{ $sessionsPayees }} payée(s)</span>
+                                @if($sessionsImpayees > 0)
+                                    <br><span class="text-danger fs-14">{{ $sessionsImpayees }} impayée(s)</span>
+                                @endif
+                            </h2>
+                        </div>
+                        <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-secondary-subtle rounded-circle fs-2"><i data-feather="credit-card" class="text-secondary"></i></span></div>
                     </div>
-                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-secondary-subtle rounded-circle fs-2"><i data-feather="credit-card" class="text-secondary"></i></span></div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 </div><!-- end row -->

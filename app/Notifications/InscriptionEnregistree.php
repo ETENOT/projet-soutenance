@@ -85,6 +85,6 @@ class InscriptionEnregistree extends Notification
 
             // Bouton vers "Mes cours". route() génère l'URL complète à partir de APP_URL
             // du fichier .env : il doit correspondre à l'adresse où tourne l'application.
-            ->action('Voir mes cours', route('cours.mes'));
+            ->action('Voir mes cours', route('paiement.statut_paiement'));
     }
 }

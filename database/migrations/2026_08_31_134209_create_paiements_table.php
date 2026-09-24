@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('paiements', function (Blueprint $table) {
             $table->id();
             $table->decimal('montant', 10, 2);
+            
 
             // Moyen de paiement : 'direct' (comptoir, enregistré par l'admin),
             // 'airtel_money' ou 'moov_money' (paiement en ligne, simulé pour l'instant).

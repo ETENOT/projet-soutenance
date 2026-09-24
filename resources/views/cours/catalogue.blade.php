@@ -122,7 +122,7 @@
         </p>
     @endif
 
-    @php
+    <!-- @php
         // Un particulier ne doit pas voir le tarif entreprise, et inversement.
         // Visiteur anonyme (ou session périmée) -> $role vaut null grâce à ?->,
         // et on affiche le tarif particulier par défaut (offre grand public).
@@ -136,7 +136,8 @@
             ['#299cdb', '41,156,219'],
         ];
 
-        $categoryIcon = function ($categorie) {
+
+         $categoryIcon = function ($categorie) {
             $categorie = strtolower((string) $categorie);
             return match (true) {
                 str_contains($categorie, 'excel') => 'ri-file-excel-2-line',
@@ -150,7 +151,7 @@
                 default => 'ri-book-open-line',
             };
         };
-    @endphp
+    @endphp -->
 
     <div class="row">
         @forelse($cours as $unCours)
