@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             // Les cours doivent exister avant les classes qui les référencent.
             CoursSeeder::class,
             ClasseSeeder::class,
+            QuestionSeeder::class,
+            OptionSeeder::class,
         ]);
     }
 }

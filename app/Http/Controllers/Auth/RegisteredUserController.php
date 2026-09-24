@@ -41,9 +41,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required','confirmed'
-            //,'min:8','regex:/[A-Z]/','regex:/[0-9]/','regex:/[^A-Za-z0-9]/'
-        ],
+            'password' => ['required','confirmed','min:8','regex:/[A-Z]/','regex:/[0-9]/','regex:/[^A-Za-z0-9]/'],
             // Verrouille la valeur à l'une des deux seules options du <select>
             'role' => ['required', 'in:particulier,entreprise'],
 
@@ -74,6 +72,8 @@ class RegisteredUserController extends Controller
         'password.confirmed' => 'Les mots de passe ne correspondent pas.',
         'password.min' => 'Le mot de passe doit contenir au moins 8 caractères.',
         'password.regex' => 'Le mot de passe doit contenir au moins une majuscule, un chiffre et un caractère spécial (exemple : #, ?, !).',
+        'email.lowercase' => 'L\'adresse email doit être en minuscules.',
+        'email.unique' => 'Cette adresse email est déjà utilisée.',
     ]);
 
         // Champs communs à tout User, quel que soit le rôle

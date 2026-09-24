@@ -185,9 +185,9 @@
                                 <span class="badge bg-light text-secondary">
                                     <i class="ri-calendar-2-line me-1"></i>{{ $unCours->classes_count }} classe(s)
                                 </span>
-                                <span class="badge bg-light text-secondary">
+                                <!-- <span class="badge bg-light text-secondary">
                                     <i class="ri-question-line me-1"></i>{{ $unCours->quizzes_count }} quiz
-                                </span>
+                                </span> -->
                             </div>
 
                             <div class="course-price-tag fw-bold text-primary mb-2">

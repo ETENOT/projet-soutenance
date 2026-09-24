@@ -82,14 +82,15 @@
         }
 
         .session-item, .quiz-item {
+            background-color: #cad5f9;
             border: 1px solid #eef0f6;
             border-radius: 0.75rem;
             padding: 0.9rem 1rem;
             margin-bottom: 0.6rem;
             transition: box-shadow .15s ease;
         }
-        .session-item:hover {
-            box-shadow: 0 0.3rem 0.8rem rgba(31, 45, 61, 0.06);
+        .session-item:hover, .quiz-item:hover {
+            box-shadow: 0 0.8rem 1rem rgba(31, 45, 61, 0.06);
         }
     </style>
 
@@ -194,14 +195,22 @@
 
             <div class="col-md-6">
                 <h5 class="mb-3"><i class="ri-question-line text-primary me-1"></i>Quiz du cours</h5>
+                     @auth
+                        @if(auth()->user()->role?->nom === 'particulier')
+                            <a href="{{ route('quiz.tentative.show', $cours) }}"
+                             class="btn btn-primary mb-3">
 
+                                Passer le quiz
+                            </a>
+                        @endif
+                    @endauth
                 @forelse($cours->quizzes as $quiz)
                     <div class="quiz-item">
                         <div class="fw-medium">Quiz du {{ \Carbon\Carbon::parse($quiz->date)->format('d/m/Y') }}</div>
                         <small class="text-muted">De {{ $quiz->heure_debut }} à {{ $quiz->heure_fin }}</small>
                     </div>
                 @empty
-                    <p class="text-muted mb-0">Aucun quiz configuré pour le moment.</p>
+                    <p class="text-muted mb-0">Vous n'avez pas de quiz en cours.</p>
                 @endforelse
             </div>
         </div>
