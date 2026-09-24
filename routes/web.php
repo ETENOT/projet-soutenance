@@ -38,15 +38,30 @@ Route::post('/update-profile/{id}', [App\Http\Controllers\HomeController::class,
     ->middleware('auth')
     ->name('updateProfile');
 
-// Mise à jour du mot de passe
+// Mise à jour du mot de passe : vérifie l'ancien mot de passe,
+// prépare le nouveau mot de passe et envoie le code par email.
 Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class, 'updatePassword'])
     ->middleware('auth')
     ->name('updatePassword');
 
-// soumission du mot de passe → envoi du code → confirmation.
+// Page dédiée où l'utilisateur saisit le code reçu par email
+// pour confirmer le changement de mot de passe.
+Route::get('/verify-password-change', [App\Http\Controllers\HomeController::class, 'showPasswordChangeVerification'])
+    ->middleware('auth')
+    ->name('passwordChangeVerification');
+
+// Confirmation du code reçu par email.
+// Si le code est correct, le nouveau mot de passe est appliqué.
 Route::post('/confirm-password-change', [App\Http\Controllers\HomeController::class, 'confirmPasswordChange'])
     ->middleware('auth')
     ->name('confirmPasswordChange');
+
+// Demande d'un nouveau code de vérification.
+// Le contrôleur vérifiera également le délai de 2 minutes
+// avant d'autoriser un nouvel envoi.
+Route::post('/resend-password-change-code', [App\Http\Controllers\HomeController::class, 'resendPasswordChangeCode'])
+    ->middleware('auth')
+    ->name('resendPasswordChangeCode');
 
 //l'utilisateur ne voit que les cours auxquels il est inscrit
 Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours'])

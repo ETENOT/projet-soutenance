@@ -109,12 +109,9 @@ class CoursController extends Controller
     private function validationRules(): array
     {
         return [
-            // required : le champ doit être présent et non vide
-            // string / max:255 : cohérent avec la colonne "titre" en varchar(255) par défaut
             'titre' => ['required', 'string', 'max:255'],
-
-            // numeric : accepte les décimaux (ex: 150.50), pas juste les entiers
-            // min:0 : empêche un prix négatif par erreur de saisie
+            'categorie' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
             'prix_particulier' => ['required', 'numeric', 'min:0'],
             'prix_entreprise' => ['required', 'numeric', 'min:0'],
         ];
