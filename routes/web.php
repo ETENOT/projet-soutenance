@@ -105,6 +105,26 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
         ->name('quiz.resultat');
 });
 
+// Espace particulier — passage d'un quiz d'auto-évaluation
+// ->middleware(['auth', 'role:particulier']) : il faut être connecté ET avoir le rôle particulier
+Route::middleware(['auth', 'role:particulier'])->group(function () {
+    // Affiche/démarre/reprend une tentative pour un cours donné
+    Route::get('/cours/{cours}/quiz', [App\Http\Controllers\QuizAttemptController::class, 'show'])
+        ->name('quiz.tentative.show');
+
+    // Appelée en AJAX à chaque réponse cochée (pas de rechargement de page)
+    Route::post('/quiz/{quiz}/repondre', [App\Http\Controllers\QuizAttemptController::class, 'repondre'])
+        ->name('quiz.tentative.repondre');
+
+    // Clôture manuelle (bouton "Terminer") ou auto (minuteur à 0)
+    Route::post('/quiz/{quiz}/terminer', [App\Http\Controllers\QuizAttemptController::class, 'terminer'])
+        ->name('quiz.tentative.terminer');
+
+    // Page de résultat + correction, une fois la tentative clôturée
+    Route::get('/mes-resultats/{resultatQuiz}', [App\Http\Controllers\QuizAttemptController::class, 'resultat'])
+        ->name('quiz.resultat');
+});
+
 // Inscription/désinscription d'un utilisateur connecté à une classe
 // Ces routes protègent l'inscription et la désinscription par authentification.
 Route::post('/classes/{classe}/inscription', [App\Http\Controllers\InscriptionController::class, 'store'])
