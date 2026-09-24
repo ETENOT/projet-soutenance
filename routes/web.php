@@ -38,30 +38,15 @@ Route::post('/update-profile/{id}', [App\Http\Controllers\HomeController::class,
     ->middleware('auth')
     ->name('updateProfile');
 
-// Mise à jour du mot de passe : vérifie l'ancien mot de passe,
-// prépare le nouveau mot de passe et envoie le code par email.
+// Mise à jour du mot de passe
 Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class, 'updatePassword'])
     ->middleware('auth')
     ->name('updatePassword');
 
-// Page dédiée où l'utilisateur saisit le code reçu par email
-// pour confirmer le changement de mot de passe.
-Route::get('/verify-password-change', [App\Http\Controllers\HomeController::class, 'showPasswordChangeVerification'])
-    ->middleware('auth')
-    ->name('passwordChangeVerification');
-
-// Confirmation du code reçu par email.
-// Si le code est correct, le nouveau mot de passe est appliqué.
+// soumission du mot de passe → envoi du code → confirmation.
 Route::post('/confirm-password-change', [App\Http\Controllers\HomeController::class, 'confirmPasswordChange'])
     ->middleware('auth')
     ->name('confirmPasswordChange');
-
-// Demande d'un nouveau code de vérification.
-// Le contrôleur vérifiera également le délai de 2 minutes
-// avant d'autoriser un nouvel envoi.
-Route::post('/resend-password-change-code', [App\Http\Controllers\HomeController::class, 'resendPasswordChangeCode'])
-    ->middleware('auth')
-    ->name('resendPasswordChangeCode');
 
 //l'utilisateur ne voit que les cours auxquels il est inscrit
 Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours'])
@@ -91,9 +76,6 @@ Route::post('/notifications/actions', [App\Http\Controllers\NotificationControll
 // Catalogue des cours — accessible à tout le monde, visiteur anonyme ET utilisateur connecté
 // (cf. diagramme de cas d'utilisation : "accéder au programme des cours" est relié aux deux acteurs)
 Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'catalogue'])->name('cours.catalogue');
-
-// Détail d'un cours précis — public aussi, pas besoin d'être connecté pour consulter
-Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])->name('cours.show');
 
 // Inscription/désinscription d'un utilisateur connecté à une classe
 // Ces routes protègent l'inscription et la désinscription par authentification.
@@ -140,27 +122,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::post('/{classe}/inscrits', [App\Http\Controllers\ClasseController::class, 'ajouterUtilisateur'])->name('inscrits.store');
         Route::delete('/{classe}/inscrits/{user}', [App\Http\Controllers\ClasseController::class, 'retirerUtilisateur'])->name('inscrits.destroy');
     });
-
-    // Enregistre le paiement direct (comptoir) d'une inscription
-    Route::post('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'store'])
-        ->name('inscriptions.paiement.store');
 });
-
-// Demande de paiement en ligne d'une inscription : réservée à son propriétaire
-Route::get('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'create'])
-    ->middleware('auth')
-    ->name('inscriptions.paiement.create');
-Route::post('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'payer'])
-    ->middleware('auth')
-    ->name('inscriptions.paiement.payer');
-
-// Retours de l'interface SingPay : la transaction sera vérifiée dans le contrôleur.
-Route::get('/paiement/success', [App\Http\Controllers\PaiementController::class, 'success'])
-    ->middleware('auth')
-    ->name('paiement.singpay.success');
-Route::get('/paiement/error', [App\Http\Controllers\PaiementController::class, 'error'])
-    ->middleware('auth')
-    ->name('paiement.singpay.error');
 
 // Route générale — DOIT rester la toute dernière route du fichier,
 // sinon elle intercepte tout ce qui n'a pas encore été défini avant elle
