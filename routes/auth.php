@@ -39,17 +39,18 @@ Route::middleware('guest')->group(function () {
     // Traite l'envoi du lien de réinitialisation par e-mail
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
         ->name('password.email');
-
-    // Affiche le formulaire de saisie du nouveau mot de passe (lien reçu par e-mail avec token)
-    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-        ->name('password.reset');
-
-    // Traite la soumission du nouveau mot de passe
-    // Nom "password.store" (et non "password.update") pour ne pas entrer en conflit
-    // avec la route de changement de mot de passe d'un utilisateur déjà connecté
-    Route::post('reset-password', [NewPasswordController::class, 'store'])
-        ->name('password.store');
 });
+
+// Affiche le formulaire de saisie du nouveau mot de passe (lien reçu par e-mail avec token)
+Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+    ->name('password.reset');
+
+// Traite la soumission du nouveau mot de passe
+// Nom "password.store" (et non "password.update") pour ne pas entrer en conflit
+// avec la route de changement de mot de passe d'un utilisateur déjà connecté
+Route::post('reset-password', [NewPasswordController::class, 'store'])
+    ->name('password.store');
+
 
 // Route accessible UNIQUEMENT si l'utilisateur EST connecté (middleware "auth")
 // Logique : on ne peut pas se déconnecter si on n'est pas connecté

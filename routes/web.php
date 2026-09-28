@@ -39,14 +39,11 @@ Route::post('/update-profile/{id}', [App\Http\Controllers\HomeController::class,
     ->name('updateProfile');
 
 // Mise à jour du mot de passe
-Route::post('/update-password/{id}', [App\Http\Controllers\HomeController::class, 'updatePassword'])
+Route::post('/profile/password/envoyer-lien', [App\Http\Controllers\HomeController::class, 'sendPasswordResetLink'])
     ->middleware('auth')
-    ->name('updatePassword');
+    ->name('password.sendResetLink');
 
 // soumission du mot de passe → envoi du code → confirmation.
-Route::post('/confirm-password-change', [App\Http\Controllers\HomeController::class, 'confirmPasswordChange'])
-    ->middleware('auth')
-    ->name('confirmPasswordChange');
 
 //l'utilisateur ne voit que les cours auxquels il est inscrit
 Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours'])

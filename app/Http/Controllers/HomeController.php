@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Password;
 
 class HomeController extends Controller
 {
@@ -142,119 +142,32 @@ class HomeController extends Controller
         ], 200);
     }
 
-    /**
- * Affiche la page dédiée à la vérification du changement de mot de passe.
- *
- * L'utilisateur ne peut accéder à cette page que s'il existe
- * un changement de mot de passe en attente dans sa session.
- */
-    public function showPasswordChangeVerification()
-    {
-        // Vérifie qu'un changement de mot de passe est bien en attente.
-        if (!session()->has('pending_password')) {
-            return redirect()->route('profile.edit')
-                ->with('message', 'Aucun changement de mot de passe en attente.')
-                ->with('alert-class', 'alert-danger');
-        }
-
-        // Récupère le temps restant avant de pouvoir demander
-        // un nouveau code.
-        $remainingSeconds = Auth::user()->secondsUntilCanResendVerificationCode();
-
-        // Envoie ce temps restant à la vue.
-        return view('auth.verify-password-change', compact('remainingSeconds'));
-    }
-
-    /**
-     * Renvoie un nouveau code de vérification pour le changement
-     * de mot de passe.
-     *
-     * Le serveur vérifie obligatoirement le délai de 2 minutes.
-     * Le bouton côté JavaScript ne suffit donc pas à protéger
-     * cette fonctionnalité.
+   /**
+     * Envoie un lien de réinitialisation du mot de passe à l'adresse email
+     * de l'utilisateur actuellement connecté (bouton "Changer le mot de passe"
+     * de la page profil). L'utilisateur suit ensuite le même parcours que
+     * pour "Mot de passe oublié" : clic sur le lien reçu, puis saisie du
+     * nouveau mot de passe sur la page dédiée.
      */
-    public function resendPasswordChangeCode()
+    public function sendPasswordResetLink(Request $request)
     {
-        // Vérifie qu'un changement de mot de passe est réellement
-        // en attente avant d'autoriser l'envoi d'un nouveau code.
-        if (!session()->has('pending_password')) {
-            return response()->json([
-                'isSuccess' => false,
-                'Message' => "Aucun changement de mot de passe en attente. Recommencez."
-            ], 200);
-        }
-
-        $user = Auth::user();
-
-        // Récupère le nombre de secondes restantes avant
-        // de pouvoir demander un nouveau code.
-        $remainingSeconds = $user->secondsUntilCanResendVerificationCode();
-
-        // Si le délai de 2 minutes n'est pas encore écoulé,
-        // on refuse l'envoi du nouveau code.
-        if ($remainingSeconds > 0) {
-            return response()->json([
-                'isSuccess' => false,
-                'Message' => "Vous devez attendre encore {$remainingSeconds} seconde(s) avant de demander un nouveau code.",
-                'remainingSeconds' => $remainingSeconds
-            ], 429);
-        }
-
-        // Génère un nouveau code et l'envoie par email.
-        // L'ancien code devient automatiquement invalide
-        // puisque le nouveau remplace celui enregistré.
-        $user->sendEmailVerificationNotification();
-
-        return response()->json([
-            'isSuccess' => true,
-            'Message' => "Un nouveau code de vérification a été envoyé à votre adresse email.",
-            'remainingSeconds' => 120
-        ], 200);
-    }
-
-    /**
-     * Deuxième étape : l'utilisateur soumet le code reçu par email.
-     * Si valide, on applique le mot de passe qui était en attente en session.
-     */
-    public function confirmPasswordChange(Request $request)
-    {
-        $request->validate([
-            'code' => ['required', 'digits:6'],
+        // Password::sendResetLink() est la même méthode Laravel qu'utilise
+        // PasswordResetLinkController::store() (le "mot de passe oublié" classique) :
+        // elle génère un token, l'enregistre, et envoie l'email avec le lien.
+        $status = Password::sendResetLink([
+            'email' => Auth::user()->email,
         ]);
 
-        if (!session()->has('pending_password')) {
+        if ($status === Password::RESET_LINK_SENT) {
             return response()->json([
-                'isSuccess' => false,
-                'Message' => "Aucun changement de mot de passe en attente. Recommencez."
+                'isSuccess' => true,
+                'Message' => "Un lien de réinitialisation a été envoyé à votre adresse email. Cliquez dessus pour définir votre nouveau mot de passe."
             ], 200);
         }
-
-        $status = Auth::user()->verificationCodeStatus($request->code);
-
-        if ($status === 'expired') {
-            return response()->json([
-                'isSuccess' => false,
-                'Message' => "Ce code a expiré. Relancez le changement de mot de passe."
-            ], 200);
-        }
-
-        if ($status === 'invalid') {
-            return response()->json([
-                'isSuccess' => false,
-                'Message' => "Ce code est incorrect."
-            ], 200);
-        }
-
-        $user = Auth::user();
-        $user->password = session('pending_password');
-        $user->update();
-
-        Auth::user()->clearVerificationCode();
-        session()->forget('pending_password');
 
         return response()->json([
-            'isSuccess' => true,
-            'Message' => "Mot de passe modifié avec succès !"
+            'isSuccess' => false,
+            'Message' => __($status)
         ], 200);
     }
 }

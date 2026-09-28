@@ -283,144 +283,31 @@
 
                         <div class="tab-pane" id="changePassword" role="tabpanel">
 
-                            <!-- Zone où les messages d'erreur seront affichés. -->
+                            <!-- Zone où les messages seront affichés. -->
                             <div id="password-feedback"></div>
 
-                            <form id="changePasswordForm">
+                            <!-- MODIFIÉ — avant : un <form id="changePasswordForm"> avec
+                                 3 champs (mot de passe actuel / nouveau / confirmation,
+                                 chacun avec son bouton œil "password-toggle") et un
+                                 bouton submit. Remplacé par un simple paragraphe
+                                 d'explication + un bouton, sans formulaire ni champ. -->
+                            <p class="text-muted">
+                                Cliquez sur le bouton ci-dessous : un lien de réinitialisation
+                                vous sera envoyé par email. Il vous suffira de cliquer dessus
+                                pour saisir votre nouveau mot de passe.
+                            </p>
 
-                                <div class="row g-2">
+                            <div class="text-end">
 
-                                    <!-- MOT DE PASSE ACTUEL -->
-                                    <div class="col-lg-4">
-                                        <div>
+                                <button
+                                    type="button"
+                                    id="sendPasswordResetLinkBtn"
+                                    class="btn btn-success"
+                                >
+                                    Changer le mot de passe
+                                </button>
 
-                                            <label for="oldpasswordInput" class="form-label">
-                                                Mot de passe actuel*
-                                            </label>
-
-                                            <div class="input-group">
-
-                                                <input
-                                                    type="password"
-                                                    class="form-control"
-                                                    id="oldpasswordInput"
-                                                    placeholder="Mot de passe actuel"
-                                                >
-
-                                                <!--
-                                                    Ce bouton permet uniquement
-                                                    d'afficher ou masquer ce que
-                                                    l'utilisateur vient de saisir.
-                                                -->
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-outline-secondary password-toggle"
-                                                    data-target="oldpasswordInput"
-                                                    aria-label="Afficher le mot de passe"
-                                                >
-                                                    <i class="ri-eye-line"></i>
-                                                </button>
-
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <!--end col-->
-
-
-                                    <!-- NOUVEAU MOT DE PASSE -->
-                                    <div class="col-lg-4">
-                                        <div>
-
-                                            <label for="newpasswordInput" class="form-label">
-                                                Nouveau mot de passe*
-                                            </label>
-
-                                            <div class="input-group">
-
-                                                <input
-                                                    type="password"
-                                                    class="form-control"
-                                                    id="newpasswordInput"
-                                                    placeholder="Nouveau mot de passe"
-                                                >
-
-                                                <!--
-                                                    Affiche ou masque le nouveau
-                                                    mot de passe saisi.
-                                                -->
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-outline-secondary password-toggle"
-                                                    data-target="newpasswordInput"
-                                                    aria-label="Afficher le mot de passe"
-                                                >
-                                                    <i class="ri-eye-line"></i>
-                                                </button>
-
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <!--end col-->
-
-
-                                    <!-- CONFIRMATION DU MOT DE PASSE -->
-                                    <div class="col-lg-4">
-                                        <div>
-
-                                            <label for="confirmpasswordInput" class="form-label">
-                                                Confirmer*
-                                            </label>
-
-                                            <div class="input-group">
-
-                                                <input
-                                                    type="password"
-                                                    class="form-control"
-                                                    id="confirmpasswordInput"
-                                                    placeholder="Confirmer le mot de passe"
-                                                >
-
-                                                <!--
-                                                    Affiche ou masque le mot de passe
-                                                    de confirmation.
-                                                -->
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-outline-secondary password-toggle"
-                                                    data-target="confirmpasswordInput"
-                                                    aria-label="Afficher le mot de passe"
-                                                >
-                                                    <i class="ri-eye-line"></i>
-                                                </button>
-
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <!--end col-->
-
-
-                                    <!-- BOUTON DE VALIDATION -->
-                                    <div class="col-lg-12">
-                                        <div class="text-end">
-
-                                            <button
-                                                type="submit"
-                                                class="btn btn-success"
-                                            >
-                                                Changer le mot de passe
-                                            </button>
-
-                                        </div>
-                                    </div>
-                                    <!--end col-->
-
-                                </div>
-                                <!--end row-->
-
-                            </form>
+                            </div>
 
                         </div>
                         <!--end tab-pane-->
@@ -445,44 +332,29 @@
     <script>
 
         // ==========================================================
-        // CHANGEMENT DU MOT DE PASSE
+        // CHANGEMENT DU MOT DE PASSE (envoi d'un lien par email)
         // ==========================================================
 
-        // Récupère le formulaire de changement de mot de passe.
-        const changePasswordForm = document.getElementById('changePasswordForm');
+        // Récupère le bouton de changement de mot de passe.
+        const sendPasswordResetLinkBtn = document.getElementById('sendPasswordResetLinkBtn');
 
         // Récupère la zone qui servira à afficher les messages.
         const feedback = document.getElementById('password-feedback');
 
-        // Écoute la soumission du formulaire.
-        changePasswordForm.addEventListener('submit', function (e) {
+        sendPasswordResetLinkBtn.addEventListener('click', function () {
 
-            // Empêche le navigateur de recharger la page.
-            e.preventDefault();
+            // Désactive le bouton le temps de la requête pour éviter les doubles envois.
+            sendPasswordResetLinkBtn.disabled = true;
 
-            // Récupère les valeurs saisies par l'utilisateur.
-            const oldPassword = document.getElementById('oldpasswordInput').value;
-            const newPassword = document.getElementById('newpasswordInput').value;
-            const confirmPassword = document.getElementById('confirmpasswordInput').value;
-
-            // Envoie les données au contrôleur Laravel.
-            fetch("{{ route('updatePassword', Auth::user()->id) }}", {
+            // Demande au contrôleur Laravel d'envoyer le lien de réinitialisation
+            // à l'adresse email de l'utilisateur actuellement connecté.
+            fetch("{{ route('password.sendResetLink') }}", {
                 method: 'POST',
-
-                // Indique à Laravel que nous envoyons des données JSON
-                // et que nous attendons également une réponse JSON.
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-
-                // Transforme les données JavaScript en JSON.
-                body: JSON.stringify({
-                    current_password: oldPassword,
-                    password: newPassword,
-                    password_confirmation: confirmPassword
-                })
+                }
             })
 
             // Transforme la réponse Laravel en objet JavaScript.
@@ -490,23 +362,13 @@
 
             .then(data => {
 
-                // Si le changement a été préparé correctement
-                // et qu'un code doit être vérifié,
-                // on ouvre la page dédiée à la vérification.
-                if (data.isSuccess && data.requiresCode) {
-
-                    window.location.href = "{{ route('confirmPasswordChange') }}";
-
-                    return;
-                }
-
-                // Si Laravel renvoie une erreur,
-                // on l'affiche dans la zone prévue.
                 feedback.innerHTML = `
-                    <div class="alert alert-danger">
+                    <div class="alert ${data.isSuccess ? 'alert-success' : 'alert-danger'}">
                         ${data.Message}
                     </div>
                 `;
+
+                sendPasswordResetLinkBtn.disabled = false;
             })
 
             // Gère une éventuelle erreur réseau ou serveur.
@@ -517,62 +379,8 @@
                         Une erreur est survenue. Veuillez réessayer.
                     </div>
                 `;
-            });
-        });
 
-
-        // ==========================================================
-        // AFFICHER / MASQUER LES MOTS DE PASSE
-        // ==========================================================
-
-        // Récupère tous les boutons avec la classe password-toggle.
-        const passwordToggleButtons = document.querySelectorAll('.password-toggle');
-
-        // Ajoute un événement à chaque bouton œil.
-        passwordToggleButtons.forEach(button => {
-
-            button.addEventListener('click', function () {
-
-                // Récupère l'identifiant du champ associé au bouton.
-                const targetId = this.dataset.target;
-
-                // Récupère le champ de mot de passe.
-                const passwordInput = document.getElementById(targetId);
-
-                // Récupère l'icône présente dans le bouton.
-                const icon = this.querySelector('i');
-
-                // Si le champ est actuellement masqué...
-                if (passwordInput.type === 'password') {
-
-                    // ...on le rend visible.
-                    passwordInput.type = 'text';
-
-                    // Change l'icône œil.
-                    icon.classList.remove('ri-eye-line');
-                    icon.classList.add('ri-eye-off-line');
-
-                    // Met à jour l'accessibilité du bouton.
-                    this.setAttribute(
-                        'aria-label',
-                        'Masquer le mot de passe'
-                    );
-
-                } else {
-
-                    // Sinon, on masque à nouveau le mot de passe.
-                    passwordInput.type = 'password';
-
-                    // Remet l'icône œil normale.
-                    icon.classList.remove('ri-eye-off-line');
-                    icon.classList.add('ri-eye-line');
-
-                    // Met à jour l'accessibilité du bouton.
-                    this.setAttribute(
-                        'aria-label',
-                        'Afficher le mot de passe'
-                    );
-                }
+                sendPasswordResetLinkBtn.disabled = false;
             });
         });
 

@@ -279,7 +279,7 @@
                             {{ __('Vous vous souvenez de votre mot de passe ?') }}
 
                             
-                                href="{{ route('login') }}"
+                                <a href="{{ route('login') }}"
                                 class="fw-semibold text-primary text-decoration-underline">
 
                                 {{ __('Retour à la connexion') }}
