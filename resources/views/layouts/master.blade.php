@@ -68,7 +68,7 @@
         {{-- Le personnalisateur du template (bouton d'engrenage) est caché : il n'a pas sa place
          dans l'application. On le garde dans la page, en d-none, car le JavaScript de Velzon
          cherche ses éléments. --}}
-    <div class="d-none">
+    <div class="">
         @include('layouts.customizer')
     </div>
 

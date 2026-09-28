@@ -64,6 +64,16 @@
                             @error('capacite_max')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
+                        <div class="mb-3">
+                    <label for="lieu" class="form-label">Lieu</label>
+                    <input type="text" name="lieu" id="lieu"
+                           class="form-control @error('lieu') is-invalid @enderror"
+                           value="{{ old('lieu') }}">
+                    @error('lieu')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="date_debut" class="form-label">Date de début</label>

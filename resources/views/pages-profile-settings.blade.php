@@ -495,7 +495,7 @@
                 // on ouvre la page dédiée à la vérification.
                 if (data.isSuccess && data.requiresCode) {
 
-                    window.location.href = "{{ route('passwordChangeVerification') }}";
+                    window.location.href = "{{ route('confirmPasswordChange') }}";
 
                     return;
                 }
