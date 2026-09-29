@@ -195,23 +195,24 @@
 
             <div class="col-md-6">
                 <h5 class="mb-3"><i class="ri-question-line text-primary me-1"></i>Quiz du cours</h5>
-                     @auth
-                        @if(auth()->user()->role?->nom === 'particulier')
-                            <a href="{{ route('quiz.tentative.show', $cours) }}"
-                             class="btn btn-primary mb-3">
+                    @if(session('quiz_en_cours'))
+                        <a href="{{ session('quiz_en_cours')['url'] }}" class="alert alert-danger d-block text-decoration-none">
+                            Veuillez terminer ou annuler votre quiz en cours dans le cours "{{ session('quiz_en_cours')['cours'] }}"
+                        </a>
+                    @endif
 
-                                Passer le quiz
-                            </a>
+                    @auth
+                        @if(auth()->user()->role?->nom === 'particulier')
+                            <div class="d-grid gap-2 mb-3" style="max-width: 260px;">
+                                <a href="{{ route('quiz.tentative.show', $cours) }}" class="btn btn-primary">
+                                    {{ $quizEnCours ? 'Continuer le quiz' : 'Passer le quiz' }}
+                                </a>
+                                <a href="{{ route('quiz.historique', $cours) }}" class="btn btn-outline-primary">
+                                    Historique de quiz
+                                </a>
+                            </div>
                         @endif
                     @endauth
-                @forelse($cours->quizzes as $quiz)
-                    <div class="quiz-item">
-                        <div class="fw-medium">Quiz du {{ \Carbon\Carbon::parse($quiz->date)->format('d/m/Y') }}</div>
-                        <small class="text-muted">De {{ $quiz->heure_debut }} à {{ $quiz->heure_fin }}</small>
-                    </div>
-                @empty
-                    <p class="text-muted mb-0">Vous n'avez pas de quiz en cours.</p>
-                @endforelse
             </div>
         </div>
     </div>

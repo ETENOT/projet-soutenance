@@ -60,6 +60,14 @@ class QuizAttemptController extends Controller
         // Aucune tentative en cours trouvée -> on en crée une nouvelle
         // (premier passage, ou tentative précédente déjà terminée -> c'est un "repasser le quiz").
         if (!$quiz) {
+            // Un seul quiz en cours à la fois
+            $autre = $this->finalisation->tentativeEnCours($user);
+            if ($autre) {
+                return redirect()->route('cours.show', $cours)->with('quiz_en_cours', [
+                    'cours' => $autre->cours->titre,
+                    'url'   => route('quiz.tentative.show', $autre->cours),
+                ]);
+            }
             $quiz = $this->demarrer($cours, $user);
         }
 
@@ -196,5 +204,46 @@ class QuizAttemptController extends Controller
         $reponses = $resultatQuiz->quiz->reponses()->with(['question.options'])->orderBy('ordre')->get();
 
         return view('quiz.resultat', compact('resultatQuiz', 'reponses'));
+    }
+
+    /**
+     * Annule une tentative encore en cours et retourne à la page du cours.
+     */
+    public function annuler(Request $request, Quiz $quiz)
+    {
+        // Seul le propriétaire de la tentative peut l'annuler.
+        abort_unless($quiz->user_id === $request->user()->id, 403);
+
+        // Conserver le cours pour pouvoir y rediriger après la suppression du quiz.
+        $cours = $quiz->cours;
+
+        // Une tentative ayant déjà un résultat est terminée et ne peut plus être annulée.
+        if ($quiz->resultats()->exists()) {
+            return redirect()->route('cours.show', $cours)
+                ->with('error', 'Ce quiz est déjà terminé, il ne peut plus être annulé.');
+        }
+
+        // Les réponses associées sont supprimées automatiquement par la clé étrangère.
+        $quiz->delete();
+
+        // Informer l'utilisateur que la tentative a bien été annulée.
+        return redirect()->route('cours.show', $cours)->with('success', 'Le quiz a été annulé.');
+    }
+
+    /**
+     * Affiche, pour le cours demandé, l'historique des résultats de l'utilisateur connecté.
+     */
+    public function historique(Request $request, Cours $cours)
+    {
+        // Limiter les résultats à l'utilisateur connecté et aux quiz de ce cours.
+        $resultats = ResultatQuiz::where('user_id', $request->user()->id)
+            ->whereHas('quiz', fn ($q) => $q->where('cours_id', $cours->id))
+            // Charger les quiz liés en une seule fois et afficher les résultats les plus récents d'abord.
+            ->with('quiz')
+            ->latest()
+            ->get();
+
+        // Transmettre le cours et ses résultats à la vue de l'historique.
+        return view('quiz.historique', compact('cours', 'resultats'));
     }
 }

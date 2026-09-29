@@ -18,18 +18,18 @@
                 <p class="fw-semibold">{{ $loop->iteration }}. {{ $reponse->question->enonce }}</p>
 
                 @foreach ($reponse->question->options as $option)
-                    @php
-                        // A-t-il choisi CETTE option précise ?
-                        $estChoisie = $reponse->option_id === $option->id;
-
-                        // Vert si c'est la bonne réponse (qu'il l'ait choisie ou non, pour qu'il voie la bonne option)
-                        // Rouge uniquement si c'est l'option qu'il a choisie ET qu'elle est fausse
-                        $classe = $option->est_correct
-                            ? 'text-success fw-bold'
-                            : ($estChoisie ? 'text-danger fw-bold' : '');
-                    @endphp
-                    <div class="{{ $classe }}">{{ $option->libelle }}</div>
+                    @if ($option->est_correct)
+                        <div class="text-success fw-bold">✅ {{ $option->libelle }}</div>
+                    @elseif ($reponse->option_id === $option->id)
+                        <div class="text-danger fw-bold">❌ {{ $option->libelle }}</div>
+                    @else
+                        <div>{{ $option->libelle }}</div>
+                    @endif
                 @endforeach
+
+                @if ($reponse->option_id === null)
+                    <small class="text-danger">Question sans réponse</small>
+                @endif
             </div>
         </div>
     @endforeach

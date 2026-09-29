@@ -44,8 +44,16 @@
                 </div>
             @endforeach
 
-            <button type="submit" class="btn btn-primary">Terminer le quiz</button>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Terminer le quiz</button>
+                <button type="submit" form="form-annuler" class="btn btn-outline-danger">Annuler le quiz</button>
+            </div>
         </form>
+
+            <form id="form-annuler" action="{{ route('quiz.tentative.annuler', $quiz) }}" method="POST"
+                onsubmit="return confirm('Annuler ce quiz ? Il sera supprimé et n\'apparaîtra pas dans votre historique.');">
+                @csrf
+            </form>
     </div>
 </div>
 

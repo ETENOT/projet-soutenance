@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Quiz;
 use App\Models\ResultatQuiz;
 use Illuminate\Support\Carbon;
+use App\Models\Notification;
+use App\Models\User;
 
 // Centralise toute la logique de "fin de tentative" (calcul de la deadline,
 // détection du dépassement, calcul du score) pour qu'elle soit identique
@@ -62,5 +64,31 @@ class QuizFinalisationService
             'quiz_id' => $quiz->id,
             'user_id' => $quiz->user_id,
         ]);
+
+        Notification::create([
+            'user_id' => $quiz->user_id,
+            'message' => 'Quiz terminé : « ' . $quiz->cours->titre . ' ». Votre note : '
+            . $score . ' / ' . $quiz->bareme . '.',
+        ]);
+        
+        return $resultat;
+    }
+    public function tentativeEnCours(User $user, ?int $coursId = null): ?Quiz{
+        $tentatives = Quiz::where('user_id', $user->id)
+            ->when($coursId, fn ($q) => $q->where('cours_id', $coursId))
+            ->whereDoesntHave('resultats')
+            ->with('cours')
+            ->latest('id')
+            ->get();
+
+        $enCours = null;
+        foreach ($tentatives as $quiz) {
+            if ($this->estExpire($quiz)) {
+                $this->finaliser($quiz);
+                continue;
+            }
+            $enCours ??= $quiz;
+        }
+        return $enCours;
     }
 }

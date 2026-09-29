@@ -69,9 +69,17 @@ class CoursController extends Controller
             ? Auth::user()->inscriptions()->pluck('classe_id')
             : collect();
 
+        $quizEnCours = null;
+        if (Auth::check() && Auth::user()->role?->nom === 'particulier') {
+            $quizEnCours = app(\App\Services\QuizFinalisationService::class)
+                ->tentativeEnCours(Auth::user(), $cours->id);
+        }
+        // ... puis ajouter 'quizEnCours' => $quizEnCours dans le tableau passé à la vue
+
         return view('cours.show', [
             'cours' => $cours,
             'mesInscriptions' => $mesInscriptions,
+            'quizEnCours' => $quizEnCours,
         ]);
     }
 
