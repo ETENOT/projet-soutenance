@@ -74,8 +74,10 @@ document.querySelectorAll('.reponse-radio').forEach(radio => {
 
 // Décompte affiché à l'écran, purement visuel — la vraie vérification
 // du temps écoulé se fait côté serveur (voir QuizFinalisationService)
-let restant = parseInt(document.getElementById('chrono').dataset.restant, 10);
 const chrono = document.getElementById('chrono');
+const restantInitial = parseInt(chrono.dataset.restant, 10);
+// Deadline fixée une seule fois au chargement, à partir du temps restant calculé par le serveur
+const finMs = Date.now() + restantInitial * 1000;
 
 function formaterChrono(secondes) {
     const m = Math.floor(secondes / 60);
@@ -83,16 +85,17 @@ function formaterChrono(secondes) {
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-chrono.textContent = formaterChrono(Math.max(restant, 0));
-
-const interval = setInterval(() => {
-    restant--;
-    chrono.textContent = formaterChrono(Math.max(restant, 0));
+function tick() {
+    const restant = Math.max(0, Math.round((finMs - Date.now()) / 1000));
+    chrono.textContent = formaterChrono(restant);
     if (restant <= 0) {
         clearInterval(interval);
         // Soumission automatique du formulaire à 0 -> appelle terminer()
         document.getElementById('form-terminer').submit();
     }
-}, 1000);
+}
+
+tick(); // affichage immédiat, sans attendre 1 seconde
+const interval = setInterval(tick, 1000);
 </script>
 @endsection

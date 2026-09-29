@@ -72,7 +72,13 @@ class QuizAttemptController extends Controller
         // diffInSeconds(..., false) * -1 : on force le signe pour obtenir un nombre positif
         // (la limite est dans le futur par rapport à maintenant).
         //$secondesRestantes = now()->diffInSeconds($this->finalisation->limite($quiz), false) * -1;
-        $secondesRestantes = 3600;
+        // $secondesRestantes = 3600;
+        // Temps restant = deadline (heure_debut + 1h, figée au démarrage) - maintenant.
+        // On soustrait deux timestamps : pas de piège de signe ni de décimales avec Carbon 3.
+        $secondesRestantes = max(
+            0,
+            $this->finalisation->limite($quiz)->getTimestamp() - now()->getTimestamp()
+        );
 
         return view('quiz.passer', compact('quiz', 'reponses', 'secondesRestantes'));
     }

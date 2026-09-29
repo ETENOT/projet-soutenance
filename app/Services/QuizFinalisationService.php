@@ -16,7 +16,15 @@ class QuizFinalisationService
     // "date" (ex: 2026-09-22) et "heure_fin" (ex: 15:32:10) de la tentative
     public function limite(Quiz $quiz): Carbon
     {
-        return Carbon::parse($quiz->date)->setTimeFromTimeString($quiz->heure_fin);
+        $limite = Carbon::parse($quiz->date)->setTimeFromTimeString($quiz->heure_fin);
+
+        // Si l'heure de fin est "plus petite" que l'heure de début, la deadline
+        // est passée après minuit : elle tombe le lendemain.
+        if ($quiz->heure_fin < $quiz->heure_debut) {
+            $limite->addDay();
+        }
+
+        return $limite;
     }
 
     // true si l'heure actuelle a dépassé la deadline calculée ci-dessus
