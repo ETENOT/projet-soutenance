@@ -68,7 +68,7 @@
             @endif
 
             <li class="nav-item">
-                <a class="nav-link menu-link" href="{{ route('index', ['any' => 'pages-profile-settings']) }}">
+                <a class="nav-link menu-link" href="{{ route('index', ['any' => 'pages-profile']) }}">
                     <i class="ri-user-line"></i> <span>Mon profil</span>
                 </a>
             </li>
