@@ -14,7 +14,9 @@ return new class extends Migration
             // Ces champs alimentent l'affichage et la recherche du catalogue.
             $table->string('categorie');
             $table->text('description')->nullable();
-
+            // Plan détaillé du cours, visible publiquement (même sans être inscrit) :
+            // c'est ce contenu qui doit donner envie de s'inscrire.
+            $table->text('programme')->nullable();
             // Crée une colonne "prix" de type décimal.
             // 10 = nombre total de chiffres maximum.
             // 2 = nombre de chiffres après la virgule.

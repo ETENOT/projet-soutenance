@@ -69,17 +69,29 @@ class CoursController extends Controller
             ? Auth::user()->inscriptions()->pluck('classe_id')
             : collect();
 
-        $quizEnCours = null;
-        if (Auth::check() && Auth::user()->role?->nom === 'particulier') {
-            $quizEnCours = app(\App\Services\QuizFinalisationService::class)
-                ->tentativeEnCours(Auth::user(), $cours->id);
-        }
-        // ... puis ajouter 'quizEnCours' => $quizEnCours dans le tableau passé à la vue
+        // Classes déjà inscrites ET payées : sert à masquer "Se désinscrire" côté vue
+        // (le serveur bloque déjà la désinscription dans ce cas — ceci évite juste
+        // d'afficher un bouton qui échouerait).
+        $mesInscriptionsPayees = Auth::check()
+            ? Auth::user()->inscriptions()->whereHas('paiement')->pluck('classe_id')
+            : collect();
+
+        // Accès aux documents du cours : réservé aux utilisateurs inscrits ET
+        // ayant payé une classe de ce cours (même règle que dans CoursDocumentController).
+        $accesDocuments = Auth::check()
+            ? Auth::user()->inscriptions()
+                ->whereHas('classe', function ($query) use ($cours) {
+                    $query->where('cours_id', $cours->id);
+                })
+                ->whereHas('paiement')
+                ->exists()
+            : false;
 
         return view('cours.show', [
             'cours' => $cours,
             'mesInscriptions' => $mesInscriptions,
-            'quizEnCours' => $quizEnCours,
+            'mesInscriptionsPayees' => $mesInscriptionsPayees,
+            'accesDocuments' => $accesDocuments,
         ]);
     }
 
@@ -120,6 +132,7 @@ class CoursController extends Controller
             'titre' => ['required', 'string', 'max:255'],
             'categorie' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'programme' => ['nullable', 'string'],
             'prix_particulier' => ['required', 'numeric', 'min:0'],
             'prix_entreprise' => ['required', 'numeric', 'min:0'],
         ];

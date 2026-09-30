@@ -53,6 +53,19 @@
                     @enderror
                 </div>
 
+                                <div class="mb-3">
+                    <label for="programme" class="form-label">Plan détaillé du cours (visible publiquement, même sans être inscrit)</label>
+                    <textarea name="programme"
+                            id="programme"
+                            rows="8"
+                            class="form-control @error('programme') is-invalid @enderror"
+                            placeholder="Ex : Module 1 - Découverte de l'interface&#10;Module 2 - Mise en forme...">{{ old('programme') }}</textarea>
+
+                    @error('programme')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="prix_particulier" class="form-label">Prix particulier (fcfa)</label>

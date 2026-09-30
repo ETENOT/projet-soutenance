@@ -121,14 +121,6 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     Route::post('/quiz/{quiz}/terminer', [App\Http\Controllers\QuizAttemptController::class, 'terminer'])
         ->name('quiz.tentative.terminer');
 
-    // NOUVEAU
-    Route::post('/quiz/{quiz}/annuler', [App\Http\Controllers\QuizAttemptController::class, 'annuler'])
-        ->name('quiz.tentative.annuler');
-        
-    Route::get('/cours/{cours}/quiz/historique', [App\Http\Controllers\QuizAttemptController::class, 'historique'])
-        ->name('quiz.historique');
-
-
     // Page de résultat + correction, une fois la tentative clôturée
     Route::get('/mes-resultats/{resultatQuiz}', [App\Http\Controllers\QuizAttemptController::class, 'resultat'])
         ->name('quiz.resultat');
@@ -144,6 +136,16 @@ Route::delete('/classes/{classe}/inscription', [App\Http\Controllers\Inscription
     ->middleware('auth')
     ->name('classes.inscription.destroy');
 
+// Ouvrir / télécharger un document de cours — accès vérifié dans le contrôleur
+// (inscrit + payé sur une classe de ce cours, ou admin)
+Route::get('/cours/{cours}/documents/{document}/voir', [App\Http\Controllers\CoursDocumentController::class, 'voir'])
+    ->middleware('auth')
+    ->name('cours.documents.voir');
+
+Route::get('/cours/{cours}/documents/{document}/telecharger', [App\Http\Controllers\CoursDocumentController::class, 'download'])
+    ->middleware('auth')
+    ->name('cours.documents.download');
+
 // Gestion des cours et des classes (création/modification/suppression) — réservée à l'admin
 // ->middleware(['auth', 'role:admin']) : il faut être connecté ET avoir le rôle admin
 // ->prefix('admin') : toutes les URLs de ce groupe commencent par /admin/...
@@ -155,6 +157,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/cours/{cours}/edit', [App\Http\Controllers\CoursController::class, 'edit'])->name('cours.edit');
     Route::put('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'update'])->name('cours.update');
     Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])->name('cours.destroy');
+
+    // Documents (fichier ou lien vidéo) d'un cours, imbriqués sous cours/{cours}
+    Route::post('/cours/{cours}/documents', [App\Http\Controllers\CoursDocumentController::class, 'store'])->name('cours.documents.store');
+    Route::delete('/cours/{cours}/documents/{document}', [App\Http\Controllers\CoursDocumentController::class, 'destroy'])->name('cours.documents.destroy');
+
     // Gestion des utilisateurs réservée à l'administrateur.
     Route::get('/utilisateurs', [App\Http\Controllers\UserController::class,'index',])->name('users.index');
     Route::get('/utilisateurs/create', [App\Http\Controllers\UserController::class, 'create'])->name('users.create');

@@ -13,7 +13,7 @@ class Cours extends Model
     protected $table = 'cours';
 
     // Les champs publics sont remplis par le catalogue et son formulaire d'administration.
-    protected $fillable = ['titre', 'categorie', 'description', 'prix_particulier', 'prix_entreprise'];
+        protected $fillable = ['titre', 'categorie', 'description', 'programme', 'prix_particulier', 'prix_entreprise'];
 
     // Un Cours a plusieurs Classes (sessions)
     public function classes()
@@ -31,5 +31,10 @@ class Cours extends Model
     public function questions()
     {
         return $this->hasMany(Question::class);
+    }
+    // Un Cours a plusieurs Ressources
+    public function resources()
+    {
+        return $this->hasMany(CoursResource::class, 'cours_id');
     }
 }
