@@ -264,11 +264,11 @@
                                             </span>
                                         </span>
                                         <div class="d-flex gap-2">
-                                            <a href="{{ route('Cours.resources.voir', [$cours, $resource]) }}" target="_blank" class="btn btn-sm btn-primary">
+                                            <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}" target="_blank" class="btn btn-sm btn-primary">
                                                 <i class="ri-external-link-line me-1"></i>Voir
                                             </a>
                                             @unless($resource->estVideo())
-                                                <a href="{{ route('Cours.resources.download', [$cours, $resource]) }}" class="btn btn-sm btn-outline-primary">
+                                                <a href="{{ route('cours.resources.download', [$cours, $resource]) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="ri-download-2-line me-1"></i>Télécharger
                                                 </a>
                                             @endunless

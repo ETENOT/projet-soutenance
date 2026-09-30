@@ -138,13 +138,13 @@ Route::delete('/classes/{classe}/inscription', [App\Http\Controllers\Inscription
 
 // Ouvrir / télécharger un document de cours — accès vérifié dans le contrôleur
 // (inscrit + payé sur une classe de ce cours, ou admin)
-Route::get('/cours/{cours}/documents/{document}/voir', [App\Http\Controllers\CoursDocumentController::class, 'voir'])
+Route::get('/cours/{cours}/resources/{resource}/voir', [App\Http\Controllers\CoursResourceController::class, 'voir'])
     ->middleware('auth')
-    ->name('cours.documents.voir');
+    ->name('cours.resources.voir');
 
-Route::get('/cours/{cours}/documents/{document}/telecharger', [App\Http\Controllers\CoursDocumentController::class, 'download'])
+Route::get('/cours/{cours}/resources/{resource}/telecharger', [App\Http\Controllers\CoursResourceController::class, 'download'])
     ->middleware('auth')
-    ->name('cours.documents.download');
+    ->name('cours.resources.download');
 
 // Gestion des cours et des classes (création/modification/suppression) — réservée à l'admin
 // ->middleware(['auth', 'role:admin']) : il faut être connecté ET avoir le rôle admin
@@ -159,8 +159,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])->name('cours.destroy');
 
     // Documents (fichier ou lien vidéo) d'un cours, imbriqués sous cours/{cours}
-    Route::post('/cours/{cours}/documents', [App\Http\Controllers\CoursDocumentController::class, 'store'])->name('cours.documents.store');
-    Route::delete('/cours/{cours}/documents/{document}', [App\Http\Controllers\CoursDocumentController::class, 'destroy'])->name('cours.documents.destroy');
+       Route::post('/cours/{cours}/resources', [App\Http\Controllers\CoursResourceController::class, 'store'])->name('cours.resources.store');
+    Route::delete('/cours/{cours}/resources/{resource}', [App\Http\Controllers\CoursResourceController::class, 'destroy'])->name('cours.resources.destroy');
 
     // Gestion des utilisateurs réservée à l'administrateur.
     Route::get('/utilisateurs', [App\Http\Controllers\UserController::class,'index',])->name('users.index');
