@@ -10,18 +10,30 @@ return new class extends Migration
     {
         Schema::create('classes', function (Blueprint $table) {
             $table->id();
+
+            // Informations de la session
             $table->string('nom');
             //signifie que la capacité max peut aller jusqu'à 255 et est obligatoirement un entier positif
             $table->unsignedTinyInteger('capacite_max');
+
+            // Dates et horaires
             $table->date('date_debut');
             $table->date('date_fin');
-            // Le lieu est affiché avec les dates de chaque session.
-            $table->string('lieu');
+            $table->time('heure_debut')->nullable();
+            $table->time('heure_fin')->nullable();
 
+            // Informations pratiques
+            $table->string('lieu');
+            $table->string('formateur')->nullable();
+
+            // État de la session
+            $table->string('statut')->default('a_venir');
+
+            // Cours auquel appartient la classe
             $table->foreignId('cours_id')
                 ->constrained('cours')
-
-                // Si un cours est supprimé, toutes les classes
+            
+                 // Si un cours est supprimé, toutes les classes
                 // qui lui sont associées seront automatiquement supprimées.
                 ->cascadeOnDelete();
 
@@ -29,9 +41,6 @@ return new class extends Migration
         });
     }
 
-    // Supprime la table "classes" si elle existe.
-    // Cette méthode est appelée lorsque l'on annule (rollback)
-    // la migration avec : php artisan migrate:rollback
     public function down(): void
     {
         Schema::dropIfExists('classes');

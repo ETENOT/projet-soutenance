@@ -10,19 +10,21 @@ return new class extends Migration
     {
         Schema::create('paiements', function (Blueprint $table) {
             $table->id();
+
             $table->decimal('montant', 10, 2);
-            
 
-            // Moyen de paiement : 'direct' (comptoir, enregistré par l'admin),
+
+        // Moyen de paiement : 'direct' (comptoir, enregistré par l'admin),
             // 'airtel_money' ou 'moov_money' (paiement en ligne, simulé pour l'instant).
-            $table->string('mode')->default('direct');
+            $table->string('mode');
 
-            // Référence de transaction : générée pour un paiement en ligne, vide pour un
-            // paiement direct. Unique : deux paiements ne peuvent pas partager la même référence.
+        // Référence de transaction : générée pour un paiement en ligne, vide pour un
+            // paiement direct. Unique : deux paiements ne peuvent pas partager la même référence.            
             $table->string('reference')->nullable()->unique();
+            $table->string('statut')->default('en_attente');
 
-            // Données de confirmation conservées pour les paiements SingPay.
-            $table->string('singpay_transaction_id')->nullable()->unique();
+            // Informations retournées par SingPay
+            $table->string('singpay_transaction_id')->nullable();
             $table->string('singpay_status')->nullable();
             $table->string('singpay_result')->nullable();
 

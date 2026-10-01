@@ -37,16 +37,15 @@
 
                 <div class="mb-3">
                     <label for="programme" class="form-label">Plan détaillé du cours (visible publiquement, même sans être inscrit)</label>
-                    <textarea name="programme"
+                                        <textarea name="programme"
                             id="programme"
-                            rows="8"
+                            rows="10"
                             class="form-control @error('programme') is-invalid @enderror"
-                            placeholder="Ex : Module 1 - Découverte de l'interface&#10;Module 2 - Mise en forme...">{{ old('programme', $cours->programme) }}</textarea>
-
-                    @error('programme')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+                            placeholder="## Module 1 - Découverte de l'interface&#10;- Présentation des outils&#10;- Navigation dans le logiciel&#10;&#10;## Module 2 - Mise en forme&#10;- Styles de texte&#10;- Mise en page">{{ old('programme', $cours->programme ?? null) }}</textarea>
+                    <div class="form-text">
+                        Une ligne commençant par <code>## </code> = un grand point (module). Les lignes
+                        <code>- </code> juste après = ses sous-points. Voir l'exemple pré-rempli ci-dessus.
+                    </div>
 
                 <div class="row">
                     <div class="col-md-6 mb-3">

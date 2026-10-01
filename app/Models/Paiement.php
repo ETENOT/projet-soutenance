@@ -23,14 +23,15 @@ class Paiement extends Model
     ];
 
     protected $fillable = [
-        'montant',
-        'inscription_id',
-        'mode',
-        'reference',
-        'singpay_transaction_id',
-        'singpay_status',
-        'singpay_result',
-    ];
+    'montant',
+    'inscription_id',
+    'mode',
+    'reference',
+    'statut',
+    'singpay_transaction_id',
+    'singpay_status',
+    'singpay_result',
+];
 
     // La table "paiements" a inscription_id -> belongsTo
     public function inscription()

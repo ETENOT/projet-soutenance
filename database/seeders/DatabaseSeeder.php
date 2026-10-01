@@ -8,7 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     /**
      * Point d'entrée unique de tous les seeders.
-     * Appelé automatiquement par : php artisan migrate:fresh --seed
+     *  Appelé automatiquement par : php artisan migrate:fresh --seed
      */
     public function run(): void
     {
@@ -17,11 +17,21 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
-            // Les cours doivent exister avant les classes qui les référencent.
+
+            // Création des formations
             CoursSeeder::class,
+
+            // Création des chapitres à partir des programmes des cours
+            ChapitreSeeder::class,
+
+            // Ressources liées aux chapitres
+            CoursResourceSeeder::class,
+
+            // Sessions de formation
             ClasseSeeder::class,
+
+            // Quiz
             QuestionSeeder::class,
-            CoursResourceSeeder::Class,
             OptionSeeder::class,
         ]);
     }

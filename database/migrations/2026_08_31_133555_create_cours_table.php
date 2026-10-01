@@ -10,26 +10,30 @@ return new class extends Migration
     {
         Schema::create('cours', function (Blueprint $table) {
             $table->id();
+
+            // Informations principales
             $table->string('titre');
-            // Ces champs alimentent l'affichage et la recherche du catalogue.
+             // Ces champs alimentent l'affichage et la recherche du catalogue.
             $table->string('categorie');
             $table->text('description')->nullable();
-            // Plan détaillé du cours, visible publiquement (même sans être inscrit) :
+
+           // Plan détaillé du cours, visible publiquement (même sans être inscrit) :
             // c'est ce contenu qui doit donner envie de s'inscrire.
             $table->text('programme')->nullable();
-            // Crée une colonne "prix" de type décimal.
+
+            // Informations pédagogiques
+            $table->string('image')->nullable();
+            $table->string('niveau')->nullable();
+
+             // Crée une colonne "prix" de type décimal.
             // 10 = nombre total de chiffres maximum.
             // 2 = nombre de chiffres après la virgule.
-            // Exemple : 150000.50
-            $table->decimal('prix_entreprise', 10, 2);
+            // Exemple : 150000.50            $table->decimal('prix_entreprise', 10, 2);
             $table->decimal('prix_particulier', 10, 2);
             $table->timestamps();
         });
     }
 
-    // Supprime la table "cours" si elle existe.
-    // Cette méthode est appelée lorsque l'on annule (rollback)
-    // la migration avec : php artisan migrate:rollback
     public function down(): void
     {
         Schema::dropIfExists('cours');

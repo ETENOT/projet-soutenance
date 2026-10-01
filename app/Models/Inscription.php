@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inscription extends Model
 {
-    protected $fillable = ['date_inscription', 'user_id', 'classe_id'];
+    protected $fillable = ['date_inscription', 'statut', 'user_id', 'classe_id'];
 
     // La table "inscriptions" a user_id -> belongsTo
     public function user()

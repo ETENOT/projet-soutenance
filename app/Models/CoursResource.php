@@ -1,17 +1,31 @@
 <?php
 
-// app/Models/CoursResource.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CoursResource extends Model
 {
-    protected $fillable = ['cours_id', 'type', 'titre', 'chemin', 'url', 'extension', 'taille'];
+    protected $fillable = [
+        'cours_id',
+        'chapitre_id',
+        'type',
+        'titre',
+        'chemin',
+        'url',
+        'extension',
+        'taille'
+    ];
 
-    public function cours()
+    public function cours(): BelongsTo
     {
         return $this->belongsTo(Cours::class);
+    }
+
+    public function chapitre(): BelongsTo
+    {
+        return $this->belongsTo(Chapitre::class);
     }
 
     public function estVideo(): bool

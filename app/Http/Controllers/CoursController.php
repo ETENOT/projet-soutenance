@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cours;
+use App\Models\Chapitre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\CoursResource;
+use App\Models\Quiz;
 
 class CoursController extends Controller
 {
@@ -21,7 +24,7 @@ class CoursController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $cours = Cours::withCount(['classes', 'quizzes'])
+        $cours = Cours::withCount(['classes', 'quizzes', 'chapitres'])
             // Un seul champ permet de rechercher dans les informations publiques du cours.
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
@@ -54,14 +57,19 @@ class CoursController extends Controller
      */
     public function show(Cours $cours)
     {
-        $cours->load([
-            'classes' => function ($query) {
-                $query->withCount('inscriptions')->orderBy('date_debut');
-            },
-            'quizzes' => function ($query) {
-                $query->orderBy('date');
-            },
-        ]);
+       $cours->load([
+    'chapitres' => function ($query) {
+        $query->orderBy('ordre');
+    },
+
+    'classes' => function ($query) {
+        $query->withCount('inscriptions')->orderBy('date_debut');
+    },
+
+    'quizzes' => function ($query) {
+        $query->orderBy('date');
+    },
+]);
 
         // Classes auxquelles l'utilisateur connecté est déjà inscrit, pour ce cours
         // (permet d'afficher "Inscrit" au lieu du bouton "S'inscrire" dans la vue).
@@ -87,11 +95,18 @@ class CoursController extends Controller
                 ->exists()
             : false;
 
+        $quizEnCours = null;
+        if (Auth::check() && Auth::user()->role?->nom === 'particulier') {
+            $quizEnCours = app(\App\Services\QuizFinalisationService::class)
+                ->tentativeEnCours(Auth::user(), $cours->id);
+        }
+
         return view('cours.show', [
             'cours' => $cours,
             'mesInscriptions' => $mesInscriptions,
             'mesInscriptionsPayees' => $mesInscriptionsPayees,
             'accesDocuments' => $accesDocuments,
+            'quizEnCours' => $quizEnCours,
         ]);
     }
 
@@ -224,6 +239,110 @@ class CoursController extends Controller
 
         return view('paiements.statut_paiement', [
             'inscriptions' => $inscriptions,
+        ]);
+    }
+
+    public function espace(Cours $cours)
+    {
+        $user = Auth::user();
+
+        $inscription = $user->inscriptions()
+            ->with('classe')
+            ->whereHas('classe', function ($query) use ($cours) {
+                $query->where('cours_id', $cours->id);
+            })
+            ->whereHas('paiement')
+            ->first();
+
+        if (!$inscription) {
+            return redirect()
+                ->route('cours.show', $cours)
+                ->with('error', 'Vous devez être inscrit et avoir payé pour accéder à ce cours.');
+        }
+
+
+        $cours->load([
+            'chapitres' => function ($query) {
+                $query->orderBy('ordre');
+            },
+            'chapitres.resources'
+        ]);
+
+
+        return view('cours.espace', [
+            'cours' => $cours,
+            'classe' => $inscription->classe,
+        ]);
+    }
+
+    public function chapitre(Cours $cours, Chapitre $chapitre)
+    {
+        $user = Auth::user();
+
+        // Vérification accès payé
+        $accesCours = $user->inscriptions()
+            ->whereHas('classe', function ($query) use ($cours) {
+                $query->where('cours_id', $cours->id);
+            })
+            ->whereHas('paiement', function ($query) {
+                $query->where('statut', 'valide');
+            })
+            ->exists();
+
+        if (!$accesCours) {
+            return redirect()
+                ->route('cours.show', $cours)
+                ->with('error', 'Accès réservé aux apprenants inscrits.');
+        }
+
+
+        // Sécurité : vérifier que le chapitre appartient bien au cours
+        if ($chapitre->cours_id !== $cours->id) {
+            abort(404);
+        }
+
+
+        $cours->load([
+            'chapitres' => function ($query) {
+                $query->orderBy('ordre');
+            }
+        ]);
+
+
+        $chapitre->load([
+            'resources'
+        ]);
+
+
+        return view('cours.chapitre', [
+            'cours' => $cours,
+            'chapitre' => $chapitre,
+        ]);
+    }
+
+    public function ressource(Cours $cours, CoursResource $resource)
+    {
+        // Vérifie que la ressource appartient bien au cours
+        if ($resource->cours_id !== $cours->id) {
+            abort(404);
+        }
+
+
+        // Charge les chapitres + leurs ressources pour le menu gauche
+        $chapitres = $cours->chapitres()
+            ->with([
+                'resources' => function ($query) {
+                    $query->orderBy('id');
+                }
+            ])
+            ->orderBy('ordre')
+            ->get();
+
+
+        return view('cours.ressource', [
+            'cours' => $cours,
+            'resource' => $resource,
+            'chapitres' => $chapitres,
         ]);
     }
 }
