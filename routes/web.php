@@ -143,6 +143,9 @@ Route::middleware('quiz.acces')->group(function () {
 
 // Historique, résultats, chapitre, ressources : réservés aux particuliers connectés
 Route::middleware(['auth', 'role:particulier'])->group(function () {
+    // Parcours des formations de l'utilisateur particulier
+    Route::get('/mes-formations', [CoursController::class, 'mesCours'])
+        ->name('cours.mes');
     // Voir le résultat après correction
     Route::get('/mes-resultats/{resultatQuiz}', [App\Http\Controllers\QuizAttemptController::class, 'resultat'])
         ->name('quiz.resultat');
