@@ -94,17 +94,11 @@
                                     <div class="col-lg-6">
                                         <div class="mb-3">
 
-                                            <label for="emailInput" class="form-label">
-                                                Adresse email
-                                            </label>
-
-                                            <input
-                                                type="email"
-                                                class="form-control"
-                                                id="emailInput"
-                                                name="email"
-                                                value="{{ Auth::user()->email }}"
-                                            >
+                                            <label for="emailInput" class="form-label">Adresse email</label>
+                                            <input type="email" class="form-control bg-light" id="emailInput"
+                                                value="{{ Auth::user()->email }}" readonly disabled
+                                                style="cursor: not-allowed;">
+                                            <small class="text-muted">Cette adresse ne peut pas être modifiée.</small>
 
                                         </div>
                                     </div>

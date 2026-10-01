@@ -7,6 +7,8 @@ use App\Models\ResultatQuiz;
 use Illuminate\Support\Carbon;
 use App\Models\Notification;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
 
 // Centralise toute la logique de "fin de tentative" (calcul de la deadline,
 // détection du dépassement, calcul du score) pour qu'elle soit identique
@@ -59,22 +61,39 @@ class QuizFinalisationService
         // -> score = 7, affiché ensuite comme "7 / 30" (30 = le barème de la tentative)
         $score = $bonnes;
 
-        return ResultatQuiz::create([
-            'score' => $score,
+        $resultat = ResultatQuiz::create([
+            'score'   => $score,
             'quiz_id' => $quiz->id,
-            'user_id' => $quiz->user_id,
+            'user_id' => $quiz->user_id, // null pour un visiteur
         ]);
 
-        Notification::create([
-            'user_id' => $quiz->user_id,
-            'message' => 'Quiz terminé : « ' . $quiz->cours->titre . ' ». Votre note : '
-            . $score . ' / ' . $quiz->bareme . '.',
-        ]);
-        
+        // Un visiteur n'a pas encore de compte : sa notification sera créée à l'inscription
+        if ($quiz->user_id) {
+            Notification::create([
+                'user_id' => $quiz->user_id,
+                'message' => 'Quiz terminé : « ' . $quiz->cours->titre . ' ». Votre note : '
+                    . $score . ' / ' . $quiz->bareme . '.',
+            ]);
+        }
+
         return $resultat;
     }
-    public function tentativeEnCours(User $user, ?int $coursId = null): ?Quiz{
-        $tentatives = Quiz::where('user_id', $user->id)
+
+    // Tentative en cours d'un utilisateur connecté OU d'un visiteur (via son token de session)
+    public function tentativeEnCours(?User $user, ?int $coursId = null, ?string $token = null): ?Quiz
+    {
+        // Sans utilisateur ni token : on s'arrête, sinon where('visiteur_token', null)
+        // deviendrait "IS NULL" et renverrait les quiz de tous les visiteurs
+        if (!$user && !$token) {
+            return null;
+        }
+
+        $tentatives = Quiz::query()
+            ->when(
+                $user,
+                fn ($q) => $q->where('user_id', $user->id),
+                fn ($q) => $q->whereNull('user_id')->where('visiteur_token', $token)
+            )
             ->when($coursId, fn ($q) => $q->where('cours_id', $coursId))
             ->whereDoesntHave('resultats')
             ->with('cours')
@@ -90,5 +109,44 @@ class QuizFinalisationService
             $enCours ??= $quiz;
         }
         return $enCours;
+    }
+    // Le visiteur a-t-il au moins un quiz terminé qui attend son inscription ?
+    public function visiteurAResultatEnAttente(?string $token): bool
+    {
+        return $token && Quiz::whereNull('user_id')
+            ->where('visiteur_token', $token)
+            ->whereHas('resultats')
+            ->exists();
+    }
+
+    // Rattache les quiz anonymes terminés au nouvel utilisateur + crée les notifications
+    public function rattacherVisiteur(User $user, string $token): void
+    {
+        DB::transaction(function () use ($user, $token) {
+            $quizzes = Quiz::whereNull('user_id')
+                ->where('visiteur_token', $token)
+                ->with(['cours', 'resultats'])
+                ->get();
+
+            foreach ($quizzes as $quiz) {
+                $resultat = $quiz->resultats->first();
+
+                if (
+                    !$resultat) {
+                    // Tentative jamais terminée : on ne la reprend pas
+                    $quiz->delete();
+                    continue;
+                }
+
+                $quiz->update(['user_id' => $user->id, 'visiteur_token' => null]);
+                $resultat->update(['user_id' => $user->id]);
+
+                Notification::create([
+                    'user_id' => $user->id,
+                    'message' => 'Quiz terminé : « ' . $quiz->cours->titre . ' ». Votre note : '
+                        . $resultat->score . ' / ' . $quiz->bareme . '.',
+                ]);
+            }
+        });
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Services\QuizFinalisationService;
 
 /**
  * Traite la soumission du code (POST /verify-email).
@@ -60,6 +61,6 @@ class VerifyEmailController extends Controller
         event(new Verified($request->user()));
 
         // Redirige vers le dashboard avec un message de statut
-        return redirect()->route('dashboard')->with('status', 'email-verified');
+        return redirect()->intended(route('dashboard'))->with('status', 'email-verified');
     }
 }

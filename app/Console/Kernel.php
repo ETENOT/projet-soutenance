@@ -18,6 +18,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('quiz:finaliser-expires')->everyFiveMinutes();
+        $schedule->command('quiz:finaliser-expires')->everyFiveMinutes();
+$schedule->command('quiz:purger-visiteurs')->daily();
     }
 
     protected function commands()

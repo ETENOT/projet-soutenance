@@ -46,26 +46,28 @@ Route::post('/profile/password/envoyer-lien', [App\Http\Controllers\HomeControll
 
 // soumission du mot de passe → envoi du code → confirmation.
 
-//l'utilisateur ne voit que les cours auxquels il est inscrit
-Route::get('/mes-cours', [App\Http\Controllers\CoursController::class, 'mesCours'])
+//l'utilisateur vers la page du choix de paiement pour une classe ou une inscription
+Route::get('/classes/{classe}/paiements/choix', [App\Http\Controllers\PaiementController::class, 'choix'])
     ->middleware('auth')
-    ->name('cours.mes');
-
-//l'utilisateur ne voit que les cours auxquels il est inscrit
-Route::get('/statut-paiement', [App\Http\Controllers\CoursController::class, 'statutPaiement'])
-    ->middleware('auth')
-    ->name('paiements.statut_paiement');
-
-Route::get('/inscriptions/{inscription}/paiement/choix', [App\Http\Controllers\PaiementController::class, 'choix'])
     ->name('paiements.choix');
+
+
 
 // Paiement en ligne d'une inscription — propriétaire vérifié dans le contrôleur
 Route::middleware('auth')->group(function () {
+
+    Route::post('/classes/{classe}/paiements/especes', [App\Http\Controllers\PaiementController::class, 'especes'])
+    ->name('paiements.especes');
+
     Route::get('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'create'])
         ->name('paiements.create');
 
     Route::post('/inscriptions/{inscription}/paiement/payer', [App\Http\Controllers\PaiementController::class, 'payer'])
         ->name('paiements.payer');
+
+    Route::get('statut-paiement', [App\Http\Controllers\CoursController::class, 'statutPaiement'])
+        ->middleware('auth')
+        ->name('paiements.statut_paiement');
 
     // Retours SingPay (redirect_success / redirect_error définis dans PaiementController::payer)
     Route::get('/paiement/success', [App\Http\Controllers\PaiementController::class, 'success'])
@@ -107,9 +109,18 @@ Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'ca
 // Détail d'un cours précis — public aussi, pas besoin d'être connecté pour consulter
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])->name('cours.show');
 
-// Espace particulier — passage d'un quiz d'auto-évaluation
-// Gestion des tentatives de quiz utilisateur
-Route::middleware(['auth', 'role:particulier'])->group(function () {
+// Quiz : visiteur (avec e-mail) OU particulier connecté
+Route::middleware('quiz.acces')->group(function () {
+
+    Route::get('/cours/{cours}/quiz/email', [App\Http\Controllers\QuizAttemptController::class, 'emailVisiteur'])
+        ->name('quiz.visiteur.email');
+
+    Route::post('/cours/{cours}/quiz/email', [App\Http\Controllers\QuizAttemptController::class, 'enregistrerEmailVisiteur'])
+        ->middleware('throttle:10,1')
+        ->name('quiz.visiteur.email.store');
+        
+    Route::get('/quiz/{quiz}/termine', [App\Http\Controllers\QuizAttemptController::class, 'termineVisiteur'])
+        ->name('quiz.visiteur.termine');
 
     // Afficher ou reprendre un quiz lié à un cours
     Route::get('/cours/{cours}/quiz', [App\Http\Controllers\QuizAttemptController::class, 'show'])
@@ -124,23 +135,21 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     // Terminer une tentative
     Route::post('/quiz/{quiz}/terminer', [App\Http\Controllers\QuizAttemptController::class, 'terminer'])
         ->name('quiz.tentative.terminer');
-    
-    // Annuler une tentative en cours
-Route::post('/quiz/{quiz}/annuler', [App\Http\Controllers\QuizAttemptController::class, 'annuler'])
-    ->name('quiz.tentative.annuler');
-
 
     // Annuler une tentative en cours
     Route::post('/quiz/{quiz}/annuler', [App\Http\Controllers\QuizAttemptController::class, 'annuler'])
         ->name('quiz.tentative.annuler');
+});
 
-
+// Historique, résultats, chapitre, ressources : réservés aux particuliers connectés
+Route::middleware(['auth', 'role:particulier'])->group(function () {
     // Voir le résultat après correction
     Route::get('/mes-resultats/{resultatQuiz}', [App\Http\Controllers\QuizAttemptController::class, 'resultat'])
         ->name('quiz.resultat');
 
-        Route::get('/cours/{cours}/historique-quiz', [App\Http\Controllers\QuizAttemptController::class, 'historique'])
-    ->name('quiz.historique');
+    // Voir l'historique de toutes les tentatives de quiz d'un cours (avec score et date)
+    Route::get('/cours/{cours}/historique-quiz', [App\Http\Controllers\QuizAttemptController::class, 'historique'])
+        ->name('quiz.historique');
 
     Route::get('/cours/{cours}/espace', [CoursController::class, 'espace'])
     ->name('cours.espace');
@@ -152,7 +161,8 @@ Route::post('/quiz/{quiz}/annuler', [App\Http\Controllers\QuizAttemptController:
     Route::get('/cours/{cours}/ressource/{resource}', [App\Http\Controllers\CoursController::class, 'ressource'])
     ->middleware('auth')
     ->name('cours.ressource');
-});
+    });
+
 // Inscription/désinscription d'un utilisateur connecté à une classe
 // Ces routes protègent l'inscription et la désinscription par authentification.
 Route::post('/classes/{classe}/inscription', [App\Http\Controllers\InscriptionController::class, 'store'])

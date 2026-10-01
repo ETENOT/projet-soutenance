@@ -28,7 +28,8 @@ return new class extends Migration
              // Crée une colonne "prix" de type décimal.
             // 10 = nombre total de chiffres maximum.
             // 2 = nombre de chiffres après la virgule.
-            // Exemple : 150000.50            $table->decimal('prix_entreprise', 10, 2);
+            // Exemple : 150000.50            
+            $table->decimal('prix_entreprise', 10, 2);
             $table->decimal('prix_particulier', 10, 2);
             $table->timestamps();
         });

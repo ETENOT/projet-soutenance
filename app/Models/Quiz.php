@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Quiz extends Model
 {
-    protected $fillable = ['date', 'heure_debut', 'heure_fin', 'cours_id', 'user_id', 'bareme'];
+    protected $fillable = [
+        'date', 'heure_debut', 'heure_fin', 'cours_id', 'user_id', 'bareme',
+        'email_visiteur', 'visiteur_token',
+    ];
 
     // La table "quizzes" a cours_id -> belongsTo
     public function cours()

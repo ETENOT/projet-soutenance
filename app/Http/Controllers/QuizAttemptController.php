@@ -9,6 +9,8 @@ use App\Models\ResultatQuiz;
 use App\Services\QuizFinalisationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Str;
 
 // Gère le passage d'un quiz d'auto-évaluation côté particulier :
 // démarrage/reprise d'une tentative, enregistrement des réponses au fil de l'eau,
@@ -35,52 +37,48 @@ class QuizAttemptController extends Controller
      * - Sinon, on en démarre une toute nouvelle.
      */
     public function show(Request $request, Cours $cours)
-    {
-        $user = $request->user();
+{
+    $user  = $request->user();
+    $token = $request->session()->get('visiteur_token');
+    $email = $request->session()->get('visiteur_email');
 
-        // Une "tentative en cours" = une ligne quizzes pour ce user + ce cours
-        // qui n'a pas encore de résultat associé (whereDoesntHave('resultats')).
-        // Dès qu'un résultat existe, la tentative est considérée comme terminée
-        // et ne doit plus être reprise.
-        $quiz = Quiz::where('cours_id', $cours->id)
-            ->where('user_id', $user->id)
-            ->whereDoesntHave('resultats')
-            ->latest('id') // la plus récente, au cas où d'anciennes tentatives abandonnées traîneraient
-            ->first();
+    // Visiteur sans e-mail enregistré : on le demande avant de commencer
+    if (!$user && (!$email || !$token)) {
+        return redirect()->route('quiz.visiteur.email', $cours);
+    }
 
-        // Cas "tentative abandonnée découverte au retour de l'utilisateur" :
-        // le temps est écoulé mais personne (ni lui, ni la tâche planifiée) n'a encore
-        // généré le résultat -> on le fait maintenant, avant d'afficher la page.
-        if ($quiz && $this->finalisation->estExpire($quiz)) {
-            $resultat = $this->finalisation->finaliser($quiz);
-            return redirect()->route('quiz.resultat', $resultat)
-                ->with('info', 'Le temps était écoulé, votre quiz a été envoyé automatiquement.');
+    $quiz = Quiz::where('cours_id', $cours->id)
+        ->when(
+            $user,
+            fn ($q) => $q->where('user_id', $user->id),
+            fn ($q) => $q->whereNull('user_id')->where('visiteur_token', $token)
+        )
+        ->whereDoesntHave('resultats')
+        ->latest('id')
+        ->first();
+
+    if ($quiz && $this->finalisation->estExpire($quiz)) {
+        $resultat = $this->finalisation->finaliser($quiz);
+        return redirect($this->urlApresFin($request, $quiz, $resultat))
+            ->with('info', 'Le temps était écoulé, votre quiz a été envoyé automatiquement.');
+    }
+
+    if (!$quiz) {
+        $autre = $this->finalisation->tentativeEnCours($user, null, $token);
+        if ($autre) {
+            return redirect()->route('cours.show', $cours)->with('quiz_en_cours', [
+                'cours' => $autre->cours->titre,
+                'url'   => route('quiz.tentative.show', $autre->cours),
+            ]);
         }
-
-        // Aucune tentative en cours trouvée -> on en crée une nouvelle
-        // (premier passage, ou tentative précédente déjà terminée -> c'est un "repasser le quiz").
-        if (!$quiz) {
-            // Un seul quiz en cours à la fois
-            $autre = $this->finalisation->tentativeEnCours($user);
-            if ($autre) {
-                return redirect()->route('cours.show', $cours)->with('quiz_en_cours', [
-                    'cours' => $autre->cours->titre,
-                    'url'   => route('quiz.tentative.show', $autre->cours),
-                ]);
-            }
-            $quiz = $this->demarrer($cours, $user);
-        }
+        $quiz = $this->demarrer($cours, $user, $email, $token);
+    }
 
         // orderBy('ordre') : réaffiche toujours les questions dans le même ordre que
         // lors du tirage initial, même si l'utilisateur quitte la page et revient plus tard.
         
         $reponses = $quiz->reponses()->with(['question.options'])->orderBy('ordre')->get();
 
-        // Temps restant en secondes, transmis à la vue pour alimenter le minuteur JS.
-        // diffInSeconds(..., false) * -1 : on force le signe pour obtenir un nombre positif
-        // (la limite est dans le futur par rapport à maintenant).
-        //$secondesRestantes = now()->diffInSeconds($this->finalisation->limite($quiz), false) * -1;
-        // $secondesRestantes = 3600;
         // Temps restant = deadline (heure_debut + 1h, figée au démarrage) - maintenant.
         // On soustrait deux timestamps : pas de piège de signe ni de décimales avec Carbon 3.
         $secondesRestantes = max(
@@ -95,12 +93,12 @@ class QuizAttemptController extends Controller
      * Crée une nouvelle tentative : une ligne "quizzes" représentant la session,
      * puis une ligne "reponses_quiz" par question tirée (avec option_id encore vide).
      */
-    private function demarrer(Cours $cours, $user): Quiz
+    private function demarrer(Cours $cours, $user, $email, $token): Quiz
     {
         // DB::transaction : si une des insertions plante en cours de route
         // (ex. coupure réseau avec la base), tout est annulé plutôt que de laisser
         // une tentative à moitié créée (quiz sans ses reponses_quiz, par exemple).
-        return DB::transaction(function () use ($cours, $user) {
+        return DB::transaction(function () use ($cours, $user, $email, $token) {
             // On tire TOUTE la banque de questions du cours, juste mélangée
             // (inRandomOrder), pas un sous-ensemble.
             // On la récupère AVANT de créer la ligne "quizzes" car le barème
@@ -108,13 +106,19 @@ class QuizAttemptController extends Controller
             $questionIds = $cours->questions()->inRandomOrder()->pluck('id');
 
             $quiz = Quiz::create([
+                'cours_id' => $cours->id,
+                'user_id'        => $user?->id,
+                'email_visiteur' => $user ? null : $email,
+                'visiteur_token' => $user ? null : $token,
                 'date' => now()->toDateString(),
                 'heure_debut' => now()->format('H:i:s'),
                 // Deadline calculée et figée dès le démarrage (et non recalculée
                 // à chaque requête) : c'est elle qui fait foi pour détecter l'expiration.
                 'heure_fin' => now()->addMinutes(self::DUREE_MAX_MINUTES)->format('H:i:s'),
                 'cours_id' => $cours->id,
-                'user_id' => $user->id,
+                'user_id'        => $user?->id,
+                'email_visiteur' => $user ? null : $email,
+                'visiteur_token' => $user ? null : $token,
                 // Chaque question vaut 1 point -> le barème (le "noté sur X")
                 // est simplement le nombre de questions posées pour cette tentative.
                 // Ex : 30 questions tirées -> bareme = 30 -> quiz noté sur 30.
@@ -147,7 +151,7 @@ class QuizAttemptController extends Controller
     {
         // Empêche un particulier de modifier la tentative d'un autre utilisateur
         // (protection contre la manipulation de l'URL/des paramètres).
-        abort_unless($quiz->user_id === $request->user()->id, 403);
+        abort_unless($this->estProprietaire($request, $quiz), 403);
 
         // Une tentative déjà notée (résultat existant) ne doit plus pouvoir être modifiée.
         abort_if($quiz->resultats()->exists(), 409);
@@ -157,7 +161,7 @@ class QuizAttemptController extends Controller
         // dépassé, on clôture immédiatement au lieu d'enregistrer la réponse.
         if ($this->finalisation->estExpire($quiz)) {
             $resultat = $this->finalisation->finaliser($quiz);
-            return response()->json(['ok' => false, 'expire' => true, 'redirect' => route('quiz.resultat', $resultat)]);
+            return response()->json(['ok' => false, 'expire' => true, 'redirect' => $this->urlApresFin($request, $quiz, $resultat)]);
         }
 
         $data = $request->validate([
@@ -181,14 +185,14 @@ class QuizAttemptController extends Controller
      */
     public function terminer(Request $request, Quiz $quiz)
     {
-        abort_unless($quiz->user_id === $request->user()->id, 403);
+        abort_unless($this->estProprietaire($request, $quiz), 403);
 
         // Si un résultat existe déjà (ex. double clic, ou double soumission du formulaire
         // au moment exact où le minuteur atteint 0), on ne le recrée pas — on réutilise
         // celui qui existe déjà plutôt que de générer un doublon.
         $resultat = $quiz->resultats()->first() ?? $this->finalisation->finaliser($quiz);
 
-        return redirect()->route('quiz.resultat', $resultat);
+        return redirect($this->urlApresFin($request, $quiz, $resultat));
     }
 
     /**
@@ -206,44 +210,105 @@ class QuizAttemptController extends Controller
         return view('quiz.resultat', compact('resultatQuiz', 'reponses'));
     }
 
-    /**
-     * Annule une tentative encore en cours et retourne à la page du cours.
-     */
     public function annuler(Request $request, Quiz $quiz)
     {
-        // Seul le propriétaire de la tentative peut l'annuler.
-        abort_unless($quiz->user_id === $request->user()->id, 403);
-
-        // Conserver le cours pour pouvoir y rediriger après la suppression du quiz.
+        // Refuse l'annulation si cette tentative n'appartient pas à l'utilisateur connecté.
+        abort_unless($this->estProprietaire($request, $quiz), 403);
+        // Conserve le cours associé pour rediriger l'utilisateur vers sa page après l'annulation.
         $cours = $quiz->cours;
 
-        // Une tentative ayant déjà un résultat est terminée et ne peut plus être annulée.
         if ($quiz->resultats()->exists()) {
             return redirect()->route('cours.show', $cours)
                 ->with('error', 'Ce quiz est déjà terminé, il ne peut plus être annulé.');
         }
 
-        // Les réponses associées sont supprimées automatiquement par la clé étrangère.
-        $quiz->delete();
+        $quiz->delete(); // reponses_quiz part en cascade (clé étrangère)
 
-        // Informer l'utilisateur que la tentative a bien été annulée.
         return redirect()->route('cours.show', $cours)->with('success', 'Le quiz a été annulé.');
     }
 
-    /**
-     * Affiche, pour le cours demandé, l'historique des résultats de l'utilisateur connecté.
-     */
     public function historique(Request $request, Cours $cours)
     {
-        // Limiter les résultats à l'utilisateur connecté et aux quiz de ce cours.
         $resultats = ResultatQuiz::where('user_id', $request->user()->id)
             ->whereHas('quiz', fn ($q) => $q->where('cours_id', $cours->id))
-            // Charger les quiz liés en une seule fois et afficher les résultats les plus récents d'abord.
             ->with('quiz')
             ->latest()
             ->get();
 
-        // Transmettre le cours et ses résultats à la vue de l'historique.
         return view('quiz.historique', compact('cours', 'resultats'));
+    }
+
+    // Propriétaire = utilisateur connecté, OU visiteur dont le token de session correspond
+    private function estProprietaire(Request $request, Quiz $quiz): bool
+    {
+        $user = $request->user();
+        if ($user) {
+            return $quiz->user_id === $user->id;
+        }
+
+        $token = (string) $request->session()->get('visiteur_token');
+        return $quiz->user_id === null
+            && $quiz->visiteur_token !== null
+            && $token !== ''
+            && hash_equals($quiz->visiteur_token, $token);
+    }
+
+    // Où aller une fois le quiz fini : résultat pour un connecté, invitation à s'inscrire pour un visiteur
+    private function urlApresFin(Request $request, Quiz $quiz, ResultatQuiz $resultat): string
+    {
+        return $request->user()
+            ? route('quiz.resultat', $resultat)
+            : route('quiz.visiteur.termine', $quiz);
+    }
+
+    // Étape 1 visiteur : saisie obligatoire de l'e-mail avant de commencer
+    public function emailVisiteur(Request $request, Cours $cours)
+    {
+        if ($request->user()) {
+            return redirect()->route('quiz.tentative.show', $cours);
+        }
+        return view('quiz.visiteur-email', compact('cours'));
+    }
+
+    public function enregistrerEmailVisiteur(Request $request, Cours $cours)
+    {
+        if ($request->user()) {
+            return redirect()->route('quiz.tentative.show', $cours);
+        }
+
+        $data  = $request->validate(['email' => ['required', 'string', 'email', 'max:255']]);
+        $email = mb_strtolower(trim($data['email']));
+
+        // Adresse déjà inscrite : inutile de passer en anonyme, on l'envoie se connecter
+        if (User::where('email', $email)->exists()) {
+            return redirect()->route('login')
+                ->with('status', 'Un compte existe déjà avec cette adresse e-mail. Connectez-vous pour passer le quiz.');
+        }
+
+        // Nouvelle adresse => nouvelle identité de visiteur (les anciennes tentatives sont abandonnées)
+        if ($request->session()->get('visiteur_email') !== $email || !$request->session()->has('visiteur_token')) {
+            $request->session()->put('visiteur_token', Str::random(40));
+        }
+        $request->session()->put('visiteur_email', $email);
+
+        return redirect()->route('quiz.tentative.show', $cours);
+    }
+
+    // Étape finale visiteur : quiz terminé, résultat masqué tant qu'il n'est pas inscrit
+    public function termineVisiteur(Request $request, Quiz $quiz)
+    {
+        if ($request->user()) {
+            return redirect()->route('cours.show', $quiz->cours);
+        }
+        abort_unless($this->estProprietaire($request, $quiz), 403);
+
+        if (!$quiz->resultats()->exists()) {
+            return redirect()->route('quiz.tentative.show', $quiz->cours);
+        }
+
+        return view('quiz.visiteur-termine', [
+            'cours' => $quiz->cours,
+            'email' => $quiz->email_visiteur,
+        ]);
     }
 }

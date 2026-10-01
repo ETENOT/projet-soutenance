@@ -62,7 +62,6 @@ class HomeController extends Controller
         // Les champs complémentaires dépendent du profil métier de l'utilisateur.
         $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
         ];
 
@@ -81,7 +80,6 @@ class HomeController extends Controller
         $request->validate($rules);
 
         $user->name = $request->get('name');
-        $user->email = $request->get('email');
 
         if ($request->file('avatar')) {
             $avatar = $request->file('avatar');

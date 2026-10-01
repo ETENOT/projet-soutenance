@@ -55,7 +55,7 @@
 
                             <div>
 
-                                <a href="index" class="d-inline-block auth-logo">
+                                <a href="{{ url('/') }}" class="d-inline-block auth-logo">
 
                                     <img src="{{ URL::asset('build/images/logo_neovision.png') }}" alt="Néovision" height="55">
 
@@ -154,13 +154,15 @@
                                             <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
 
                                             <input type="email" class="form-control @error('email') is-invalid @enderror"
-
-                                                name="email" id="email" value="{{ old('email') }}"
-
-                                                placeholder="Entrez votre siège social e-mail" required>
+                                                name="email" id="email"
+                                                value="{{ $emailVisiteur ?? old('email') }}"
+                                                placeholder="Entrez votre adresse e-mail" required
+                                                @if(!empty($emailVisiteur)) readonly style="background-color:#e9ecef;cursor:not-allowed;" @endif>
+                                            @if(!empty($emailVisiteur))
+                                                <small class="text-muted">Adresse saisie avant votre quiz, elle ne peut pas être modifiée.</small>
+                                            @endif
 
                                             @error('email')
-
                                                 <span class="invalid-feedback" role="alert">
 
                                                     <strong>{{ $message }}</strong>
@@ -230,10 +232,13 @@
                                         <div class="mb-3">
 
                                             <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
-
+                                            
+                                            @if(!empty($emailVisiteur))
+                                                <input type="hidden" name="role" value="particulier">
+                                            @endif
                                             <select id="role" name="role" class="form-select @error('role') is-invalid @enderror"
-
-                                                    required onchange="toggleRoleFields()">
+                                                    required onchange="toggleRoleFields()" 
+                                                    @if(!empty($emailVisiteur)) disabled @endif>
 
                                                 {{-- old('role', 'particulier') : "particulier" pré-sélectionné par défaut au
 

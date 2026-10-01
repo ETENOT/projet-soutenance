@@ -15,15 +15,29 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Services\QuizFinalisationService;
 
 class RegisteredUserController extends Controller
 {
     /**
      * Affiche le formulaire d'inscription (resources/views/auth/register.blade.php).
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        return view('auth.register', [
+            'emailVisiteur' => $this->emailVisiteurVerrouille($request),
+        ]);
+    }
+
+    // L'e-mail n'est verrouillé que si le visiteur a un quiz terminé qui attend son inscription
+    private function emailVisiteurVerrouille(Request $request): ?string
+    {
+        $token = $request->session()->get('visiteur_token');
+        $email = $request->session()->get('visiteur_email');
+
+        return ($email && app(QuizFinalisationService::class)->visiteurAResultatEnAttente($token))
+            ? $email
+            : null;
     }
 
     /**
@@ -38,6 +52,13 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $emailVisiteur = $this->emailVisiteurVerrouille($request);
+        $tokenVisiteur = $request->session()->get('visiteur_token');
+
+        if ($emailVisiteur) {
+            // On ignore ce que le navigateur envoie : e-mail et rôle viennent du serveur
+            $request->merge(['email' => $emailVisiteur, 'role' => 'particulier']);
+        }
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
@@ -117,6 +138,16 @@ class RegisteredUserController extends Controller
         // Création finale du User, une fois qu'on sait quel role_id/particulier_id/
         // entreprise_id lui attribuer
         $user = User::create($userData);
+        if ($emailVisiteur && $tokenVisiteur) {
+            app(QuizFinalisationService::class)->rattacherVisiteur($user, $tokenVisiteur);
+            $request->session()->forget(['visiteur_email', 'visiteur_token']);
+
+            // Après la vérification du code, on atterrit sur l'historique du quiz
+            $dernierCours = $user->resultatsQuiz()->with('quiz')->latest()->first()?->quiz?->cours_id;
+            if ($dernierCours) {
+                $request->session()->put('url.intended', route('quiz.historique', $dernierCours));
+            }
+        }
 
         // Déclenche l'événement Registered (écouté par défaut pour envoyer
         // l'email de vérification d'adresse, si MustVerifyEmail est activé sur User)

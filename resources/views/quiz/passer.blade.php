@@ -1,4 +1,4 @@
-@extends('layouts.master')
+@extends(Auth::check() ? 'layouts.master' : 'layouts.master-without-nav')
 
 @section('title')
     Quiz — {{ $quiz->cours->titre }}
@@ -51,7 +51,7 @@
         </form>
 
             <form id="form-annuler" action="{{ route('quiz.tentative.annuler', $quiz) }}" method="POST"
-                onsubmit="return confirm('Annuler ce quiz ? Il sera supprimé et n\'apparaîtra pas dans votre historique.');">
+                onsubmit="return confirm('Annuler ce quiz ? Il sera supprimé.');">
                 @csrf
             </form>
     </div>
@@ -103,7 +103,8 @@ function tick() {
     }
 }
 
-tick(); // affichage immédiat, sans attendre 1 seconde
-const interval = setInterval(tick, 1000);
+let interval;
+tick();
+interval = setInterval(tick, 1000);
 </script>
 @endsection
