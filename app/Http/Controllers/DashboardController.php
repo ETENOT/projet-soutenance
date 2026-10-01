@@ -8,15 +8,16 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request){
-        // Auth::user() renvoie l'utilisateur connecté (peu importe le nom de sa classe,
-        // ->load('role') précharge la relation "role" tout de suite (1 seule requête SQL),
+    public function index(Request $request)
+    {
+        // Auth::user() renvoie l'utilisateur connecté.
+        // ->load('role') précharge la relation "role".
         $utilisateur = Auth::user()->load('role');
 
-         // match() compare $utilisateur->role->nom à chaque cas dans l'ordre.
-         //$utilisateur->role->nom fonctionne car : role_id sur "users" pointe vers "roles",
-         return match ($utilisateur->role->nom) {      
-            'admin' => $this->admin($utilisateur) ,
+        // match() compare le rôle de l'utilisateur
+        // et appelle la méthode correspondant à ce rôle.
+        return match ($utilisateur->role->nom) {
+            'admin' => $this->admin($utilisateur),
             'entreprise' => $this->entreprise($utilisateur),
             'particulier' => $this->particulier($utilisateur),
 
@@ -24,107 +25,227 @@ class DashboardController extends Controller
         };
     }
 
-     // Chaque méthode privée retourne la vue Blade correspondant au rôle,
-    // en lui passant l'utilisateur connecté pour que la vue puisse afficher son nom, etc.
+
+    // =========================================================
+    // ESPACE PARTICULIER
+    // =========================================================
+
     private function particulier($utilisateur)
-{
-    // Nombre total de sessions auxquelles l'utilisateur est inscrit
-    $sessionsInscrites = $utilisateur->inscriptions()->count();
+    {
+        // Nombre total de sessions auxquelles l'utilisateur est inscrit.
+        $sessionsInscrites = $utilisateur->inscriptions()->count();
 
-    // Sessions dont la classe est actuellement en cours (date_debut <= aujourd'hui <= date_fin)
-    $SessionEnCours = $utilisateur->inscriptions()
-    ->whereHas('paiement')
-        ->whereHas('classe', function ($q) {
-            $q->where('date_debut', '<=', now())
-              ->where('date_fin', '>=', now());
-        })->count();
 
-        
-// $utilisateur->inscriptions()->whereHas('paiement')
-    // La prochaine classe à venir (date_debut la plus proche dans le futur)
-    $prochaineClasse =\App\Models\Classe::whereHas('inscriptions', function ($q) use ($utilisateur) {
-            $q->where('user_id', $utilisateur->id);
-        })
-        ->where('date_debut', '>', now())
-        ->orderBy('date_debut')
-        ->first();
+        // =====================================================
+        // SESSIONS EN COURS
+        // =====================================================
 
-    // Moyenne des scores sur tous les quiz passés (null si aucun quiz encore fait)
-    $moyenneQuiz = $utilisateur->resultatsQuiz()->avg('score');
+        // Une session est en cours lorsque :
+        // date_debut <= aujourd'hui
+        // ET
+        // date_fin >= aujourd'hui
+        //
+        // On vérifie également que la session est payée.
+        $SessionEnCours = $utilisateur->inscriptions()
+            ->whereHas('paiement')
+            ->whereHas('classe', function ($q) {
+                $q->where('date_debut', '<=', now())
+                  ->where('date_fin', '>=', now());
+            })
+            ->count();
 
-    // Notifications non encore lues
-    $notificationsNonLues = $utilisateur->notifications()->where('est_lue', false)->count();
 
-    // Sessions payées vs impayées (une Inscription est "payée" si elle a un Paiement lié)
-    $sessionsPayees = $utilisateur->inscriptions()->whereHas('paiement')->count();
-    $sessionsImpayees = $utilisateur->inscriptions()->whereDoesntHave('paiement')->count();
+        // =====================================================
+        // PROCHAINE SESSION
+        // =====================================================
 
-    return view('dashboards.particulier', [
-        'utilisateur' => $utilisateur,
-        'sessionsInscrites' => $sessionsInscrites,
-        'SessionEnCours' => $SessionEnCours,
-        'prochaineClasse' => $prochaineClasse
-            ? \Carbon\Carbon::parse($prochaineClasse->date_debut)->format('d/m/Y')
-            : 'Aucune session prévue',
-        'moyenneQuiz' => $moyenneQuiz !== null ? round($moyenneQuiz, 1) : null,
-        'notificationsNonLues' => $notificationsNonLues,
-        'sessionsPayees' => $sessionsPayees,
-        'sessionsImpayees' => $sessionsImpayees,
-    ]);
-}
+        // Recherche la prochaine classe à venir
+        // parmi celles auxquelles l'utilisateur est inscrit.
+        $prochaineClasse = \App\Models\Classe::whereHas('inscriptions', function ($q) use ($utilisateur) {
+                $q->where('user_id', $utilisateur->id);
+            })
+            ->where('date_debut', '>', now())
+            ->orderBy('date_debut')
+            ->first();
 
-    private function entreprise($utilisateur)
-{
-    $entreprise = $utilisateur->entreprise;
 
-    // Garde-fou : un compte "entreprise" sans entreprise_id renseigné ne devrait
-    // normalement pas arriver, mais on évite un crash si ça se produit.
-    if (!$entreprise) {
-        return view('dashboards.entreprise', [
+        // =====================================================
+        // ANCIENS COURS
+        // =====================================================
+
+        // On recherche les inscriptions :
+        //
+        // 1. appartenant à l'utilisateur connecté ;
+        // 2. ayant un paiement ;
+        // 3. dont la classe est terminée ;
+        // 4. avec le cours correspondant.
+        //
+        // Chaîne :
+        // Utilisateur
+        //      ↓
+        // Inscription
+        //      ↓
+        // Classe
+        //      ↓
+        // Cours
+        $anciensCours = $utilisateur->inscriptions()
+            ->whereHas('paiement')
+            ->whereHas('classe', function ($q) {
+                $q->where('date_fin', '<', now());
+            })
+            ->with('classe.cours')
+            ->get()
+            ->map(function ($inscription) {
+
+                // On récupère le cours lié à la classe.
+                return $inscription->classe->cours;
+            })
+            ->filter()
+            ->unique('id')
+            ->values();
+
+
+        // =====================================================
+        // MOYENNE DES QUIZ
+        // =====================================================
+
+        // Moyenne des scores obtenus aux quiz.
+        $moyenneQuiz = $utilisateur->resultatsQuiz()->avg('score');
+
+
+        // =====================================================
+        // NOTIFICATIONS
+        // =====================================================
+
+        // Nombre de notifications qui n'ont pas encore été lues.
+        $notificationsNonLues = $utilisateur->notifications()
+            ->where('est_lue', false)
+            ->count();
+
+
+        // =====================================================
+        // STATUT DES PAIEMENTS
+        // =====================================================
+
+        // Une inscription est considérée comme payée
+        // lorsqu'elle possède un paiement associé.
+        $sessionsPayees = $utilisateur->inscriptions()
+            ->whereHas('paiement')
+            ->count();
+
+        // Inscriptions sans paiement.
+        $sessionsImpayees = $utilisateur->inscriptions()
+            ->whereDoesntHave('paiement')
+            ->count();
+
+
+        // =====================================================
+        // VUE DU PARTICULIER
+        // =====================================================
+
+        return view('dashboards.particulier', [
             'utilisateur' => $utilisateur,
-            'devisEnCours' => 0,
-            'employesInscrits' => 0,
-            'sessionsReservees' => 0,
-            'budgetFormation' => 0,
+
+            'sessionsInscrites' => $sessionsInscrites,
+
+            'SessionEnCours' => $SessionEnCours,
+
+            'prochaineClasse' => $prochaineClasse
+                ? \Carbon\Carbon::parse($prochaineClasse->date_debut)->format('d/m/Y')
+                : 'Aucune session prévue',
+
+            'moyenneQuiz' => $moyenneQuiz !== null
+                ? round($moyenneQuiz, 1)
+                : null,
+
+            'notificationsNonLues' => $notificationsNonLues,
+
+            'sessionsPayees' => $sessionsPayees,
+
+            'sessionsImpayees' => $sessionsImpayees,
+
+            // Nouveaux anciens cours.
+            'anciensCours' => $anciensCours,
         ]);
     }
 
-    // Devis en attente de traitement
-    $devisEnCours = $entreprise->devis()->where('statut', 'en_attente')->count();
 
-    // Sessions réservées par n'importe quel employé de cette entreprise
-    $sessionsReservees = \App\Models\Inscription::whereHas('user', function ($q) use ($entreprise) {
-        $q->where('entreprise_id', $entreprise->id);
-    })->count();
+    // =========================================================
+    // ESPACE ENTREPRISE
+    // =========================================================
 
-    // Total dépensé en formation : somme des paiements liés aux inscriptions
-    // de tous les employés de cette entreprise
-    $budgetFormation = \App\Models\Paiement::whereHas('inscription.user', function ($q) use ($entreprise) {
-        $q->where('entreprise_id', $entreprise->id);
-    })->sum('montant');
+    private function entreprise($utilisateur)
+    {
+        $entreprise = $utilisateur->entreprise;
 
-    return view('dashboards.entreprise', [
-        'utilisateur' => $utilisateur,
-        'devisEnCours' => $devisEnCours,
-        'sessionsReservees' => $sessionsReservees,
-        'budgetFormation' => $budgetFormation,
-    ]);
-}
+        // Garde-fou si aucun compte entreprise n'est associé.
+        if (!$entreprise) {
+            return view('dashboards.entreprise', [
+                'utilisateur' => $utilisateur,
+                'devisEnCours' => 0,
+                'employesInscrits' => 0,
+                'sessionsReservees' => 0,
+                'budgetFormation' => 0,
+            ]);
+        }
+
+
+        // Devis en attente de traitement.
+        $devisEnCours = $entreprise->devis()
+            ->where('statut', 'en_attente')
+            ->count();
+
+
+        // Sessions réservées par les employés de l'entreprise.
+        $sessionsReservees = \App\Models\Inscription::whereHas('user', function ($q) use ($entreprise) {
+            $q->where('entreprise_id', $entreprise->id);
+        })
+        ->count();
+
+
+        // Total dépensé en formation par l'entreprise.
+        $budgetFormation = \App\Models\Paiement::whereHas('inscription.user', function ($q) use ($entreprise) {
+            $q->where('entreprise_id', $entreprise->id);
+        })
+        ->sum('montant');
+
+
+        return view('dashboards.entreprise', [
+            'utilisateur' => $utilisateur,
+            'devisEnCours' => $devisEnCours,
+            'sessionsReservees' => $sessionsReservees,
+            'budgetFormation' => $budgetFormation,
+        ]);
+    }
+
+
+    // =========================================================
+    // ESPACE ADMIN
+    // =========================================================
 
     private function admin($utilisateur)
     {
-        // Compteurs simples : contexte du volume à gérer, pas des indicateurs business
+        // Compteurs du tableau de bord administrateur.
         $totalUtilisateurs = User::count();
+
         $totalCours = \App\Models\Cours::count();
+
         $totalClasses = \App\Models\Classe::count();
+
         $totalQuiz = \App\Models\Quiz::count();
+
 
         return view('dashboards.admin', [
             'utilisateur' => $utilisateur,
+
             'totalUtilisateurs' => $totalUtilisateurs,
+
             'totalCours' => $totalCours,
+
             'totalClasses' => $totalClasses,
+
             'totalQuiz' => $totalQuiz,
         ]);
     }
-}   
+}
+

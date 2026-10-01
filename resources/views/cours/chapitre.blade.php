@@ -4,263 +4,215 @@
 
 @section('content')
 
+<style>
+
+    .list-group-item.active {
+        background-color: #eef6ff;
+        border-color: #d7e8ff;
+        color: #0f47ad;
+        font-weight: 600;
+    }
+
+</style>
+
+@auth
+
+@component('components.breadcrumb')
+
+    @slot('li_1')
+        {{ $cours->titre }}
+    @endslot
+
+    @slot('title')
+        {{ $chapitre->titre }}
+    @endslot
+
+@endcomponent
+
+@endauth
+
 <div class="container-fluid">
-
-    {{-- Retour --}}
-    <div class="mb-3">
-        <a href="{{ route('cours.espace', $cours) }}" class="text-primary text-decoration-none">
-            <i class="bi bi-arrow-left"></i>
-            Retour au cours
-        </a>
-    </div>
-
-
-    {{-- En-tête --}}
-    <div class="mb-4">
-
-        <div class="d-flex justify-content-between align-items-center">
-
-            <div>
-                <small class="text-muted">
-                    Chapitres > {{ $chapitre->titre }}
-                </small>
-
-                <h2 class="fw-bold mt-2">
-                    {{ $chapitre->titre }}
-                </h2>
-            </div>
-
-
-            <div class="text-end">
-
-                <small class="text-muted">
-                    Progression
-                </small>
-
-                <div>
-                    <strong>
-                        {{ $chapitre->ordre }}/{{ $cours->chapitres->count() }}
-                        terminés
-                    </strong>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        {{-- Barre progression --}}
-        <div class="progress mt-3" style="height:8px">
-
-            <div class="progress-bar"
-                 style="width: {{ ($chapitre->ordre / $cours->chapitres->count()) * 100 }}%">
-            </div>
-
-        </div>
-
-    </div>
-
-
 
     <div class="row g-4">
 
 
-        {{-- COLONNE GAUCHE --}}
+        {{-- =================================================
+             COLONNE GAUCHE — panneau unique : chapitres / ressources / quiz
+        ================================================== --}}
         <div class="col-lg-3">
 
+            <div class="card shadow-sm">
 
-            {{-- Chapitres --}}
-            <div class="card shadow-sm mb-4">
-
+                {{-- Contenu du chapitre (liste des chapitres du cours) --}}
                 <div class="card-header bg-white">
-
-                    <strong>
-                        Contenu du chapitre
-                    </strong>
-
+                    <strong>Contenu du chapitre</strong>
                 </div>
-
 
                 <div class="list-group list-group-flush">
 
-
                     @foreach($cours->chapitres as $item)
 
-
-                        <a href="{{ route('cours.chapitre', [$cours,$item]) }}"
-                           class="list-group-item list-group-item-action
+                        <a href="{{ route('cours.chapitre', [$cours, $item]) }}"
+                           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center
                            {{ $item->id == $chapitre->id ? 'active' : '' }}">
 
+                            <span>
+                                <small>{{ $item->ordre }}.</small>
+                                {{ $item->titre }}
+                            </span>
 
-                            <small>
-                                {{ $item->ordre }}.
-                            </small>
-
-                            {{ $item->titre }}
-
+                            <i class="bi bi-chevron-right small"></i>
 
                         </a>
-
 
                     @endforeach
 
-
                 </div>
 
 
-            </div>
-
-
-
-
-            {{-- Ressources --}}
-            <div class="card shadow-sm mb-4">
-
-
-                <div class="card-header bg-white">
-
+                {{-- Ressources --}}
+                <div class="card-header bg-white border-top">
                     <strong>
-                        <i class="bi bi-folder"></i>
+                        <i class="bi bi-folder me-1"></i>
                         Ressources
                     </strong>
-
                 </div>
 
+                <div class="list-group list-group-flush">
 
+                    @forelse($chapitre->resources->where('type', '!=', 'video') as $resource)
 
-                <div class="card-body p-2">
-
-
-                    @forelse($chapitre->resources as $resource)
-
-
-                        <a href="{{ route('cours.resources.voir', [$cours,$resource]) }}"
-                           class="d-flex align-items-center text-decoration-none p-2 rounded mb-2 border">
-
+                        <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
+                           class="list-group-item list-group-item-action">
 
                             <i class="bi bi-file-earmark-pdf text-danger me-2"></i>
-
-
-                            <span>
-                                {{ $resource->titre }}
-                            </span>
-
+                            {{ $resource->titre }}
 
                         </a>
 
-
                     @empty
 
-
-                        <small class="text-muted">
+                        <div class="list-group-item text-muted small">
                             Aucune ressource
-                        </small>
-
+                        </div>
 
                     @endforelse
 
+                    @foreach($chapitre->resources->where('type', 'video') as $resource)
+
+                        <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
+                           class="list-group-item list-group-item-action">
+
+                            <i class="bi bi-play-circle text-primary me-2"></i>
+                            {{ $resource->titre }}
+
+                        </a>
+
+                    @endforeach
 
                 </div>
 
 
-            </div>
-
-
-
-            {{-- Quiz --}}
-            <div class="card shadow-sm">
-
-
-                <div class="card-header bg-white">
-
+                {{-- Quiz : décoratif pour l'instant, pas de quiz par chapitre
+                     (le quiz du cours reste unique et non obligatoire) --}}
+                <div class="card-header bg-white border-top">
                     <strong>
-                        <i class="bi bi-question-circle"></i>
+                        <i class="bi bi-question-circle me-1"></i>
                         Quiz
                     </strong>
-
                 </div>
 
-
-                <div class="card-body">
-
-                    <span class="text-muted">
-                        Quiz du chapitre
-                    </span>
-
+                <div class="list-group-item d-flex justify-content-between align-items-center text-muted">
+                    Quiz du chapitre
+                    <i class="bi bi-lock small"></i>
                 </div>
-
 
             </div>
-
-
 
         </div>
 
 
-
-
-
-
-        {{-- CONTENU PRINCIPAL --}}
+        {{-- =================================================
+             COLONNE DROITE — vidéo + à retenir
+        ================================================== --}}
         <div class="col-lg-9">
 
-
-            <div class="card shadow-sm">
-
+            <div class="card shadow-sm mb-4">
 
                 <div class="card-body p-4">
 
-
-                    <h4 class="fw-bold mb-4">
+                    <h5 class="fw-bold mb-3">
                         {{ $chapitre->titre }}
-                    </h4>
+                    </h5>
 
 
+                    @php
+                        $video = $chapitre->resources->firstWhere('type', 'video');
+                    @endphp
 
-                    {{-- Zone contenu --}}
-                    <div style="line-height:1.9">
+                    @if($video)
+
+                        <a href="{{ route('cours.resources.voir', [$cours, $video]) }}"
+                           target="_blank"
+                           class="d-flex align-items-center justify-content-center rounded mb-4 text-decoration-none"
+                           style="background:#0b1437; aspect-ratio:16/9;">
+
+                            <i class="bi bi-play-circle-fill text-white" style="font-size:3.5rem;"></i>
+
+                        </a>
+
+                    @endif
 
 
-                        {!! nl2br(e($chapitre->contenu)) !!}
+                    {{-- À retenir : chaque ligne du contenu du chapitre devient une puce --}}
+                    <div class="p-3 rounded" style="background:#eef6ff;">
 
+                        <div class="fw-bold text-primary mb-2">
+                            <i class="bi bi-lightbulb me-1"></i>
+                            À retenir
+                        </div>
+
+                        <ul class="mb-0">
+
+                            @foreach(explode("\n", trim($chapitre->contenu ?? '')) as $ligne)
+
+                                @continue(trim($ligne) === '')
+
+                                <li>{{ trim($ligne) }}</li>
+
+                            @endforeach
+
+                        </ul>
 
                     </div>
 
-
-
                 </div>
-
 
             </div>
 
 
-
-
-
             {{-- Navigation --}}
-            <div class="d-flex justify-content-between mt-4">
-
+            <div class="d-flex justify-content-between">
 
                 @php
 
                 $chapitrePrecedent = $cours->chapitres
-                    ->where('ordre','<',$chapitre->ordre)
+                    ->where('ordre', '<', $chapitre->ordre)
                     ->sortByDesc('ordre')
                     ->first();
 
 
                 $chapitreSuivant = $cours->chapitres
-                    ->where('ordre','>',$chapitre->ordre)
+                    ->where('ordre', '>', $chapitre->ordre)
                     ->sortBy('ordre')
                     ->first();
 
                 @endphp
 
 
-
                 @if($chapitrePrecedent)
 
-                    <a href="{{ route('cours.chapitre',[$cours,$chapitrePrecedent]) }}"
+                    <a href="{{ route('cours.chapitre', [$cours, $chapitrePrecedent]) }}"
                        class="btn btn-outline-secondary">
 
                         <i class="bi bi-arrow-left"></i>
@@ -275,11 +227,9 @@
                 @endif
 
 
-
-
                 @if($chapitreSuivant)
 
-                    <a href="{{ route('cours.chapitre',[$cours,$chapitreSuivant]) }}"
+                    <a href="{{ route('cours.chapitre', [$cours, $chapitreSuivant]) }}"
                        class="btn btn-primary">
 
                         Chapitre suivant
@@ -289,18 +239,12 @@
 
                 @endif
 
-
             </div>
-
-
 
         </div>
 
-
     </div>
 
-
 </div>
-
 
 @endsection

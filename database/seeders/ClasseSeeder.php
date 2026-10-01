@@ -63,7 +63,7 @@ class ClasseSeeder extends Seeder
  
 		Classe::create([
 			'nom' => 'Developpement Web - Session Novembre 2026',
-			'capacite_max' => 8,
+			'capacite_max' => 10,
 			'date_debut' => '2026-11-02',
 			'date_fin' => '2026-11-20',
 			'lieu' => 'Libreville',

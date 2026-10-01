@@ -668,16 +668,23 @@ $role = Auth::user()?->role?->nom;
 
 </style>
 
+@auth
+
+@component('components.breadcrumb')
+
+    @slot('li_1')
+        Cours
+    @endslot
+
+    @slot('title')
+        {{ $cours->titre }}
+    @endslot
+
+@endcomponent
+
+@endauth
+
 <div class="container-fluid course-page">
-
-{{-- =====================================================
-RETOUR
-====================================================== --}}
-
-<a href="{{ route('cours.catalogue') }}" class="course-back">
-    <i class="bi bi-arrow-left"></i>
-    Retour au catalogue
-</a>
 
 {{-- =====================================================
 HERO + PRIX (côte à côte)
@@ -861,7 +868,7 @@ ONGLET
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="contenu-tab" data-bs-toggle="tab" data-bs-target="#contenu" type="button" role="tab" aria-controls="contenu" aria-selected="false">
                 <i class="bi bi-folder2-open"></i>
-                Contenu
+               Avis
             </button>
         </li>
 
@@ -1113,7 +1120,7 @@ CLASSES
                             <i class="bi bi-people"></i>
                             {{ $classe->inscriptions_count ?? 0 }}
                             /
-                            {{ $classe->capacite ?? '∞' }}
+                            {{ $classe->capacite_max }}
                             inscrits
                         </div>
 
@@ -1128,9 +1135,9 @@ CLASSES
 
                                 @if($mesInscriptionsPayees->contains($classe->id))
 
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle"></i>
-                                        Inscrit et payé
+                                   <span class="badge bg-success fs-6 px-3 py-2">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Inscription confirmée
                                     </span>
 
 
@@ -1138,15 +1145,16 @@ CLASSES
 
                                     <div class="d-flex align-items-center gap-2">
 
-                                        <span class="badge bg-warning text-dark">
-                                            Inscrit
+                                       <span class="badge bg-warning text-white fs-6 px-3 py-2">
+                                            <i class="bi bi-clock-history me-1"></i>
+                                            Inscription en attente de paiement
                                         </span>
 
 
                                         <form method="POST" action="{{ route('classes.inscription.destroy', $classe) }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <button type="submit" class="btn btn-sm btn-danger">
                                                 Annuler
                                             </button>
                                         </form>
@@ -1156,7 +1164,7 @@ CLASSES
                                 @endif
 
 
-                            @elseif(isset($classe->capacite) && $classe->inscriptions_count >= $classe->capacite)
+                            @elseif($classe->inscriptions_count >= $classe->capacite_max)
 
                                 <span class="badge bg-secondary">
                                     Complet
@@ -1234,106 +1242,15 @@ QUIZ
                             </div>
                         @endif
                     @endauth
-            </div>
+                    @guest
+                    <div class="d-grid gap-2 mb-3" style="max-width: 260px;">
+                        <a href="{{ route('quiz.tentative.show', $cours) }}" class="btn btn-primary">
+                            {{ $quizEnCours ? 'Continuer le quiz' : 'Passer le quiz' }}
+                        </a>
+                    </div>
+                    @endguest
     </div>
 </div>
-
-{{-- =================================================
-CONTENU
-================================================== --}}
-
-<div class="tab-pane fade" id="contenu" role="tabpanel" aria-labelledby="contenu-tab">
-
-    <div class="course-section">
-
-        <h2 class="course-section-title">
-            <i class="bi bi-folder2-open"></i>
-            Contenu de la formation
-        </h2>
-
-
-        @if($cours->resources->count() === 0)
-
-            <div class="empty-state">
-                <i class="bi bi-folder-x d-block"></i>
-                Aucun document ou ressource n'est disponible pour le moment.
-            </div>
-
-
-        @elseif($accesDocuments)
-
-            @foreach($cours->resources as $resource)
-
-                <div class="resource-item">
-
-                    <div class="resource-info">
-
-                        <div class="resource-icon">
-                            @if($resource->type === 'video')
-                                <i class="bi bi-play-circle"></i>
-                            @elseif($resource->type === 'pdf')
-                                <i class="bi bi-file-earmark-pdf"></i>
-                            @elseif($resource->type === 'document')
-                                <i class="bi bi-file-earmark-text"></i>
-                            @else
-                                <i class="bi bi-file-earmark"></i>
-                            @endif
-                        </div>
-
-
-                        <div>
-
-                            <div class="resource-name">
-                                {{ $resource->titre }}
-                            </div>
-
-
-                            @if($resource->type)
-                                <small class="text-muted">{{ ucfirst($resource->type) }}</small>
-                            @endif
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="d-flex gap-2">
-
-                        <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}" class="btn btn-sm btn-primary">
-                            <i class="bi bi-eye"></i>
-                            Consulter
-                        </a>
-
-
-                        @if($resource->type !== 'video')
-
-                            <a href="{{ route('cours.resources.download', [$cours, $resource]) }}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-download"></i>
-                                Télécharger
-                            </a>
-
-                        @endif
-
-                    </div>
-
-                </div>
-
-            @endforeach
-
-
-        @else
-
-            <div class="course-content-access text-center">
-                <i class="bi bi-lock d-block"></i>
-                <h5>Contenu réservé aux inscrits</h5>
-                <a href="{{ route('cours.espace', $cours) }}" class="btn btn-primary">
-                    Accéder au cours
-                </a>
-            </div>
-
-        @endif
-
-    </div>
 
 </div>
 

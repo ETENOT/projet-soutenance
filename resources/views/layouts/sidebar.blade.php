@@ -1,4 +1,11 @@
 <!-- ========== App Menu ========== -->
+<!-- =========================================================
+     MENU LATÉRAL PRINCIPAL
+     ---------------------------------------------------------
+     Ce panneau centralise la navigation selon le rôle de l'utilisateur.
+     Les liens sont affichés différemment pour l'admin et pour les
+     profils particuliers / entreprises afin de garder l'interface simple.
+========================================================= -->
 <div class="app-menu navbar-menu">
     <!-- LOGO -->
     <div class="navbar-brand-box">
@@ -32,6 +39,7 @@
             </div>
             <ul class="navbar-nav" id="navbar-nav">
             {{-- Les liens d'administration et de formation dépendent du rôle courant. --}}
+            {{-- Bloc de navigation principal : tableau de bord, catalogue et gestion. --}}
             <li class="menu-title"><span>@lang('translation.menu')</span></li>
             <li class="nav-item">
                 <a class="nav-link menu-link" href="{{ route('dashboard') }}">
@@ -62,7 +70,7 @@
 
                 <li class="nav-item">
                     <a class="nav-link menu-link" href="{{ route('cours.mes') }}">
-                        <i class="ri-graduation-cap-line"></i> <span>Mes cours</span>
+                        <i class="ri-graduation-cap-line"></i> <span>Mes Formations</span>
                     </a>
                 </li>
             @endif

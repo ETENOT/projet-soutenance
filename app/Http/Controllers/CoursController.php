@@ -95,10 +95,14 @@ class CoursController extends Controller
                 ->exists()
             : false;
 
-        $quizEnCours = null;
-        if (Auth::check() && Auth::user()->role?->nom === 'particulier') {
-            $quizEnCours = app(\App\Services\QuizFinalisationService::class)
-                ->tentativeEnCours(Auth::user(), $cours->id);
+       $quizEnCours = null;
+        $service = app(\App\Services\QuizFinalisationService::class);
+        if (Auth::check()) {
+            if (Auth::user()->role?->nom === 'particulier') {
+                $quizEnCours = $service->tentativeEnCours(Auth::user(), $cours->id);
+            }
+        } else {
+            $quizEnCours = $service->tentativeEnCours(null, $cours->id, session('visiteur_token'));
         }
 
         return view('cours.show', [
@@ -220,46 +224,133 @@ class CoursController extends Controller
 
     public function mesCours()
     {
+        // On récupère toutes les inscriptions de l'utilisateur connecté.
+        // On charge également la classe, le cours et le paiement
+        // pour éviter de refaire des requêtes dans la vue.
         $inscriptions = Auth::user()
             ->inscriptions()
             ->with('classe.cours', 'paiement')
             ->get();
 
+        // =========================================================
+        // FORMATIONS EN COURS
+        // =========================================================
+
+        $inscriptionsEnCours = $inscriptions
+            ->filter(function ($inscription) {
+
+                // Une inscription sans paiement n'est pas considérée
+                // comme une formation suivie.
+                if (!$inscription->paiement) {
+                    return false;
+                }
+
+                // La formation est en cours si :
+                // date_debut <= aujourd'hui
+                // ET
+                // date_fin >= aujourd'hui.
+                return $inscription->classe->date_debut <= now()
+                    && $inscription->classe->date_fin >= now();
+            });
+
+
+        // =========================================================
+        // PROCHAINES FORMATIONS
+        // =========================================================
+
+        $prochainesFormations = $inscriptions
+            ->filter(function ($inscription) {
+
+                // Une inscription sans paiement n'est pas considérée.
+                if (!$inscription->paiement) {
+                    return false;
+                }
+
+                // La formation doit commencer dans le futur.
+                return $inscription->classe->date_debut > now();
+            })
+            ->sortBy(function ($inscription) {
+                return $inscription->classe->date_debut;
+            });
+
+
+        // =========================================================
+        // ANCIENS COURS
+        // =========================================================
+
+        $anciensCours = $inscriptions
+            ->filter(function ($inscription) {
+
+                // Une inscription sans paiement n'est pas considérée.
+                if (!$inscription->paiement) {
+                    return false;
+                }
+
+                // La formation est terminée lorsque sa date de fin
+                // est passée.
+                return $inscription->classe->date_fin < now();
+            })
+            ->sortByDesc(function ($inscription) {
+                return $inscription->classe->date_fin;
+            });
+
+
         return view('cours.mes_cours', [
-            'inscriptions' => $inscriptions,
+            'inscriptionsEnCours' => $inscriptionsEnCours,
+            'prochainesFormations' => $prochainesFormations,
+            'anciensCours' => $anciensCours,
         ]);
     }
 
+
+
     public function statutPaiement()
     {
-        $inscriptions = Auth::user()
+         $inscriptions = Auth::user()
             ->inscriptions()
             ->with('classe.cours', 'paiement')
             ->get();
 
         return view('paiements.statut_paiement', [
             'inscriptions' => $inscriptions,
-        ]);
+         ]);
+    }
+
+    /**
+     * Vérifie que l'utilisateur connecté est inscrit ET a payé (paiement validé)
+     * une classe de ce cours. Centralisé ici pour que espace(), chapitre() et
+     * ressource() appliquent exactement la même règle d'accès — avant, chacune
+     * la réimplémentait à sa façon (ou pas du tout pour ressource()).
+     */
+    private function utilisateurAAccesPaye(Cours $cours): bool
+    {
+        return Auth::user()->inscriptions()
+            ->whereHas('classe', function ($query) use ($cours) {
+                $query->where('cours_id', $cours->id);
+            })
+            ->whereHas('paiement', function ($query) {
+                $query->where('statut', 'valide');
+            })
+            ->exists();
     }
 
     public function espace(Cours $cours)
     {
-        $user = Auth::user();
-
-        $inscription = $user->inscriptions()
-            ->with('classe')
-            ->whereHas('classe', function ($query) use ($cours) {
-                $query->where('cours_id', $cours->id);
-            })
-            ->whereHas('paiement')
-            ->first();
-
-        if (!$inscription) {
+        if (!$this->utilisateurAAccesPaye($cours)) {
             return redirect()
                 ->route('cours.show', $cours)
                 ->with('error', 'Vous devez être inscrit et avoir payé pour accéder à ce cours.');
         }
 
+        $inscription = Auth::user()->inscriptions()
+            ->with('classe')
+            ->whereHas('classe', function ($query) use ($cours) {
+                $query->where('cours_id', $cours->id);
+            })
+            ->whereHas('paiement', function ($query) {
+                $query->where('statut', 'valide');
+            })
+            ->first();
 
         $cours->load([
             'chapitres' => function ($query) {
@@ -277,19 +368,7 @@ class CoursController extends Controller
 
     public function chapitre(Cours $cours, Chapitre $chapitre)
     {
-        $user = Auth::user();
-
-        // Vérification accès payé
-        $accesCours = $user->inscriptions()
-            ->whereHas('classe', function ($query) use ($cours) {
-                $query->where('cours_id', $cours->id);
-            })
-            ->whereHas('paiement', function ($query) {
-                $query->where('statut', 'valide');
-            })
-            ->exists();
-
-        if (!$accesCours) {
+        if (!$this->utilisateurAAccesPaye($cours)) {
             return redirect()
                 ->route('cours.show', $cours)
                 ->with('error', 'Accès réservé aux apprenants inscrits.');
@@ -322,6 +401,12 @@ class CoursController extends Controller
 
     public function ressource(Cours $cours, CoursResource $resource)
     {
+        if (!$this->utilisateurAAccesPaye($cours)) {
+            return redirect()
+                ->route('cours.show', $cours)
+                ->with('error', 'Vous devez être inscrit et avoir payé pour accéder à ce contenu.');
+        }
+
         // Vérifie que la ressource appartient bien au cours
         if ($resource->cours_id !== $cours->id) {
             abort(404);

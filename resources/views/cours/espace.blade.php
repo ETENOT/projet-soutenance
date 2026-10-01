@@ -24,56 +24,33 @@
 
 </style>
 
+@auth
+
+@component('components.breadcrumb')
+
+    @slot('li_1')
+        Cours
+    @endslot
+
+    @slot('title')
+        {{ $cours->titre }}
+    @endslot
+
+@endcomponent
+
+@endauth
 
 <div class="container-fluid">
 
-
 {{-- =====================================================
-     PROGRESSION + CLASSE ACTUELLE
+     CLASSE ACTUELLE
 ====================================================== --}}
 
 <div class="row g-4 mb-4">
 
 
-    {{-- Progression --}}
-    <div class="col-lg-7">
-
-        <div class="card h-100">
-
-            <div class="card-body">
-
-
-                <h5 class="fw-bold mb-3">
-                    <i class="bi bi-bar-chart-line text-primary"></i>
-                    Progression de la formation
-                </h5>
-
-
-                <div class="progress mb-3" style="height:12px;">
-
-                    <div class="progress-bar"
-                         role="progressbar"
-                         style="width:0%;">
-                    </div>
-
-                </div>
-
-
-                <p class="text-muted mb-0">
-                    Commencez votre formation pour suivre votre progression.
-                </p>
-
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-
     {{-- Classe actuelle --}}
-    <div class="col-lg-5">
+    <div class="col-12">
 
         <div class="card h-100">
 
@@ -93,6 +70,7 @@
                     <h6 class="fw-bold">
                         {{ $classe->nom }}
                     </h6>
+
 
 
                     <p class="text-muted mb-2">
