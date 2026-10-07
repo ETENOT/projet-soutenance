@@ -35,9 +35,9 @@ class CoursController extends Controller
             ->orderBy('titre')
             // ordre stable si deux cours ont le même titre
             ->orderBy('id') 
-            ->paginate(9)
+            ->paginate(9)
             // conserve ?search=... en changeant de page
-            ->withQueryString();
+            ->withQueryString();
 
         return view('cours.catalogue', [
             'cours' => $cours,
@@ -145,12 +145,15 @@ class CoursController extends Controller
      */
     public function index()
     {
-        // withCount('classes') ajoute "classes_count" sur chaque cours
-        // en une seule requête SQL (pas de boucle N+1)
-        $cours = Cours::withCount('classes')
-            ->orderBy('titre')
-            ->orderBy('id') // ordre stable si deux cours ont le même titre
-            ->paginate(10);
+       /**
+        * withCount('classes') ajoute "classes_count" sur chaque cours
+        *en une seule requête SQL (pas de boucle N+1)
+        */
+        $cours = Cours::withCount('classes')
+            ->orderBy('titre')
+            // ordre stable si deux cours ont le même titre
+            ->orderBy('id') 
+            ->paginate(10);
 
         return view('cours.index', [
             'cours' => $cours,

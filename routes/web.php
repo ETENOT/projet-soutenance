@@ -175,8 +175,8 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
         ->name('quiz.historique');
 
     // Liste des cours où le particulier a passé des quiz (avec le nombre de quiz par cours)
-    Route::get('/historique-quiz', [App\Http\Controllers\QuizAttemptController::class, 'historiqueCours'])
-    ->name('quiz.historique.cours');
+        Route::get('/historique-quiz', [App\Http\Controllers\QuizAttemptController::class, 'historiqueCours'])
+        ->name('quiz.historique.cours');
 
     // Espace d'apprentissage
     Route::get('/cours/{cours}/espace', [CoursController::class, 'espace'])
@@ -376,7 +376,7 @@ Route::middleware(['auth', 'role:admin'])
             });
     });
 
-    
+
 // ==========================================================================
 // ROUTE GÉNÉRALE
 // ==========================================================================
