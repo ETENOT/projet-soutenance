@@ -673,7 +673,7 @@ $role = Auth::user()?->role?->nom;
 @component('components.breadcrumb')
 
     @slot('li_1')
-        Cours
+        <a href="{{ route('cours.catalogue') }}">Cours</a>
     @endslot
 
     @slot('title')

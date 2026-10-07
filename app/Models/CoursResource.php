@@ -9,7 +9,6 @@ class CoursResource extends Model
 {
     protected $fillable = [
         'cours_id',
-        'chapitre_id',
         'type',
         'titre',
         'chemin',
@@ -18,21 +17,25 @@ class CoursResource extends Model
         'taille'
     ];
 
+    /**
+     * Une ressource appartient à un cours.
+     */
     public function cours(): BelongsTo
     {
         return $this->belongsTo(Cours::class);
     }
 
-    public function chapitre(): BelongsTo
-    {
-        return $this->belongsTo(Chapitre::class);
-    }
-
+    /**
+     * Vérifie si la ressource est une vidéo.
+     */
     public function estVideo(): bool
     {
         return $this->type === 'video';
     }
 
+    /**
+     * Retourne la taille du fichier dans un format lisible.
+     */
     public function getTailleLisibleAttribute(): ?string
     {
         if (is_null($this->taille)) {

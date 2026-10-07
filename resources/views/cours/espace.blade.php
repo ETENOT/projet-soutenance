@@ -29,11 +29,11 @@
 @component('components.breadcrumb')
 
     @slot('li_1')
-        Cours
+        <a href="{{ route('cours.show', $cours) }}">{{ $cours->titre }}</a>
     @endslot
 
     @slot('title')
-        {{ $cours->titre }}
+        Espace de cours
     @endslot
 
 @endcomponent

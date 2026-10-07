@@ -7,10 +7,10 @@
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1')
-            Formation
+            <a href="{{ route('cours.mes') }}">Formation</a>
         @endslot
         @slot('title')
-            Mes cours
+            Statut de mes paiements
         @endslot
     @endcomponent
 

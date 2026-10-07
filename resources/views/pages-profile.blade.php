@@ -3,6 +3,16 @@
     @lang('translation.profile')
 @endsection
 @section('content')
+
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('dashboard') }}">Compte</a>
+        @endslot
+        @slot('title')
+            Mon profil
+        @endslot
+    @endcomponent
+
     <div class="profile-foreground position-relative mx-n4 mt-n4">
         <div class="profile-wid-bg">
             <img src="{{ URL::asset('build/images/profile-bg.jpg') }}" alt="" class="profile-wid-img" />

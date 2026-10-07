@@ -226,7 +226,7 @@ BREADCRUMB
 @component('components.breadcrumb')
 
     @slot('li_1')
-        Formation
+        <a href="{{ route('dashboard') }}">Formation</a>
     @endslot
 
     @slot('title')

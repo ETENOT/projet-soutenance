@@ -36,11 +36,6 @@ return new class extends Migration
             $table->unsignedBigInteger('taille')->nullable();
 
             $table->timestamps();
-
-            $table->foreignId('chapitre_id')
-                ->nullable()
-                ->constrained('chapitres')
-                ->cascadeOnDelete();
         });
     }
 

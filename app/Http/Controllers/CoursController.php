@@ -25,7 +25,6 @@ class CoursController extends Controller
         $search = trim($request->input('search', ''));
 
         $cours = Cours::withCount(['classes', 'quizzes', 'chapitres'])
-            // Un seul champ permet de rechercher dans les informations publiques du cours.
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('titre', 'like', '%' . $search . '%')
@@ -34,7 +33,11 @@ class CoursController extends Controller
                 });
             })
             ->orderBy('titre')
-            ->get();
+            // ordre stable si deux cours ont le même titre
+            ->orderBy('id') 
+            ->paginate(9)
+            // conserve ?search=... en changeant de page
+            ->withQueryString();
 
         return view('cours.catalogue', [
             'cours' => $cours,
@@ -43,49 +46,37 @@ class CoursController extends Controller
     }
 
     /**
-     * Page de détail d'un cours précis (public).
-     *
-     * Route model binding : Laravel voit "Cours $cours" dans la signature,
-     * et va automatiquement chercher en base le Cours dont l'id correspond
-     * au {cours} présent dans l'URL. Si aucun cours ne correspond, Laravel
-     * renvoie directement une 404 — pas besoin d'écrire Cours::findOrFail()
-     * à la main.
-     */
- 
-    /**
      * Affiche le détail public d'un cours avec ses classes et ses quiz.
      */
     public function show(Cours $cours)
     {
-       $cours->load([
-    'chapitres' => function ($query) {
-        $query->orderBy('ordre');
-    },
+        $cours->load([
+            'chapitres' => function ($query) {
+                $query->orderBy('ordre');
+            },
 
-    'classes' => function ($query) {
-        $query->withCount('inscriptions')->orderBy('date_debut');
-    },
+            'classes' => function ($query) {
+                $query->withCount('inscriptions')->orderBy('date_debut');
+            },
 
-    'quizzes' => function ($query) {
-        $query->orderBy('date');
-    },
-]);
+            'quizzes' => function ($query) {
+                $query->orderBy('date');
+            },
+        ]);
 
-        // Classes auxquelles l'utilisateur connecté est déjà inscrit, pour ce cours
-        // (permet d'afficher "Inscrit" au lieu du bouton "S'inscrire" dans la vue).
+        // Classes auxquelles l'utilisateur connecté est déjà inscrit
         $mesInscriptions = Auth::check()
             ? Auth::user()->inscriptions()->pluck('classe_id')
             : collect();
 
-        // Classes déjà inscrites ET payées : sert à masquer "Se désinscrire" côté vue
-        // (le serveur bloque déjà la désinscription dans ce cas — ceci évite juste
-        // d'afficher un bouton qui échouerait).
+        // Classes déjà inscrites ET payées
         $mesInscriptionsPayees = Auth::check()
-            ? Auth::user()->inscriptions()->whereHas('paiement')->pluck('classe_id')
+            ? Auth::user()->inscriptions()
+                ->whereHas('paiement')
+                ->pluck('classe_id')
             : collect();
 
-        // Accès aux documents du cours : réservé aux utilisateurs inscrits ET
-        // ayant payé une classe de ce cours (même règle que dans CoursDocumentController).
+        // Accès aux documents du cours
         $accesDocuments = Auth::check()
             ? Auth::user()->inscriptions()
                 ->whereHas('classe', function ($query) use ($cours) {
@@ -95,14 +86,23 @@ class CoursController extends Controller
                 ->exists()
             : false;
 
-       $quizEnCours = null;
+        $quizEnCours = null;
+
         $service = app(\App\Services\QuizFinalisationService::class);
+
         if (Auth::check()) {
             if (Auth::user()->role?->nom === 'particulier') {
-                $quizEnCours = $service->tentativeEnCours(Auth::user(), $cours->id);
+                $quizEnCours = $service->tentativeEnCours(
+                    Auth::user(),
+                    $cours->id
+                );
             }
         } else {
-            $quizEnCours = $service->tentativeEnCours(null, $cours->id, session('visiteur_token'));
+            $quizEnCours = $service->tentativeEnCours(
+                null,
+                $cours->id,
+                session('visiteur_token')
+            );
         }
 
         return view('cours.show', [
@@ -115,24 +115,50 @@ class CoursController extends Controller
     }
 
     /**
-     * Liste des cours côté admin, pour la gestion (pas le catalogue public).
-     * Protégée par le middleware role:admin défini dans les routes.
-     */
-  public function index()
-{
-    // withCount('classes') ajoute automatiquement un attribut
-    // "classes_count" sur chaque Cours, en une seule requête SQL
-    // (pas de boucle N+1)
-    $cours = Cours::withCount('classes')->orderBy('titre')->get();
+ * Affiche le détail d'un cours côté administration.
+ */
+    public function adminShow(Cours $cours)
+    {
+        $cours->load([
+            'chapitres' => function ($query) {
+                $query->with('resources')
+                    ->orderBy('ordre');
+            },
 
-    return view('cours.index', [
-        'cours' => $cours,
-    ]);
-}
+            'classes' => function ($query) {
+                $query->withCount('inscriptions')
+                    ->orderBy('date_debut');
+            },
+
+            'quizzes' => function ($query) {
+                $query->orderBy('date');
+            },
+        ]);
+
+        return view('cours.admin-show', [
+            'cours' => $cours,
+        ]);
+    }
+
+    /**
+     * Liste des cours côté admin.
+     */
+    public function index()
+    {
+        // withCount('classes') ajoute "classes_count" sur chaque cours
+        // en une seule requête SQL (pas de boucle N+1)
+        $cours = Cours::withCount('classes')
+            ->orderBy('titre')
+            ->orderBy('id') // ordre stable si deux cours ont le même titre
+            ->paginate(10);
+
+        return view('cours.index', [
+            'cours' => $cours,
+        ]);
+    }
 
     /**
      * Affiche le formulaire vide de création d'un cours.
-     * Pas de logique ici, juste retourner la vue avec le formulaire.
      */
     public function create()
     {
@@ -140,10 +166,7 @@ class CoursController extends Controller
     }
 
     /**
-     * Règles de validation communes à la création ET à la modification
-     * d'un cours. Factorisées ici pour ne pas dupliquer les mêmes règles
-     * dans store() et dans update() — si on doit changer une règle plus
-     * tard, on ne le fait qu'à un seul endroit.
+     * Règles de validation communes à la création et à la modification.
      */
     private function validationRules(): array
     {
@@ -158,30 +181,20 @@ class CoursController extends Controller
     }
 
     /**
-     * Traite la soumission du formulaire de création.
-     * Correspond au cas d'utilisation "Créer cours" avec ses <<Include>>
-     * (définir nom, définir prix particulier, définir prix entreprise).
+     * Traite la création d'un cours.
      */
     public function store(Request $request)
     {
-        // $request->validate() vérifie les données selon validationRules().
-        // Si une règle échoue, Laravel redirige automatiquement en arrière
-        // avec les erreurs — on n'a pas besoin d'écrire de if/else pour ça.
         $data = $request->validate($this->validationRules());
 
-        // Cours::create() utilise $fillable défini dans le modèle Cours
-        // pour savoir quelles colonnes on a le droit de remplir en masse.
         Cours::create($data);
 
-        // redirect()->route() plutôt qu'un chemin en dur : si jamais on
-        // renomme la route plus tard, ce code n'a pas besoin de changer.
         return redirect()->route('admin.cours.index')
             ->with('success', 'Cours créé avec succès.');
     }
 
     /**
-     * Affiche le formulaire de modification, pré-rempli avec les
-     * données actuelles du cours ($cours vient du route model binding).
+     * Affiche le formulaire de modification.
      */
     public function edit(Cours $cours)
     {
@@ -191,16 +204,43 @@ class CoursController extends Controller
     }
 
     /**
-     * Traite la soumission du formulaire de modification.
-     * Correspond au cas d'utilisation "modifier cours" avec ses <<Extend>>
-     * (modifier nom / modifier prix particulier / modifier prix entreprise).
+     * Gère les chapitres et les ressources pédagogiques d'un cours.
+     *
+     * Cette méthode est utilisée par la route :
+     * admin.cours.contenus
+     */
+   public function contenus(Cours $cours)
+    {
+    // Tous les chapitres du cours
+    $chapitres = $cours->chapitres()
+    ->orderBy('ordre')
+    ->get();
+
+    // Premier chapitre affiché automatiquement
+    $chapitreActif = $chapitres->first();
+
+    // Toutes les ressources directement liées au cours
+    $resources = $cours->resources()
+        ->orderBy('id')
+        ->get();
+
+    return view('cours.contenus', [
+        'cours' => $cours,
+        'chapitres' => $chapitres,
+        'chapitreActif' => $chapitreActif,
+        'resources' => $resources,
+    ]);
+
+    }
+
+
+    /**
+     * Traite la modification d'un cours.
      */
     public function update(Request $request, Cours $cours)
     {
         $data = $request->validate($this->validationRules());
 
-        // update() sur une instance existante : modifie uniquement
-        // les colonnes présentes dans $data, ne touche pas au reste
         $cours->update($data);
 
         return redirect()->route('admin.cours.index')
@@ -209,10 +249,6 @@ class CoursController extends Controller
 
     /**
      * Supprime définitivement un cours.
-     * Attention : si des Classes ou Quiz sont liés à ce cours (relations
-     * hasMany définies dans le modèle), vérifier le comportement des clés
-     * étrangères en base (cascade ? interdiction ?) avant d'utiliser ça
-     * en production — pas bloquant pour tester en local pour l'instant.
      */
     public function destroy(Cours $cours)
     {
@@ -222,11 +258,11 @@ class CoursController extends Controller
             ->with('success', 'Cours supprimé avec succès.');
     }
 
+    /**
+     * Affiche les cours de l'utilisateur particulier.
+     */
     public function mesCours()
     {
-        // On récupère toutes les inscriptions de l'utilisateur connecté.
-        // On charge également la classe, le cours et le paiement
-        // pour éviter de refaire des requêtes dans la vue.
         $inscriptions = Auth::user()
             ->inscriptions()
             ->with('classe.cours', 'paiement')
@@ -239,20 +275,13 @@ class CoursController extends Controller
         $inscriptionsEnCours = $inscriptions
             ->filter(function ($inscription) {
 
-                // Une inscription sans paiement n'est pas considérée
-                // comme une formation suivie.
                 if (!$inscription->paiement) {
                     return false;
                 }
 
-                // La formation est en cours si :
-                // date_debut <= aujourd'hui
-                // ET
-                // date_fin >= aujourd'hui.
                 return $inscription->classe->date_debut <= now()
                     && $inscription->classe->date_fin >= now();
             });
-
 
         // =========================================================
         // PROCHAINES FORMATIONS
@@ -261,18 +290,15 @@ class CoursController extends Controller
         $prochainesFormations = $inscriptions
             ->filter(function ($inscription) {
 
-                // Une inscription sans paiement n'est pas considérée.
                 if (!$inscription->paiement) {
                     return false;
                 }
 
-                // La formation doit commencer dans le futur.
                 return $inscription->classe->date_debut > now();
             })
             ->sortBy(function ($inscription) {
                 return $inscription->classe->date_debut;
             });
-
 
         // =========================================================
         // ANCIENS COURS
@@ -281,19 +307,15 @@ class CoursController extends Controller
         $anciensCours = $inscriptions
             ->filter(function ($inscription) {
 
-                // Une inscription sans paiement n'est pas considérée.
                 if (!$inscription->paiement) {
                     return false;
                 }
 
-                // La formation est terminée lorsque sa date de fin
-                // est passée.
                 return $inscription->classe->date_fin < now();
             })
             ->sortByDesc(function ($inscription) {
                 return $inscription->classe->date_fin;
             });
-
 
         return view('cours.mes_cours', [
             'inscriptionsEnCours' => $inscriptionsEnCours,
@@ -302,25 +324,21 @@ class CoursController extends Controller
         ]);
     }
 
-
-
     public function statutPaiement()
     {
-         $inscriptions = Auth::user()
+        $inscriptions = Auth::user()
             ->inscriptions()
             ->with('classe.cours', 'paiement')
             ->get();
 
         return view('paiements.statut_paiement', [
             'inscriptions' => $inscriptions,
-         ]);
+        ]);
     }
 
     /**
-     * Vérifie que l'utilisateur connecté est inscrit ET a payé (paiement validé)
-     * une classe de ce cours. Centralisé ici pour que espace(), chapitre() et
-     * ressource() appliquent exactement la même règle d'accès — avant, chacune
-     * la réimplémentait à sa façon (ou pas du tout pour ressource()).
+     * Vérifie que l'utilisateur connecté est inscrit ET a payé
+     * une classe de ce cours.
      */
     private function utilisateurAAccesPaye(Cours $cours): bool
     {
@@ -339,7 +357,10 @@ class CoursController extends Controller
         if (!$this->utilisateurAAccesPaye($cours)) {
             return redirect()
                 ->route('cours.show', $cours)
-                ->with('error', 'Vous devez être inscrit et avoir payé pour accéder à ce cours.');
+                ->with(
+                    'error',
+                    'Vous devez être inscrit et avoir payé pour accéder à ce cours.'
+                );
         }
 
         $inscription = Auth::user()->inscriptions()
@@ -359,7 +380,6 @@ class CoursController extends Controller
             'chapitres.resources'
         ]);
 
-
         return view('cours.espace', [
             'cours' => $cours,
             'classe' => $inscription->classe,
@@ -371,15 +391,16 @@ class CoursController extends Controller
         if (!$this->utilisateurAAccesPaye($cours)) {
             return redirect()
                 ->route('cours.show', $cours)
-                ->with('error', 'Accès réservé aux apprenants inscrits.');
+                ->with(
+                    'error',
+                    'Accès réservé aux apprenants inscrits.'
+                );
         }
-
 
         // Sécurité : vérifier que le chapitre appartient bien au cours
         if ($chapitre->cours_id !== $cours->id) {
             abort(404);
         }
-
 
         $cours->load([
             'chapitres' => function ($query) {
@@ -387,11 +408,9 @@ class CoursController extends Controller
             }
         ]);
 
-
         $chapitre->load([
             'resources'
         ]);
-
 
         return view('cours.chapitre', [
             'cours' => $cours,
@@ -404,14 +423,16 @@ class CoursController extends Controller
         if (!$this->utilisateurAAccesPaye($cours)) {
             return redirect()
                 ->route('cours.show', $cours)
-                ->with('error', 'Vous devez être inscrit et avoir payé pour accéder à ce contenu.');
+                ->with(
+                    'error',
+                    'Vous devez être inscrit et avoir payé pour accéder à ce contenu.'
+                );
         }
 
         // Vérifie que la ressource appartient bien au cours
         if ($resource->cours_id !== $cours->id) {
             abort(404);
         }
-
 
         // Charge les chapitres + leurs ressources pour le menu gauche
         $chapitres = $cours->chapitres()
@@ -422,7 +443,6 @@ class CoursController extends Controller
             ])
             ->orderBy('ordre')
             ->get();
-
 
         return view('cours.ressource', [
             'cours' => $cours,

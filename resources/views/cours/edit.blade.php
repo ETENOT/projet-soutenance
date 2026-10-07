@@ -1,173 +1,691 @@
 @extends('layouts.master')
 
 @section('title')
-    Modifier le cours
+Modifier la formation
 @endsection
 
 @section('content')
-    @component('components.breadcrumb')
-        @slot('li_1')
-            <a href="{{ route('admin.cours.index') }}">Gestion des cours</a>
-        @endslot
-        @slot('title')
-            Modifier le cours
-        @endslot
-    @endcomponent
 
-    <div class="card">
-        <div class="card-body">
-            <form action="{{ route('admin.cours.update', $cours) }}" method="POST">
-                @csrf
-                @method('PUT')
 
-                                <div class="mb-3">
-                    <label for="titre" class="form-label">Titre du cours</label>
-                    <input type="text" name="titre" id="titre" class="form-control @error('titre') is-invalid @enderror"
-                           value="{{ old('titre', $cours->titre) }}">
-                    @error('titre')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
+{{-- ==========================================
+     EN-TÊTE
+=========================================== --}}
+<div class="row">
+    <div class="col-12">
 
-                {{-- categorie/description : requis par la validation mais pas encore de champ dédié
-                     dans ce formulaire — on préserve la valeur actuelle pour ne pas bloquer
-                     l'enregistrement (sujet à part, pas traité ici). --}}
-                <input type="hidden" name="categorie" value="{{ old('categorie', $cours->categorie) }}">
-                <input type="hidden" name="description" value="{{ old('description', $cours->description) }}">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
 
-                <div class="mb-3">
-                    <label for="programme" class="form-label">Plan détaillé du cours (visible publiquement, même sans être inscrit)</label>
-                                        <textarea name="programme"
-                            id="programme"
-                            rows="10"
-                            class="form-control @error('programme') is-invalid @enderror"
-                            placeholder="## Module 1 - Découverte de l'interface&#10;- Présentation des outils&#10;- Navigation dans le logiciel&#10;&#10;## Module 2 - Mise en forme&#10;- Styles de texte&#10;- Mise en page">{{ old('programme', $cours->programme ?? null) }}</textarea>
-                    <div class="form-text">
-                        Une ligne commençant par <code>## </code> = un grand point (module). Les lignes
-                        <code>- </code> juste après = ses sous-points. Voir l'exemple pré-rempli ci-dessus.
-                    </div>
+            <div>
+                <h4 class="mb-sm-0">Modifier la formation</h4>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="prix_particulier" class="form-label">Prix particulier (fcfa)</label>
-                        <input type="number" step="0.01" name="prix_particulier" id="prix_particulier"
-                               class="form-control @error('prix_particulier') is-invalid @enderror"
-                               value="{{ old('prix_particulier', $cours->prix_particulier) }}">
-                        @error('prix_particulier')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="prix_entreprise" class="form-label">Prix entreprise (fcfa)</label>
-                        <input type="number" step="0.01" name="prix_entreprise" id="prix_entreprise"
-                               class="form-control @error('prix_entreprise') is-invalid @enderror"
-                               value="{{ old('prix_entreprise', $cours->prix_entreprise) }}">
-                        @error('prix_entreprise')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
-
-                    <div class="card">
-            <div class="card-body">
-                <h5 class="card-title mb-3">Documents du cours</h5>
-
-                {{-- Liste des documents déjà en ligne --}}
-                @if($cours->resources->isEmpty())
-                    <p class="text-muted">Aucun document pour l'instant.</p>
-                @else
-                    <ul class="list-group mb-3">
-                        @foreach($cours->resources as $resource)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <span>
-                                    <i class="{{ $resource->estVideo() ? 'ri-video-line' : 'ri-file-text-line' }} text-muted me-1"></i>
-                                    {{ $resource->titre }}
-                                    <span class="text-muted small">
-                                        @if($resource->estVideo())
-                                            (Vidéo)
-                                        @else
-                                            ({{ strtoupper($resource->extension) }} — {{ $resource->taille_lisible }})
-                                        @endif
-                                    </span>
-                                </span>
-                                <div class="d-flex gap-2">
-                                    <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}" target="_blank" class="btn btn-sm btn-outline-primary">Voir</a>
-                                    @if(!$resource->estVideo())
-                                        <a href="{{ route('cours.resources.download', [$cours, $resource]) }}" class="btn btn-sm btn-outline-secondary">Télécharger</a>
-                                    @endif
-                                    <form action="{{ route('admin.cours.resources.destroy', [$cours, $resource]) }}" method="POST"
-                                        onsubmit="return confirm('Supprimer ce document ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
-                                    </form>
-                                </div>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-
-                {{-- Formulaire d'ajout : soit un fichier, soit un lien vidéo --}}
-                <form action="{{ route('admin.cours.resources.store', $cours) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-
-                    <div class="mb-3">
-                        <label class="form-label d-block">Type de contenu</label>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="type" id="type_fichier" value="fichier" checked
-                                onchange="document.getElementById('bloc_fichier').classList.remove('d-none'); document.getElementById('bloc_video').classList.add('d-none');">
-                            <label class="form-check-label" for="type_fichier">Fichier (PDF, Word, Excel, PowerPoint)</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="type" id="type_video" value="video"
-                                onchange="document.getElementById('bloc_video').classList.remove('d-none'); document.getElementById('bloc_fichier').classList.add('d-none');">
-                            <label class="form-check-label" for="type_video">Lien vidéo (YouTube, Vimeo...)</label>
-                        </div>
-                        @error('type')
-                            <div class="text-danger small">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="row g-2 align-items-end">
-                        <div class="col-md-5">
-                            <label for="titre_document" class="form-label">Titre</label>
-                            <input type="text" name="titre" id="titre_document"
-                                class="form-control @error('titre') is-invalid @enderror" value="{{ old('titre') }}">
-                            @error('titre')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-5" id="bloc_fichier">
-                            <label for="fichier" class="form-label">Fichier (20 Mo max)</label>
-                            <input type="file" name="fichier" id="fichier"
-                                class="form-control @error('fichier') is-invalid @enderror">
-                            @error('fichier')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-5 d-none" id="bloc_video">
-                            <label for="url" class="form-label">Lien de la vidéo</label>
-                            <input type="url" name="url" id="url" placeholder="https://..."
-                                class="form-control @error('url') is-invalid @enderror" value="{{ old('url') }}">
-                            @error('url')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="col-md-2">
-                            <button type="submit" class="btn btn-primary w-100">Ajouter</button>
-                        </div>
-                    </div>
-                </form>
+                <p class="text-muted mb-0 mt-1">
+                    Modifiez les informations, le programme et les tarifs de cette formation.
+                </p>
             </div>
+
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('admin.cours.index') }}">
+                            Formations
+                        </a>
+                    </li>
+
+                    <li class="breadcrumb-item active">
+                        Modifier
+                    </li>
+
+                </ol>
+            </div>
+
         </div>
 
-                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-                <a href="{{ route('admin.cours.index') }}" class="btn btn-light">Annuler</a>
-            </form>
-        </div>
     </div>
+</div>
+
+
+{{-- ==========================================
+     FORMULAIRE PRINCIPAL
+=========================================== --}}
+<form
+    action="{{ route('admin.cours.update', $cours) }}"
+    method="POST"
+>
+
+    @csrf
+    @method('PUT')
+
+
+    <div class="row">
+
+        {{-- ==========================================
+             COLONNE PRINCIPALE
+        =========================================== --}}
+        <div class="col-xl-8">
+
+            {{-- ==========================================
+                 INFORMATIONS GÉNÉRALES
+            =========================================== --}}
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="avatar-sm rounded bg-primary-subtle d-flex align-items-center justify-content-center"
+                            >
+                                <i class="ri-book-open-line fs-20 text-primary"></i>
+                            </div>
+                        </div>
+
+                        <div class="ms-3">
+                            <h5 class="card-title mb-1">
+                                Informations générales
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Informations principales de la formation.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    {{-- TITRE + CATÉGORIE --}}
+                    <div class="row">
+
+                        <div class="col-md-8 mb-3">
+
+                            <label for="titre" class="form-label">
+                                Nom de la formation
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="titre"
+                                id="titre"
+                                class="form-control @error('titre') is-invalid @enderror"
+                                value="{{ old('titre', $cours->titre) }}"
+                                placeholder="Ex. Microsoft Excel - Niveau débutant"
+                            >
+
+                            @error('titre')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+
+                        <div class="col-md-4 mb-3">
+
+                            <label for="categorie" class="form-label">
+                                Catégorie
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="categorie"
+                                id="categorie"
+                                class="form-control @error('categorie') is-invalid @enderror"
+                                value="{{ old('categorie', $cours->categorie) }}"
+                                placeholder="Ex. Bureautique"
+                            >
+
+                            @error('categorie')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- DESCRIPTION --}}
+                    <div class="mb-0">
+
+                        <label for="description" class="form-label">
+                            Description de la formation
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea
+                            name="description"
+                            id="description"
+                            rows="6"
+                            class="form-control @error('description') is-invalid @enderror"
+                            placeholder="Présentez brièvement cette formation..."
+                        >{{ old('description', $cours->description) }}</textarea>
+
+                        @error('description')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                        <div class="form-text">
+                            Cette description peut être affichée dans le catalogue des formations.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- ==========================================
+                 PROGRAMME
+            =========================================== --}}
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="avatar-sm rounded bg-success-subtle d-flex align-items-center justify-content-center"
+                            >
+                                <i class="ri-list-check-2 fs-20 text-success"></i>
+                            </div>
+                        </div>
+
+                        <div class="ms-3">
+                            <h5 class="card-title mb-1">
+                                Programme de la formation
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Présentez les modules et cours qui composent cette formation.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <label for="programme" class="form-label">
+                        Programme détaillé
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea
+                        name="programme"
+                        id="programme"
+                        rows="14"
+                        class="form-control font-monospace @error('programme') is-invalid @enderror"
+                        placeholder="## Module 1 - Découverte de l'interface&#10;- Présentation des outils&#10;- Navigation dans le logiciel&#10;&#10;## Module 2 - Mise en forme&#10;- Styles de texte&#10;- Mise en page"
+                    >{{ old('programme', $cours->programme) }}</textarea>
+
+                    @error('programme')
+                        <div class="invalid-feedback">
+                            {{ $message }}
+                        </div>
+                    @enderror
+
+                    <div class="alert alert-light border mt-3 mb-0">
+
+                        <div class="d-flex">
+
+                            <div class="flex-shrink-0">
+                                <i class="ri-information-line text-primary fs-18"></i>
+                            </div>
+
+                            <div class="ms-2">
+
+                                <h6 class="mb-2">
+                                    Organisation du programme
+                                </h6>
+
+                                <p class="text-muted mb-2">
+                                    Utilisez les éléments suivants pour présenter les modules/cours :
+                                </p>
+
+                                <div class="mb-1">
+                                    <code>## Module 1 - Introduction</code>
+                                    <span class="text-muted ms-2">
+                                        → module ou cours
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <code>- Présentation des outils</code>
+                                    <span class="text-muted ms-2">
+                                        → élément du programme
+                                    </span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- ==========================================
+                 TARIFICATION
+            =========================================== --}}
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="avatar-sm rounded bg-warning-subtle d-flex align-items-center justify-content-center"
+                            >
+                                <i class="ri-money-dollar-circle-line fs-20 text-warning"></i>
+                            </div>
+                        </div>
+
+                        <div class="ms-3">
+                            <h5 class="card-title mb-1">
+                                Tarification
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Tarifs appliqués selon le type de client.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        {{-- PARTICULIER --}}
+                        <div class="col-md-6">
+
+                            <div class="border rounded p-3 h-100">
+
+                                <div class="d-flex align-items-center mb-3">
+
+                                    <div
+                                        class="avatar-sm rounded bg-primary-subtle d-flex align-items-center justify-content-center"
+                                    >
+                                        <i class="ri-user-line text-primary"></i>
+                                    </div>
+
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">
+                                            Tarif particulier
+                                        </h6>
+
+                                        <small class="text-muted">
+                                            Prix destiné aux particuliers
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <label
+                                    for="prix_particulier"
+                                    class="form-label"
+                                >
+                                    Prix (FCFA)
+                                </label>
+
+                                <div class="input-group">
+
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="prix_particulier"
+                                        id="prix_particulier"
+                                        class="form-control @error('prix_particulier') is-invalid @enderror"
+                                        value="{{ old('prix_particulier', $cours->prix_particulier) }}"
+                                    >
+
+                                    <span class="input-group-text">
+                                        FCFA
+                                    </span>
+
+                                </div>
+
+                                @error('prix_particulier')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- ENTREPRISE --}}
+                        <div class="col-md-6">
+
+                            <div class="border rounded p-3 h-100">
+
+                                <div class="d-flex align-items-center mb-3">
+
+                                    <div
+                                        class="avatar-sm rounded bg-success-subtle d-flex align-items-center justify-content-center"
+                                    >
+                                        <i class="ri-building-line text-success"></i>
+                                    </div>
+
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">
+                                            Tarif entreprise
+                                        </h6>
+
+                                        <small class="text-muted">
+                                            Prix destiné aux entreprises
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <label
+                                    for="prix_entreprise"
+                                    class="form-label"
+                                >
+                                    Prix (FCFA)
+                                </label>
+
+                                <div class="input-group">
+
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="prix_entreprise"
+                                        id="prix_entreprise"
+                                        class="form-control @error('prix_entreprise') is-invalid @enderror"
+                                        value="{{ old('prix_entreprise', $cours->prix_entreprise) }}"
+                                    >
+
+                                    <span class="input-group-text">
+                                        FCFA
+                                    </span>
+
+                                </div>
+
+                                @error('prix_entreprise')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- ==========================================
+                 ACTIONS
+            =========================================== --}}
+            <div class="card">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-end gap-2">
+
+                        <a
+                            href="{{ route('admin.cours.index') }}"
+                            class="btn btn-light"
+                        >
+                            <i class="ri-arrow-left-line me-1"></i>
+                            Annuler
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            <i class="ri-save-3-line me-1"></i>
+                            Enregistrer les modifications
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- ==========================================
+             COLONNE LATÉRALE
+        =========================================== --}}
+        <div class="col-xl-4">
+
+            {{-- CONTENU PÉDAGOGIQUE --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-folder-open-line me-1 text-primary"></i>
+                        Contenu pédagogique
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <p class="text-muted">
+                        Gérez les chapitres et les ressources pédagogiques
+                        associés à cette formation.
+                    </p>
+
+                    <a
+                        href="{{ route('admin.cours.contenus', $cours) }}"
+                        class="btn btn-outline-primary w-100"
+                    >
+                        <i class="ri-book-open-line me-1"></i>
+                        Gérer les chapitres et contenus
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            {{-- RÉSUMÉ --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-file-info-line me-1 text-primary"></i>
+                        Résumé
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="text-center mb-4">
+
+                        <div
+                            class="avatar-lg rounded-circle bg-primary-subtle d-inline-flex align-items-center justify-content-center"
+                        >
+                            <i class="ri-book-open-line text-primary fs-28"></i>
+                        </div>
+
+                        <h5 class="mt-3 mb-1">
+                            {{ $cours->titre }}
+                        </h5>
+
+                        <p class="text-muted mb-0">
+                            {{ $cours->categorie }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="border-top pt-3">
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Chapitres
+                            </span>
+
+                            <span class="fw-semibold">
+                                {{ $cours->chapitres->count() }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Ressources
+                            </span>
+
+                            <span class="fw-semibold">
+                                {{ $cours->resources->count() }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between">
+
+                            <span class="text-muted">
+                                Catégorie
+                            </span>
+
+                            <span class="text-muted">
+                                {{ $cours->categorie }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- TARIFS RAPIDES --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-money-dollar-circle-line me-1 text-warning"></i>
+                        Tarifs actuels
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <span class="text-muted">
+                            Particulier
+                        </span>
+
+                        <strong>
+                            {{ number_format($cours->prix_particulier, 0, ',', ' ') }} FCFA
+                        </strong>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <span class="text-muted">
+                            Entreprise
+                        </span>
+
+                        <strong>
+                            {{ number_format($cours->prix_entreprise, 0, ',', ' ') }} FCFA
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- INFORMATION CONTENU --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-information-line me-1 text-info"></i>
+                        Organisation du contenu
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="d-flex align-items-start mb-3">
+
+                        <i class="ri-book-open-line text-primary fs-18 me-2"></i>
+
+                        <div>
+                            <h6 class="mb-1">
+                                Chapitres
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                Les chapitres structurent le contenu pédagogique de la formation.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="d-flex align-items-start">
+
+                        <i class="ri-folder-video-line text-info fs-18 me-2"></i>
+
+                        <div>
+                            <h6 class="mb-1">
+                                Ressources
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                Les fichiers, vidéos et liens sont associés directement à un chapitre.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+
 @endsection
