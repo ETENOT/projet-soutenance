@@ -25,6 +25,7 @@ class Cours extends Model
     'prix_particulier',
     'prix_entreprise',
     'statut',
+    'note_sur',   // nombre de questions tirées pour le quiz (NULL = toute la banque)
 ];
 
 // Un Cours a plusieurs Classes (sessions)

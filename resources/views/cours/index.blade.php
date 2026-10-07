@@ -66,6 +66,17 @@
                     </tbody>
                 </table>
             </div>
+            @if($cours->hasPages())
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+                    <small class="text-muted">
+                        Affichage de {{ $cours->firstItem() }} à {{ $cours->lastItem() }}
+                        sur {{ $cours->total() }} cours
+                    </small>
+
+                    {{ $cours->links() }}
+                </div>
+            @endif
+        </div>{{-- fin .card-body --}}
         </div>
     </div>
 @endsection

@@ -350,13 +350,13 @@
 
                                             <div class="mb-3">
 
-                                                <label for="date_de_naissance" class="form-label">Date de naissance <span class="text-danger">*</span></label>
+                                                <label for="date_de_naissance" class="form-label">Date de naissance</label>
 
                                                 <input type="date" class="form-control @error('date_de_naissance') is-invalid @enderror"
 
                                                     name="date_de_naissance" id="date_de_naissance"
 
-                                                    value="{{ old('date_de_naissance') }}" required>
+                                                    value="{{ old('date_de_naissance') }}">
 
                                                 @error('date_de_naissance')
 
@@ -482,13 +482,13 @@
 
                                             <div class="mb-3">
 
-                                                <label for="secteur_activite" class="form-label">Secteur d'activité <span class="text-danger">*</span></label>
+                                                <label for="secteur_activite" class="form-label">Secteur d'activité</label>
 
                                                 <input type="text" class="form-control @error('secteur_activite') is-invalid @enderror"
 
                                                     name="secteur_activite" id="secteur_activite" value="{{ old('secteur_activite') }}"
 
-                                                    placeholder="Entrez le secteur d'activité" required disabled>
+                                                    placeholder="Entrez le secteur d'activité">
 
                                                 @error('secteur_activite')
 

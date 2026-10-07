@@ -22,7 +22,7 @@
                             <div class="text-center mt-sm-5 mb-4 text-white-50">
                                 <div>
                                     <a href="{{ route('root') }}" class="d-inline-block auth-logo">
-                                        <img src="{{ URL::asset('build/images/logo-light.png') }}" alt="" height="20">
+                                        <img  src="{{ URL::asset('build/images/logo_neovision.png') }}" alt="" height="55">
                                     </a>
                                 </div>
                                 <p class="mt-3 fs-15 fw-medium">Formation NéoVision</p>
@@ -107,6 +107,7 @@
                                             Renvoyer le code
                                         </button>
                                     </form>
+
                                     {{-- Décompte visuel : caché si aucun délai en cours --}}
                                     <span id="resend-countdown" class="text-muted @if ($resendAvailableInSeconds === 0) d-none @endif">
                                         (disponible dans <span id="resend-countdown-value">{{ $resendAvailableInSeconds }}</span>s)
@@ -117,6 +118,13 @@
                                 @error('resend')
                                     <p class="text-danger small mt-2 mb-0">{{ $message }}</p>
                                 @enderror
+                                <form method="POST" action="{{ route('verification.cancel') }}" class="mt-3"
+                                onsubmit="return confirm('Votre inscription en cours sera annulée. Continuer ?');">
+                                @csrf
+                                <button type="submit" class="btn btn-link p-0 text-muted text-decoration-underline">
+                                    <i class="ri-arrow-left-line align-middle"></i> Retour à l'inscription
+                                </button>
+                            </form>
                             </div>
                         </div>
                     </div>

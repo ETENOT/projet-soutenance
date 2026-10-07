@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('particuliers', function (Blueprint $table) {
             $table->id();
             $table->string('telephone');
-            $table->date('date_de_naissance');
+            $table->date('date_de_naissance')->nullable();
             $table->timestamps();
         });
     }

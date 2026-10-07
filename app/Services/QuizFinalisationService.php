@@ -57,8 +57,7 @@ class QuizFinalisationService
         })->count();
 
         // Le score est directement le nombre de bonnes réponses.
-        // Exemple : 10 questions répondues sur 30 posées, disons 7 bonnes
-        // -> score = 7, affiché ensuite comme "7 / 30" (30 = le barème de la tentative)
+        // Exemple : 7 bonnes réponses sur un quiz noté sur 20 -> "7 / 20"
         $score = $bonnes;
 
         $resultat = ResultatQuiz::create([

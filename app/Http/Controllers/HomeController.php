@@ -69,12 +69,12 @@ class HomeController extends Controller
         // de l'inscription (RegisteredUserController)
         if ($user->role->nom === 'particulier') {
             $rules['telephone'] = ['required', 'string', 'max:20'];
-            $rules['date_de_naissance'] = ['required', 'date'];
+            $rules['date_de_naissance'] = ['nullable', 'date'];
         } elseif ($user->role->nom === 'entreprise') {
             $rules['raison_sociale'] = ['required', 'string', 'max:255'];
             $rules['adresse'] = ['required', 'string', 'max:255'];
             $rules['contact_principal'] = ['required', 'string', 'max:255'];
-            $rules['secteur_activite'] = ['required', 'string', 'max:255'];
+            $rules['secteur_activite'] = ['nullable', 'string', 'max:255'];
         }
 
         $request->validate($rules);

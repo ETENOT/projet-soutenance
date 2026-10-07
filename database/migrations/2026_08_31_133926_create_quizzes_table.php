@@ -29,9 +29,17 @@ return new class extends Migration
                 ->constrained('cours')
                 ->cascadeOnDelete();
 
+            // nullable() AVANT constrained() : un visiteur non inscrit n'a pas de user_id (NULL)
             $table->foreignId('user_id')
+                ->nullable()
                 ->constrained('users')
                 ->cascadeOnDelete();
+
+            // E-mail saisi par le visiteur avant de commencer le quiz (NULL si utilisateur connecté)
+            $table->string('email_visiteur')->nullable()->index();
+
+            // Identifiant aléatoire gardé aussi en session : prouve que le quiz appartient à ce navigateur
+            $table->string('visiteur_token', 64)->nullable()->index();
 
             $table->timestamps();
         });

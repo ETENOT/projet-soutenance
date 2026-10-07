@@ -35,6 +35,8 @@ class DashboardController extends Controller
         // Nombre total de sessions auxquelles l'utilisateur est inscrit.
         $sessionsInscrites = $utilisateur->inscriptions()->count();
 
+        // Nombre total de quiz terminés par le particulier.
+        $totalQuizEffectues = $utilisateur->resultatsQuiz()->count();
 
         // =====================================================
         // SESSIONS EN COURS
@@ -145,11 +147,8 @@ class DashboardController extends Controller
 
         return view('dashboards.particulier', [
             'utilisateur' => $utilisateur,
-
             'sessionsInscrites' => $sessionsInscrites,
-
             'SessionEnCours' => $SessionEnCours,
-
             'prochaineClasse' => $prochaineClasse
                 ? \Carbon\Carbon::parse($prochaineClasse->date_debut)->format('d/m/Y')
                 : 'Aucune session prévue',
@@ -159,13 +158,11 @@ class DashboardController extends Controller
                 : null,
 
             'notificationsNonLues' => $notificationsNonLues,
-
             'sessionsPayees' => $sessionsPayees,
-
             'sessionsImpayees' => $sessionsImpayees,
-
             // Nouveaux anciens cours.
             'anciensCours' => $anciensCours,
+            'totalQuizEffectues' => $totalQuizEffectues, // <-- à ajouter
         ]);
     }
 

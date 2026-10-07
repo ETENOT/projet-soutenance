@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('raison_sociale');
             $table->string('adresse');
             $table->string('contact_principal');
-            $table->string('secteur_activite');
+            $table->string('secteur_activite')->nullable();
             $table->timestamps();
         });
     }

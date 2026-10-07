@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\CancelRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 // Ce fichier remplace l'ancien Auth::routes() (fourni par laravel/ui, qu'on a retiré).
@@ -64,6 +65,11 @@ Route::middleware('auth')->group(function () {
     Route::post('verify-email', VerifyEmailController::class)
         ->middleware('throttle:10,1')
         ->name('verification.verify');
+
+        // Annule l'inscription
+    Route::post('verify-email/cancel', CancelRegistrationController::class)
+        ->middleware('throttle:6,1')
+        ->name('verification.cancel');
 
     // Renvoie le code de vérification par e-mail
     // throttle:10,1 = anti brute-force : 10 tentatives par minute maximum.

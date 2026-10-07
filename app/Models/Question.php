@@ -21,4 +21,10 @@ class Question extends Model
     {
         return $this->hasMany(Option::class);
     }
+    // Les lignes reponses_quiz où cette question a été posée (une par tentative concernée)
+    // Sert à compter "posée N fois" et à avertir l'admin avant une modification/suppression
+    public function reponses()
+    {
+        return $this->hasMany(ReponseQuiz::class);
+    }
 }

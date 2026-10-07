@@ -99,12 +99,22 @@ class QuizAttemptController extends Controller
         // (ex. coupure réseau avec la base), tout est annulé plutôt que de laisser
         // une tentative à moitié créée (quiz sans ses reponses_quiz, par exemple).
         return DB::transaction(function () use ($cours, $user, $email, $token) {
-            // On tire TOUTE la banque de questions du cours, juste mélangée
-            // (inRandomOrder), pas un sous-ensemble.
-            // On la récupère AVANT de créer la ligne "quizzes" car le barème
-            // (voir plus bas) dépend directement du nombre de questions tirées.
-            $questionIds = $cours->questions()->inRandomOrder()->pluck('id');
-
+            // On tire les questions de la banque du cours dans un ordre aléatoire
+            // (inRandomOrder). Chaque question n'apparaît qu'UNE fois : on lit chaque ligne
+            // de la table "questions" une seule fois, il n'y a donc jamais de doublon.
+            // Si l'admin a fixé un "noté sur" (cours.note_sur), on ne garde que ce nombre
+            // de questions (ex : banque de 30, noté sur 20 -> 20 questions au hasard).
+            // Sans "noté sur" (NULL), on garde toute la banque, comme avant.
+            // Si la banque contient MOINS de questions que le "noté sur", limit() ne
+            // change rien : on prend tout ce qui existe et le barème suit (voir plus bas).
+            // On récupère les questions AVANT de créer la ligne "quizzes" car le barème
+            // dépend directement du nombre de questions tirées.
+            $tirage = $cours->questions()->inRandomOrder();
+            if ($cours->note_sur) {
+                $tirage->limit($cours->note_sur);
+            }
+            $questionIds = $tirage->pluck('id');
+            
             $quiz = Quiz::create([
                 'cours_id' => $cours->id,
                 'user_id'        => $user?->id,
@@ -236,6 +246,24 @@ class QuizAttemptController extends Controller
             ->get();
 
         return view('quiz.historique', compact('cours', 'resultats'));
+    }
+
+    // Liste des cours où le particulier a passé au moins un quiz,
+    // du cours au quiz le plus récent au plus ancien, avec le nombre de quiz par cours.
+    public function historiqueCours(Request $request)
+    {
+        $cours = Cours::query()
+            ->join('quizzes', 'quizzes.cours_id', '=', 'cours.id')
+            ->join('resultats_quiz', 'resultats_quiz.quiz_id', '=', 'quizzes.id')
+            ->where('resultats_quiz.user_id', $request->user()->id)
+            ->select('cours.*')
+            ->selectRaw('COUNT(resultats_quiz.id) as nombre_quiz')
+            ->selectRaw('MAX(resultats_quiz.created_at) as dernier_quiz_le')
+            ->groupBy('cours.id')
+            ->orderByDesc('dernier_quiz_le')
+            ->get();
+
+        return view('quiz.historique-cours', compact('cours'));
     }
 
     // Propriétaire = utilisateur connecté, OU visiteur dont le token de session correspond

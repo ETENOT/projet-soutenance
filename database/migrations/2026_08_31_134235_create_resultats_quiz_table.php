@@ -16,7 +16,9 @@ return new class extends Migration
                 ->constrained('quizzes')
                 ->cascadeOnDelete();
 
+            // nullable : résultat d'un visiteur non inscrit (rempli à son inscription)
             $table->foreignId('user_id')
+                ->nullable()
                 ->constrained('users')
                 ->cascadeOnDelete();
 

@@ -80,13 +80,13 @@ class RegisteredUserController extends Controller
             // sécurité serveur si jamais le JS est contourné (ex. requête forgée),
             // pas une revalidation complète pays par pays.
             'telephone' => ['nullable', 'required_if:role,particulier', 'string', 'max:20', 'regex:/^\+[1-9]\d{6,14}$/'],
-            'date_de_naissance' => ['nullable', 'required_if:role,particulier', 'date'],
+            'date_de_naissance' => ['nullable', 'date'],
 
             // Même logique inversée pour les champs "entreprise"
             'raison_sociale' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
             'adresse' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
             'contact_principal' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
-            'secteur_activite' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'secteur_activite' => ['nullable', 'string', 'max:255'],
         ],
         [
         'password.required' => 'Le mot de passe est obligatoire.',
@@ -108,7 +108,8 @@ class RegisteredUserController extends Controller
             // 1) On crée d'abord la ligne "particuliers" avec ses champs propres
             $particulier = Particulier::create([
                 'telephone' => $request->telephone,
-                'date_de_naissance' => $request->date_de_naissance,
+                // La date est facultative : on enregistre null si elle n'est pas renseignée.
+                'date_de_naissance' => $request->input('date_de_naissance') ?: null,
             ]);
 
             // 2) On récupère l'id du rôle "particulier" (créé par RoleSeeder)
@@ -125,7 +126,7 @@ class RegisteredUserController extends Controller
                 'raison_sociale' => $request->raison_sociale,
                 'adresse' => $request->adresse,
                 'contact_principal' => $request->contact_principal,
-                'secteur_activite' => $request->secteur_activite,
+                'secteur_activite' => $request->input('secteur_activite') ?: null,
             ]);
 
             $userData['role_id'] = Role::where('nom', 'entreprise')->firstOrFail()->id;

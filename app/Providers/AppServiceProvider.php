@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Vite;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,13 +24,14 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
+
     public function boot()
     {
-        //
         Schema::defaultStringLength(191);
 
-        // Vite 5 génère le manifest dans .vite/manifest.json au lieu de manifest.json
-        // directement à la racine de public/build/. On indique explicitement à Laravel où le trouver.
+        // Pagination au format Bootstrap 5 (Velzon n'utilise pas Tailwind)
+        Paginator::useBootstrapFive();
+
         Vite::useManifestFilename('.vite/manifest.json');
     }
 }

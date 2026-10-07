@@ -513,15 +513,11 @@ BOUTON CONNEXION POUR VISITEUR
         <p class="catalogue-section-subtitle mb-0">
 
             @if($search !== '')
-
-                {{ $cours->count() }}
+                {{ $cours->total() }}
                 résultat(s) pour « {{ $search }} »
-
             @else
-
-                {{ $cours->count() }}
+                {{ $cours->total() }}
                 formation(s) disponible(s)
-
             @endif
 
         </p>
@@ -557,7 +553,7 @@ BOUTON CONNEXION POUR VISITEUR
 
         @php
 
-            $theme = $palette[$loop->index % count($palette)];
+            $theme = $palette[($cours->firstItem() + $loop->index - 1) % count($palette)];
 
             $categorie = strtolower(
                 (string) $unCours->categorie
@@ -859,6 +855,16 @@ BOUTON CONNEXION POUR VISITEUR
 
 </div>
 
+@if($cours->hasPages())
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
+        <small class="text-muted">
+            Affichage de {{ $cours->firstItem() }} à {{ $cours->lastItem() }}
+            sur {{ $cours->total() }} formation(s)
+        </small>
+
+        {{ $cours->links() }}
+    </div>
+@endif
 
 </div>
 

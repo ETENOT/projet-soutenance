@@ -25,6 +25,10 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('niveau')->nullable();
 
+            // "Noté sur" du quiz du cours = nombre de questions tirées au hasard dans la banque.
+            // NULL = pas de limite : on pose toute la banque de questions.
+            $table->unsignedSmallInteger('note_sur')->nullable();
+
              // Crée une colonne "prix" de type décimal.
             // 10 = nombre total de chiffres maximum.
             // 2 = nombre de chiffres après la virgule.
