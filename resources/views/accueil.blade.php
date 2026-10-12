@@ -81,7 +81,7 @@
                     <input type="search" name="search" class="form-control" value="{{ request('search') }}"
                            placeholder="Rechercher une formation, un cours, une compétence..."
                            aria-label="Rechercher une formation">
-                    <button class="btn btn-primary px-4" type="submit">Rechercher</button>
+                    <button class="btn btn-primary btn-sm px-3" type="submit">Rechercher</button>
                 </form>
 
                 @if($categories->isNotEmpty())
@@ -95,7 +95,7 @@
                 @endif
             </div>
 
-            {{-- Visuel : photo + formes bleue et rouge + phrase d'accroche --}}
+            {{-- Visuel : photo + phrase d'accroche --}}
             <div class="col-lg-6 d-none d-lg-block">
                 <div class="nv-hero-visual text-center">
                     <p class="nv-tagline mb-0">Votre potentiel<br>n'a pas de limite</p>
@@ -162,57 +162,89 @@
             </div>
         @endif
 
-        <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-5 g-3">
+        <div class="row g-4">
             @forelse($coursPopulaires as $c)
-                <div class="col">
-                    <article class="card card-animate nv-course h-100 mb-0">
-                        <div class="position-relative">
-                            @if($c->image)
-                                <div class="ratio ratio-16x9">
-                                    <img src="{{ asset('storage/' . $c->image) }}" alt="{{ $c->titre }}" class="nv-course-img">
+                <div class="col-xl-4 col-md-6">
+                    @php
+                        $icones = ['ri-computer-line', 'ri-code-s-slash-line', 'ri-briefcase-4-line', 'ri-calculator-line', 'ri-book-open-line'];
+                        $icon = $icones[$loop->index % count($icones)];
+                        $categorie = strtolower((string) $c->categorie);
+
+                        if (str_contains($categorie, 'excel')) {
+                            $icon = 'ri-file-excel-2-line';
+                        } elseif (str_contains($categorie, 'word')) {
+                            $icon = 'ri-file-word-2-line';
+                        } elseif (str_contains($categorie, 'powerpoint')) {
+                            $icon = 'ri-file-ppt-2-line';
+                        } elseif (str_contains($categorie, 'web') || str_contains($categorie, 'développement') || str_contains($categorie, 'informatique')) {
+                            $icon = 'ri-code-s-slash-line';
+                        } elseif (str_contains($categorie, 'gestion')) {
+                            $icon = 'ri-briefcase-4-line';
+                        }
+                    @endphp
+
+                    <div class="card card-animate h-100 overflow-hidden border shadow-sm mb-0">
+
+                        @if(!empty($c->image))
+                            <div class="ratio ratio-16x9">
+                                <img src="{{ asset('storage/' . $c->image) }}" alt="{{ $c->titre }}" class="object-fit-cover">
+                            </div>
+                        @else
+                            <div class="ratio ratio-16x9 bg-primary-subtle">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <span class="avatar-lg">
+                                        <span class="avatar-title rounded-3 bg-white text-primary fs-1 shadow-sm">
+                                            <i class="{{ $icon }}"></i>
+                                        </span>
+                                    </span>
                                 </div>
-                            @else
-                                <div class="ratio ratio-16x9 bg-primary-subtle">
-                                    <div class="d-flex align-items-center justify-content-center text-primary display-5">
-                                        <i class="ri-book-open-line"></i>
-                                    </div>
-                                </div>
-                            @endif
-                            @if($c->categorie)
-                                <span class="badge nv-cat-badge">{{ $c->categorie }}</span>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
 
                         <div class="card-body d-flex flex-column">
-                            <h6 class="fw-bold mb-1">{{ $c->titre }}</h6>
-                            <p class="text-muted small nv-clamp mb-2">
-                                {{ $c->description ?: 'Découvrez le programme de cette formation.' }}
-                            </p>
+                            @if(!empty($c->categorie))
+                                <span class="badge bg-primary-subtle text-primary text-uppercase align-self-start mb-2">
+                                    {{ $c->categorie }}
+                                </span>
+                            @endif
 
-                            <div class="d-flex flex-wrap gap-3 text-muted small mb-3">
-                                <span><i class="ri-article-line me-1"></i>{{ $c->chapitres_count }} chapitre(s)</span>
-                                @if($c->niveau)
-                                    <span><i class="ri-bar-chart-line me-1"></i>{{ $c->niveau }}</span>
-                                @else
-                                    <span><i class="ri-calendar-2-line me-1"></i>{{ $c->classes_count }} classe(s)</span>
-                                @endif
+                            <h5 class="fw-bold mb-2">{{ $c->titre }}</h5>
+
+                            {{-- Note moyenne des avis --}}
+                            <div class="d-flex align-items-center gap-1 small mb-2">
+                                @include('cours.partials.etoiles', ['note' => $c->avis_avg_note])
+                                <span class="fw-semibold">{{ number_format($c->avis_avg_note, 1, ',', '') }}</span>
+                                <span class="text-muted">({{ $c->avis_count }} avis)</span>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mt-auto">
-                                <span class="fw-bold text-danger">{{ number_format($c->prix_particulier, 0, ',', ' ') }} FCFA</span>
-                                <a href="{{ route('cours.show', $c) }}" class="nv-arrow-btn"
-                                   aria-label="Découvrir {{ $c->titre }}">
-                                    <i class="ri-arrow-right-line"></i>
+                            <p class="text-muted small mb-0">
+                                {{ \Illuminate\Support\Str::limit($c->description ?: 'Description à venir pour cette formation.', 100) }}
+                            </p>
+
+                            <div class="d-flex gap-4 text-muted small border-top border-bottom py-2 my-3">
+                                <span><i class="ri-book-open-line me-1"></i>{{ $c->chapitres_count }} chapitre(s)</span>
+                                <span><i class="ri-calendar-2-line me-1"></i>{{ $c->classes_count }} classe(s)</span>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center gap-2 mt-auto">
+                                <div>
+                                    <small class="text-muted d-block">À partir de</small>
+                                    <span class="fs-5 fw-bold text-danger">
+                                        {{ number_format($c->prix_particulier, 0, ',', ' ') }} FCFA
+                                    </span>
+                                </div>
+                                <a href="{{ route('cours.show', $c) }}" class="btn btn-primary fw-semibold text-nowrap">
+                                    Découvrir <i class="ri-arrow-right-line ms-1"></i>
                                 </a>
                             </div>
                         </div>
-                    </article>
+                    </div>
                 </div>
             @empty
                 <div class="col-12">
                     <div class="alert alert-light border text-center mb-0">
-                        <i class="ri-book-open-line fs-2 text-primary d-block mb-2"></i>
-                        Les formations seront bientôt disponibles.
+                        <i class="ri-star-line fs-2 text-primary d-block mb-2"></i>
+                        Les formations les mieux notées apparaîtront ici dès les premiers avis.
                     </div>
                 </div>
             @endforelse

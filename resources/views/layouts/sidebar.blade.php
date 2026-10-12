@@ -7,7 +7,7 @@
         <a href="{{ route('dashboard') }}" class="logo logo-dark">
             <span class="logo-sm">
                 <img
-                    src="{{ URL::asset('build/images/logo_neovision.png') }}"
+                    src="{{ ('images/logo_neovision_white.JPG') }}"
                     alt="NEO VISION"
                     height="22"
                 >
@@ -15,7 +15,7 @@
 
             <span class="logo-lg">
                 <img
-                    src="{{ URL::asset('build/images/logo_neovision.png') }}"
+                    src="{{ ('images/logo_neovision_white.JPG') }}"
                     alt="NEO VISION"
                     height="30"
                 >
@@ -25,7 +25,7 @@
         <a href="{{ route('dashboard') }}" class="logo logo-light">
             <span class="logo-sm">
                 <img
-                    src="{{ URL::asset('build/images/logo_neovision.png') }}"
+                    src="{{ ('build/images/logo_neovision_white.JPG') }}"
                     alt="NEO VISION"
                     height="22"
                 >
@@ -33,7 +33,7 @@
 
             <span class="logo-lg">
                 <img
-                    src="{{ URL::asset('build/images/logo_neovision.png') }}"
+                    src="{{ ('images/logo_neovision_white.JPG') }}"
                     alt="NEO VISION"
                     height="30"
                 >

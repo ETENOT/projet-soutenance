@@ -34,14 +34,24 @@ class HomeController extends Controller
         return abort(404);
     }
 
-  public function root()
+    public function root()
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
 
         // Données réelles pour la page d'accueil
-        $coursPopulaires = \App\Models\Cours::latest()->take(5)->get();
+        // Les cours les mieux notés (moyenne des avis), 5 au maximum.
+        // On ne garde que les cours qui ont au moins un avis : s'il y en a moins de 5,
+        // on affiche seulement ceux-là. Départage : plus d'avis d'abord, puis le plus récent.
+        $coursPopulaires = \App\Models\Cours::has('avis')
+            ->withAvg('avis', 'note')
+            ->withCount('avis')
+            ->orderByDesc('avis_avg_note')
+            ->orderByDesc('avis_count')
+            ->latest()
+            ->take(5)
+            ->get();
         $categories      = \App\Models\Cours::whereNotNull('categorie')->distinct()->pluck('categorie');
         $nbCours         = \App\Models\Cours::count();
 
