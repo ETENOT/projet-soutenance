@@ -24,10 +24,28 @@ return new class extends Migration
 
             // Informations pratiques
             $table->string('lieu');
-            $table->string('formateur')->nullable();
+            
+            // Formateur (utilisateur au rôle "formateur") chargé d'animer la classe.
+            // nullable : une classe peut exister avant qu'un formateur lui soit affecté.
+            // nullOnDelete : si le compte du formateur est supprimé, la classe est conservée.
+            $table->foreignId('formateur_id')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             // État de la session
             $table->string('statut')->default('a_venir');
+
+            // Fermeture de la classe (action du formateur ou de l'administrateur).
+            // NULL = classe encore ouverte. dateTime() et non timestamp() pour éviter le
+            // décalage d'1h dû à la conversion UTC de MySQL (voir learnings du projet).
+            $table->dateTime('fermee_le')->nullable();
+
+            // Qui a fermé la classe (traçabilité) ; NULL si le compte a été supprimé depuis.
+            $table->foreignId('fermee_par')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
 
             // Cours auquel appartient la classe
             $table->foreignId('cours_id')

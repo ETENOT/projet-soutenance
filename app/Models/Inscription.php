@@ -8,7 +8,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inscription extends Model
 {
-    protected $fillable = ['date_inscription', 'statut', 'user_id', 'classe_id'];
+    protected $fillable = ['date_inscription', 'statut', 'user_id', 'classe_id','taux_presence', 'attestation_eligible',];
+
+    protected $casts = [
+        'attestation_eligible' => 'boolean',
+    ];
+
+    /**
+     * Scope "payées" : inscriptions dont le paiement est validé (statut = 'valide').
+     * Même définition que CoursController::utilisateurAAccesPaye().
+     * Utilisation : Inscription::payees()->... ou $classe->inscriptions()->payees()
+     */
+    public function scopePayees($query)
+    {
+        return $query->whereHas('paiement', function ($q) {
+            $q->where('statut', 'valide');
+        });
+    }
 
     // La table "inscriptions" a user_id -> belongsTo
     public function user()

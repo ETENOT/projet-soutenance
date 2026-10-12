@@ -38,6 +38,21 @@
         @endslot
     @endcomponent
 
+    {{-- Fermeture de la classe (admin ou formateur) : fige les taux de présence et les attestations --}}
+    <div class="mb-3">
+        @if ($classe->estFermee())
+            <span class="badge bg-dark-subtle text-dark fs-12">Classe fermée le {{ $classe->fermee_le->format('d/m/Y H:i') }}</span>
+        @elseif ($classe->peutEtreFermee())
+            <form action="{{ route('admin.cours.classes.fermer', [$cours, $classe]) }}" method="POST"
+                  onsubmit="return confirm('Fermer cette classe ? Les taux de présence seront figés et les attestations calculées. Action définitive.');">
+                @csrf
+                <button type="submit" class="btn btn-danger">
+                    <i class="ri-lock-line me-1"></i>Fermer la classe
+                </button>
+            </form>
+        @endif
+    </div>
+
     <div class="row">
         <div class="col-lg-6">
             <div class="card">
@@ -70,6 +85,22 @@
                            class="form-control @error('lieu') is-invalid @enderror"
                            value="{{ old('lieu') }}">
                     @error('lieu')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-3">
+                    <label for="formateur_id" class="form-label">Formateur</label>
+                    <select name="formateur_id" id="formateur_id"
+                            class="form-select @error('formateur_id') is-invalid @enderror">
+                        <option value="">— Aucun formateur —</option>
+                        @foreach ($formateurs as $formateur)
+                            <option value="{{ $formateur->id }}"
+                                @selected((string) old('formateur_id', $classe->formateur_id) === (string) $formateur->id)>
+                                {{ $formateur->name }} ({{ $formateur->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('formateur_id')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>

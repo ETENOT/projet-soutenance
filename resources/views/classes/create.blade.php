@@ -48,6 +48,23 @@
                     @enderror
                 </div>
 
+                <div class="mb-3">
+                    <label for="formateur_id" class="form-label">Formateur</label>
+                    <select name="formateur_id" id="formateur_id"
+                            class="form-select @error('formateur_id') is-invalid @enderror">
+                        <option value="">— Aucun formateur —</option>
+                        @foreach ($formateurs as $formateur)
+                            <option value="{{ $formateur->id }}"
+                                @selected((string) old('formateur_id', '') === (string) $formateur->id)>
+                                {{ $formateur->name }} ({{ $formateur->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('formateur_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="date_debut" class="form-label">Date de début</label>

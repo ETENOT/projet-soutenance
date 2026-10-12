@@ -119,6 +119,21 @@ Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'ca
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])
     ->name('cours.show');
 
+    // ==========================================================================
+    // AVIS SUR LES COURS (utilisateur connecté)
+    // ==========================================================================
+
+    Route::middleware('auth')->group(function () {
+
+        // Enregistrer un avis sur un cours
+        Route::post('/cours/{cours}/avis', [App\Http\Controllers\AvisController::class, 'store'])
+            ->middleware('throttle:10,1')
+            ->name('avis.store');
+
+        // Formulaire d'avis sur un cours
+        Route::get('/avis/{avis}', [App\Http\Controllers\AvisController::class, 'destroy'])
+            ->name('avis.destroy');
+    });
 
 // ==========================================================================
 // QUIZ
@@ -181,10 +196,6 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     // Espace d'apprentissage
     Route::get('/cours/{cours}/espace', [CoursController::class, 'espace'])
         ->name('cours.espace');
-
-    // Consulter un chapitre
-    Route::get('/cours/{cours}/chapitre/{chapitre}', [CoursController::class, 'chapitre'])
-        ->name('cours.chapitre');
 
     // Consulter une ressource
     Route::get('/cours/{cours}/ressource/{resource}', [CoursController::class, 'ressource'])
@@ -295,23 +306,23 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/cours/{cours}/resources/{resource}', [App\Http\Controllers\CoursResourceController::class, 'destroy'])
             ->name('cours.resources.destroy');
 
-        // Banque de questions (QCM) : CRUD + import CSV.
-    // Les routes /questions/import* sont déclarées AVANT la resource, sinon "import"
-    // serait interprété comme l'id d'une question ({question}).
-    Route::get('/questions/import', [App\Http\Controllers\QuestionImportController::class, 'form'])->name('questions.import');
-    Route::post('/questions/import', [App\Http\Controllers\QuestionImportController::class, 'traiter'])->name('questions.import.store');
-    Route::get('/questions/import/modele', [App\Http\Controllers\QuestionImportController::class, 'modele'])->name('questions.import.modele');
-    Route::resource('questions', App\Http\Controllers\QuestionController::class)->except(['show']);
 
-    // Suivi des quiz (tentatives des particuliers et des visiteurs) : liste
-    Route::get('/quiz', [App\Http\Controllers\AdminQuizController::class, 'index'])->name('quiz.index');
-    // Réglage du "noté sur" de chaque cours. Déclaré AVANT /quiz/{quiz}, sinon "reglages"
-    // serait pris pour l'id d'un quiz.
-    Route::get('/quiz/reglages', [App\Http\Controllers\AdminQuizController::class, 'reglages'])->name('quiz.reglages');
-    Route::put('/quiz/reglages', [App\Http\Controllers\AdminQuizController::class, 'enregistrerReglages'])->name('quiz.reglages.update');
-    // Suivi des quiz (tentatives des particuliers et des visiteurs) : détail, suppression
-    Route::get('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'show'])->name('quiz.show');
-    Route::delete('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'destroy'])->name('quiz.destroy');
+        // Banque de questions (QCM) : CRUD + import CSV.
+
+        Route::get('/questions/import', [App\Http\Controllers\QuestionImportController::class, 'form'])->name('questions.import');
+        Route::post('/questions/import', [App\Http\Controllers\QuestionImportController::class, 'traiter'])->name('questions.import.store');
+        Route::get('/questions/import/modele', [App\Http\Controllers\QuestionImportController::class, 'modele'])->name('questions.import.modele');
+        Route::resource('questions', App\Http\Controllers\QuestionController::class)->except(['show']);
+
+        // Suivi des quiz (tentatives des particuliers et des visiteurs) : liste
+        Route::get('/quiz', [App\Http\Controllers\AdminQuizController::class, 'index'])->name('quiz.index');
+        // Réglage du "noté sur" de chaque cours. Déclaré AVANT /quiz/{quiz}, sinon "reglages"
+        // serait pris pour l'id d'un quiz.
+        Route::get('/quiz/reglages', [App\Http\Controllers\AdminQuizController::class, 'reglages'])->name('quiz.reglages');
+        Route::put('/quiz/reglages', [App\Http\Controllers\AdminQuizController::class, 'enregistrerReglages'])->name('quiz.reglages.update');
+        // Suivi des quiz (tentatives des particuliers et des visiteurs) : détail, suppression
+        Route::get('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'show'])->name('quiz.show');
+        Route::delete('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'destroy'])->name('quiz.destroy');
 
         // ------------------------------------------------------------------
         // UTILISATEURS
@@ -335,6 +346,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/utilisateurs/{user}', [App\Http\Controllers\UserController::class, 'destroy'])
             ->name('users.destroy');
 
+        Route::post('/classe', [App\Http\Controllers\ClasseController::class, 'toutes'])
+            ->name('classes.index');
 
         // ------------------------------------------------------------------
         // CLASSES
@@ -362,6 +375,10 @@ Route::middleware(['auth', 'role:admin'])
                 Route::delete('/{classe}', [App\Http\Controllers\ClasseController::class, 'destroy'])
                     ->name('destroy');
 
+                // Fermer la classe (calcule les taux de présence / attestations)
+                Route::post('/{classe}/fermer', [App\Http\Controllers\ClasseController::class, 'fermer'])
+                    ->name('fermer');
+
                 // Reporter une session
                 Route::put('/{classe}/reporter', [App\Http\Controllers\ClasseController::class, 'reporter'])
                     ->name('reporter');
@@ -375,6 +392,84 @@ Route::middleware(['auth', 'role:admin'])
                     ->name('inscrits.destroy');
             });
     });
+
+    // ==========================================================================
+    // ESPACE FORMATEUR
+    // ==========================================================================
+    // Toutes ces routes exigent d'être connecté ET d'avoir le rôle "formateur".
+    // Chaque contrôleur vérifie en plus que la classe/le cours appartient bien au formateur connecté.
+
+    Route::middleware(['auth', 'role:formateur'])
+        ->prefix('formateur')
+        ->group(function () {
+
+            // Liste de mes classes (état, dates, lieu, payés/capacité)
+            Route::get('/classes', [App\Http\Controllers\Formateur\ClasseController::class, 'index'])
+                ->name('classes.formateur.index');
+
+            // Nombre de forums avec nouveaux messages (badge du menu).
+            // DOIT rester avant '/{classe}', sinon "non-lus" serait pris pour un id de classe.
+            Route::get('/non-lus', [App\Http\Controllers\ForumController::class, 'nonLus'])->name('forum.non-lus');
+
+            // Détail d'une classe : cours concerné + stagiaires payés
+            Route::get('/classes/{classe}', [App\Http\Controllers\Formateur\ClasseController::class, 'show'])
+                ->name('classes.formateur.show');
+
+            // Fermer la classe (formateur de la classe ; l'admin a sa propre route)
+            Route::post('/classes/{classe}/fermer', [App\Http\Controllers\Formateur\ClasseController::class, 'fermer'])
+                ->name('classes.formateur.fermer');
+
+            // Feuille de présence : afficher un jour / enregistrer un jour
+            Route::get('/classes/{classe}/presences', [App\Http\Controllers\Formateur\PresenceController::class, 'edit'])
+                ->name('presences.formateur.edit');
+
+            Route::put('/classes/{classe}/presences', [App\Http\Controllers\Formateur\PresenceController::class, 'update'])
+                ->name('presences.formateur.update');
+
+            // Résultats au quiz des stagiaires de la classe
+            Route::get('/classes/{classe}/quiz', [App\Http\Controllers\Formateur\QuizController::class, 'index'])
+                ->name('quiz.formateur.index');
+
+            // Supports de cours : liste + dépôt (le dépôt réutilise le contrôleur de l'admin)
+            Route::get('/cours/{cours}/supports', [App\Http\Controllers\Formateur\SupportController::class, 'index'])
+                ->name('cours.resources.formateur.index');
+
+            Route::post('/cours/{cours}/supports', [App\Http\Controllers\CoursResourceController::class, 'store'])
+                ->name('cours.resources.formateur.store');
+        });
+
+    // ==========================================================================
+    // FORUM DE DISCUSSION (un forum par classe)
+    // ==========================================================================
+    // Accessible à tout utilisateur connecté ; ForumController vérifie ensuite qu'il est
+    // bien membre (stagiaire payé de la classe, formateur de la classe, ou admin).
+
+    Route::middleware('auth')
+        ->prefix('forum')
+        ->name('forum.')
+        ->group(function () {
+
+            // Mes forums
+            Route::get('/', [App\Http\Controllers\ForumController::class, 'index'])->name('index');
+
+            // Page du forum d'une classe
+            Route::get('/{classe}', [App\Http\Controllers\ForumController::class, 'show'])->name('show');
+
+            // Messages en JSON (rafraîchis automatiquement par la page)
+            Route::get('/{classe}/messages', [App\Http\Controllers\ForumController::class, 'messages'])->name('messages');
+
+            // Poster un message / une photo (limité à 30 envois par minute et par utilisateur)
+            Route::post('/{classe}/messages', [App\Http\Controllers\ForumController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('store');
+
+            // Supprimer un message
+            Route::delete('/{classe}/messages/{message}', [App\Http\Controllers\ForumController::class, 'destroy'])->name('destroy');
+
+            // Afficher une photo (réservé aux membres)
+            Route::get('/{classe}/photos/{message}', [App\Http\Controllers\ForumController::class, 'photo'])->name('photo');
+        });
+
 
 
 // ==========================================================================

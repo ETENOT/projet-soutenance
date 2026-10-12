@@ -30,9 +30,16 @@ class DatabaseSeeder extends Seeder
             // Sessions de formation
             ClasseSeeder::class,
 
+            //Utilisateurs + avis de test (moyenne des avis)
+            AvisSeeder::class,
+
             // Quiz
             QuestionSeeder::class,
             OptionSeeder::class,
+
+            // Compte formateur de test + classes, stagiaires, paiements, quiz et présences
+            // (après ClasseSeeder : il affecte le formateur à une classe existante)
+            FormateurSeeder::class,
         ]);
     }
 }

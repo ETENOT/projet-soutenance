@@ -20,6 +20,7 @@ class DashboardController extends Controller
             'admin' => $this->admin($utilisateur),
             'entreprise' => $this->entreprise($utilisateur),
             'particulier' => $this->particulier($utilisateur),
+            'formateur' => $this->formateur($utilisateur),
 
             default => abort(403, 'Rôle non reconnu.'),
         };
@@ -163,6 +164,50 @@ class DashboardController extends Controller
             // Nouveaux anciens cours.
             'anciensCours' => $anciensCours,
             'totalQuizEffectues' => $totalQuizEffectues, // <-- à ajouter
+        ]);
+    }
+
+    // =========================================================
+    // ESPACE FORMATEUR
+    // =========================================================
+
+    private function formateur($utilisateur)
+    {
+        // Toutes les requêtes sont limitées aux classes dont CE formateur est responsable.
+        $mesClasses = fn () => \App\Models\Classe::where('formateur_id', $utilisateur->id);
+
+        // Nombre total de classes affectées au formateur
+        $nombreClasses = $mesClasses()->count();
+
+        // Classes en cours : commencées, pas encore terminées, et pas fermées
+        // (même définition que Classe::getEtatAttribute(), mais calculée en SQL)
+        $classesEnCours = $mesClasses()
+            ->whereNull('fermee_le')
+            ->whereDate('date_debut', '<=', today())
+            ->whereDate('date_fin', '>=', today())
+            ->count();
+
+        // Apprenants payés : stagiaires DISTINCTS ayant un paiement validé dans une de ses classes
+        // (distinct : un stagiaire inscrit à 2 de ses classes n'est compté qu'une fois)
+        $apprenantsPayes = \App\Models\Inscription::payees()
+            ->whereHas('classe', fn ($q) => $q->where('formateur_id', $utilisateur->id))
+            ->distinct()
+            ->count('user_id');
+
+        // Prochaine classe : la plus proche dans le futur (qui n'a pas encore commencé)
+        $prochaineClasse = $mesClasses()
+            ->with('cours')
+            ->whereNull('fermee_le')
+            ->whereDate('date_debut', '>', today())
+            ->orderBy('date_debut')
+            ->first();
+
+        return view('dashboards.formateur', [
+            'utilisateur' => $utilisateur,
+            'nombreClasses' => $nombreClasses,
+            'classesEnCours' => $classesEnCours,
+            'apprenantsPayes' => $apprenantsPayes,
+            'prochaineClasse' => $prochaineClasse,
         ]);
     }
 

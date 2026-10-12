@@ -118,6 +118,19 @@ class QuizFinalisationService
             ->exists();
     }
 
+    // Abandon d'un visiteur : supprime TOUS ses quiz anonymes (terminés ou non).
+    // Les reponses_quiz et resultats_quiz partent en cascade (clé étrangère).
+    public function abandonnerVisiteur(?string $token): void
+    {
+        // Sans token, where('visiteur_token', null) viendrait toucher les quiz de tous les visiteurs
+        if (!$token) {
+            return;
+        }
+
+        // user_id NULL = quiz jamais rattaché à un compte
+        Quiz::whereNull('user_id')->where('visiteur_token', $token)->delete();
+    }
+
     // Rattache les quiz anonymes terminés au nouvel utilisateur + crée les notifications
     public function rattacherVisiteur(User $user, string $token): void
     {

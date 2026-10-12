@@ -215,16 +215,14 @@
                                 @if(Auth::user()->avatar)
                                     <img
                                         class="rounded-circle header-profile-user"
-                                        src="{{ asset('storage/' . Auth::user()->avatar) }}"
+                                        src="{{ asset('images/' . Auth::user()->avatar) }}"
                                         alt="Avatar"
                                     >
                                 @else
-                                    <span
-                                        class="rounded-circle header-profile-user bg-primary text-white d-flex align-items-center justify-content-center fw-semibold"
-                                        style="width: 32px; height: 32px;"
-                                    >
-                                        {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                                    </span>
+                                    <img
+                                    class="rounded-circle header-profile-user"
+                                    src="{{ URL::asset('build/images/users/user-dummy-img.jpg') }}"
+                                    alt="user-img" class="img-thumbnail rounded-circle" />
                                 @endif
 
                                 <span class="text-start ms-xl-2">

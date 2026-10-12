@@ -6,7 +6,12 @@ use App\Models\Classe;
 use App\Models\Cours;
 use App\Models\User;
 use App\Models\Inscription;
+use App\Models\Role;
+use App\Services\ClasseClotureService;
+use DomainException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ClasseController extends Controller
 {
@@ -19,7 +24,15 @@ class ClasseController extends Controller
 
     public function create(Cours $cours)
     {
-        return view('classes.create', ['cours' => $cours]);
+        return view('classes.create', ['cours' => $cours, 'formateurs' => $this->formateurs()]);
+    }
+
+    // Comptes ayant le rôle "formateur" : liste proposée dans les formulaires de classe.
+    private function formateurs()
+    {
+        return User::whereHas('role', fn ($q) => $q->where('nom', 'formateur'))
+            ->orderBy('name')
+            ->get();
     }
 
     private function validationRules(): array
@@ -32,6 +45,12 @@ class ClasseController extends Controller
             'date_debut' => ['required', 'date'],
             // la date de fin ne peut pas précéder la date de début
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
+            // Formateur facultatif, mais s'il est fourni ce doit être un utilisateur au rôle "formateur"
+            // (on interdit d'affecter un particulier ou un admin comme formateur).
+            'formateur_id' => [
+                'nullable',
+                Rule::exists('users', 'id')->where('role_id', Role::where('nom', 'formateur')->value('id')),
+            ],
         ];
     }
 
@@ -53,7 +72,11 @@ class ClasseController extends Controller
         // et savoir si l'inscription est payée.
         $classe->load('inscriptions.user', 'inscriptions.paiement');
 
-        return view('classes.edit', ['cours' => $cours, 'classe' => $classe]);
+        return view('classes.edit', [
+            'cours' => $cours,
+            'classe' => $classe,
+            'formateurs' => $this->formateurs(),
+        ]);
     }
 
     public function update(Request $request, Cours $cours, Classe $classe)
@@ -68,8 +91,27 @@ class ClasseController extends Controller
     {
         $classe->delete();
 
-        return redirect()->route('admin.cours.classes.index', $cours)
+        return redirect()->route('admin.classes.index', $cours)
             ->with('success', 'Classe supprimée avec succès.');
+    }
+
+    /**
+     * Fermer une classe (l'administrateur ET le formateur de la classe peuvent le faire).
+     * Calcule et fige les taux de présence : voir ClasseClotureService.
+     */
+    public function fermer(Cours $cours, Classe $classe, ClasseClotureService $service)
+    {
+        // La classe doit bien appartenir au cours de l'URL
+        abort_unless($classe->cours_id === $cours->id, 404);
+
+        try {
+            $service->fermer($classe, Auth::user());
+        } catch (DomainException $e) {
+            return redirect()->route('admin.cours.classes.edit', [$cours, $classe])->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+            ->with('success', 'La classe est fermée. Les taux de présence et les attestations ont été calculés.');
     }
 
     /**

@@ -20,6 +20,8 @@ class RoleSeeder extends Seeder
             ['nom' => 'particulier', 'created_at' => now(), 'updated_at' => now()],
             ['nom' => 'entreprise',  'created_at' => now(), 'updated_at' => now()],
             ['nom' => 'admin',       'created_at' => now(), 'updated_at' => now()],
+            // Formateur : anime des classes (présences, supports, résultats de quiz)
+            ['nom' => 'formateur',   'created_at' => now(), 'updated_at' => now()],
         ]);
     }
 }

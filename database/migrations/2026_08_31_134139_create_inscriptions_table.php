@@ -17,6 +17,13 @@ return new class extends Migration
             // État de l'inscription
             $table->string('statut')->default('en_attente');
 
+            // Renseignés UNIQUEMENT à la fermeture de la classe (voir ClasseClotureService) :
+            // - taux_presence : pourcentage de séances où le stagiaire était présent
+            // - attestation_eligible : false si taux_presence < 50 %
+            // NULL tant que la classe n'est pas fermée.
+            $table->decimal('taux_presence', 5, 2)->nullable();
+            $table->boolean('attestation_eligible')->nullable();
+
             // Utilisateur inscrit
             $table->foreignId('user_id')
                 ->constrained('users')

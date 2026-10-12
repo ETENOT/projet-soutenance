@@ -42,6 +42,16 @@ class QuizAttemptController extends Controller
     $token = $request->session()->get('visiteur_token');
     $email = $request->session()->get('visiteur_email');
 
+    // Visiteur qui avait déjà terminé un quiz sans s'inscrire, et qui revient cliquer
+    // sur un quiz (le même ou un autre) : on annule l'ancien quiz et on oublie son e-mail.
+    // Il devra en saisir un nouveau avant de commencer.
+    if (!$user && $this->finalisation->visiteurAResultatEnAttente($token)) {
+        $this->finalisation->abandonnerVisiteur($token);
+        $request->session()->forget(['visiteur_email', 'visiteur_token']);
+
+        return redirect()->route('quiz.visiteur.email', $cours);
+    }
+
     // Visiteur sans e-mail enregistré : on le demande avant de commencer
     if (!$user && (!$email || !$token)) {
         return redirect()->route('quiz.visiteur.email', $cours);
@@ -232,7 +242,18 @@ class QuizAttemptController extends Controller
                 ->with('error', 'Ce quiz est déjà terminé, il ne peut plus être annulé.');
         }
 
+        // On note AVANT la suppression si c'est un visiteur (non connecté)
+        $estVisiteur = !$request->user();
+
         $quiz->delete(); // reponses_quiz part en cascade (clé étrangère)
+
+        if ($estVisiteur) {
+            // Un visiteur qui annule oublie tout : ses quiz anonymes sont supprimés
+            // et son e-mail/token quittent la session. Au prochain quiz, il devra
+            // ressaisir une adresse e-mail (voir show() -> quiz.visiteur.email).
+            $this->finalisation->abandonnerVisiteur($request->session()->get('visiteur_token'));
+            $request->session()->forget(['visiteur_email', 'visiteur_token']);
+        }
 
         return redirect()->route('cours.show', $cours)->with('success', 'Le quiz a été annulé.');
     }

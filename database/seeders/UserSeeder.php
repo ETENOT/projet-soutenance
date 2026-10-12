@@ -21,6 +21,7 @@ class UserSeeder extends Seeder
         $roleAdmin = Role::where('nom', 'admin')->firstOrFail();
         $roleEntreprise = Role::where('nom', 'entreprise')->firstOrFail();
         $roleParticulier = Role::where('nom', 'particulier')->firstOrFail();
+        $roleFormateur = Role::where('nom', 'formateur')->firstOrFail();
 
         // --- Compte admin (déjà existant, inchangé) ---
         User::create([
@@ -65,5 +66,16 @@ class UserSeeder extends Seeder
             'role_id' => $roleParticulier->id,
             'particulier_id' => $particulier->id,
         ]);
+
+        // --- Compte formateur de test ---
+        User::Create([
+            'email' => 'formateur@test.com',
+            'name' => 'Formateur Test',
+            'password' => Hash::make('12345678'),
+            // Sans email vérifié, le middleware "verified" bloque l'accès à /dashboard
+            'email_verified_at' => now(),
+            'role_id' => $roleFormateur->id,
+            ]
+        );
     }
 }

@@ -21,6 +21,9 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
         \App\Http\Middleware\TrimStrings::class,
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
+        // Annule le quiz anonyme si le visiteur quitte l'inscription.
+        // Doit venir APRÈS StartSession (il lit la session) et SubstituteBindings (il utilise routeIs).
+        \App\Http\Middleware\AbandonnerQuizVisiteur::class,
     ];
 
     /**

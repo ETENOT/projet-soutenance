@@ -59,6 +59,11 @@
 
             <ul class="navbar-nav" id="navbar-nav">
 
+                {{-- Nombre de forums contenant de nouveaux messages (affiché en badge sur "Forums") --}}
+                @php
+                    $forumsNonLus = Auth::check() ? \App\Models\MessageForum::nombreForumsNonLus(Auth::user()) : 0;
+                @endphp
+
                 @if (Auth::user()?->role?->nom === 'admin')
 
                     {{-- ================================
@@ -75,6 +80,14 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('forum.index') }}">
+                            <i class="ri-chat-3-line"></i>
+                            <span>Forums</span>
+                            {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
+                            <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
+                        </a>
+                    </li>
 
                     {{-- ================================
                          UTILISATEURS
@@ -86,9 +99,10 @@
                             href="{{ route('admin.users.index') }}"
                         >
                             <i class="ri-user-line"></i>
-                            <span>Utilisateurs</span>
+                            <span>Gestion des utilisateurs</span>
                         </a>
                     </li>
+
 
 
                     {{-- ================================
@@ -99,57 +113,11 @@
 
                         <a
                             class="nav-link menu-link"
-                            href="#sidebarFormations"
-                            data-bs-toggle="collapse"
-                            role="button"
-                            aria-expanded="false"
-                            aria-controls="sidebarFormations"
+                            href="{{ route('admin.cours.index') }}"
                         >
                             <i class="ri-book-open-line"></i>
-                            <span>Formations</span>
+                            <span>Gestion des Formations</span>
                         </a>
-
-                        <div
-                            class="collapse menu-dropdown"
-                            id="sidebarFormations"
-                        >
-
-                            <ul class="nav nav-sm flex-column">
-
-                                {{-- Catalogue --}}
-                                <li class="nav-item">
-                                    <a
-                                        href="{{ route('admin.cours.index') }}"
-                                        class="nav-link"
-                                    >
-                                        Catalogue de formations
-                                    </a>
-                                </li>
-
-                                {{-- Création --}}
-                                <li class="nav-item">
-                                    <a
-                                        href="{{ route('admin.cours.create') }}"
-                                        class="nav-link"
-                                    >
-                                        Créer une formation
-                                    </a>
-                                </li>
-
-                                {{-- Contenu pédagogique --}}
-                                <li class="nav-item">
-                                    <span
-                                        class="nav-link text-muted"
-                                        style="cursor: not-allowed;"
-                                        title="Accessible depuis une formation"
-                                    >
-                                        Contenu pédagogique
-                                    </span>
-                                </li>
-
-                            </ul>
-
-                        </div>
 
                     </li>
 
@@ -162,46 +130,13 @@
 
                         <a
                             class="nav-link menu-link"
-                            href="#sidebarClasses"
-                            data-bs-toggle="collapse"
-                            role="button"
-                            aria-expanded="false"
-                            aria-controls="sidebarClasses"
+                            href="{{ route('admin.classes.index') }}"
                         >
                             <i class="ri-group-line"></i>
-                            <span>Classes</span>
+                            <span>Gestion des Classes</span>
                         </a>
 
-                        <div
-                            class="collapse menu-dropdown"
-                            id="sidebarClasses"
-                        >
-
-                            <ul class="nav nav-sm flex-column">
-
-                                <li class="nav-item">
-                                    <span
-                                        class="nav-link text-muted"
-                                        style="cursor: not-allowed;"
-                                    >
-                                        Toutes les classes
-                                    </span>
-                                </li>
-
-                                <li class="nav-item">
-                                    <span
-                                        class="nav-link text-muted"
-                                        style="cursor: not-allowed;"
-                                    >
-                                        Créer une classe
-                                    </span>
-                                </li>
-
-                            </ul>
-
-                        </div>
-
-                    </li>
+                    </li>  
 
 
                     {{-- ================================
@@ -209,16 +144,43 @@
                     ================================= --}}
 
                     <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('admin.questions.index') }}">
-                        <i class="ri-question-line"></i> <span>Banque de questions</span>
-                    </a>
-                </li>
 
-                <li class="nav-item">
-                    <a class="nav-link menu-link" href="{{ route('admin.quiz.index') }}">
-                        <i class="ri-file-list-3-line"></i> <span>Suivi des quiz</span>
-                    </a>
-                </li>
+                        <a
+                            class="nav-link menu-link"
+                            href="#sidebarQuiz"
+                            data-bs-toggle="collapse"
+                            role="button"
+                            aria-expanded="false"
+                            aria-controls="sidebarQuiz"
+                        >
+                            <i class="ri-question-line"></i>
+                            <span>Gestion des Quiz</span>
+                        </a>
+                        <div
+                                class="collapse menu-dropdown"
+                                id="sidebarQuiz"
+                            >
+                            <ul class="nav nav-sm flex-column">
+                                <li class="nav-item">
+                                    <a class="nav-link menu-link" href="{{ route('admin.questions.index') }}">
+                                        <span>Banque de questions</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link menu-link" href="{{ route('admin.quiz.index') }}">
+                                        <span>Suivi des quiz</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link menu-link" href="{{ route('admin.quiz.reglages') }}">
+                                        <span>Réglages des notations</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
 
                     {{-- ================================
                          FINANCES
@@ -250,7 +212,45 @@
 
                     </li>
 
+                @elseif (Auth::user()?->role?->nom === 'formateur')
 
+                    {{-- ================================
+                         ESPACE FORMATEUR
+                    ================================= --}}
+
+                    <li class="menu-title">
+                        <span>ESPACE FORMATEUR</span>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('dashboard') }}">
+                            <i class="ri-dashboard-2-line"></i>
+                            <span>Tableau de bord</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('classes.formateur.index') }}">
+                            <i class="ri-group-line"></i>
+                            <span>Mes classes</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('forum.index') }}">
+                            <i class="ri-chat-3-line"></i>
+                            <span>Forums</span>
+                            {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
+                            <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('index', ['any' => 'pages-profile']) }}">
+                            <i class="ri-user-line"></i>
+                            <span>Mon profil</span>
+                        </a>
+                    </li>
                 @else
 
                     {{-- ================================
@@ -292,6 +292,15 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('forum.index') }}">
+                            <i class="ri-chat-3-line"></i>
+                            <span>Forums</span>
+                            {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
+                            <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a
                             class="nav-link menu-link"
                             href="{{ route('index', ['any' => 'pages-profile']) }}"
@@ -312,6 +321,31 @@
     <div class="sidebar-background"></div>
 
 </div>
+
+{{-- Met à jour le badge "Forums" toutes les 30 secondes, sans recharger la page --}}
+@auth
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const badges = document.querySelectorAll('.js-forum-badge');
+        if (!badges.length) return;
+
+        async function majBadge() {
+            try {
+                const r = await fetch(@json(route('forum.non-lus')), { headers: { 'Accept': 'application/json' } });
+                if (!r.ok) return;
+                const { nombre } = await r.json();
+                // On affiche le nombre, et on cache le badge quand il vaut 0
+                badges.forEach(b => {
+                    b.textContent = nombre;
+                    b.classList.toggle('d-none', nombre === 0);
+                });
+            } catch (e) { /* réseau coupé : on réessaiera au prochain tour */ }
+        }
+
+        setInterval(majBadge, 30000);
+    });
+</script>
+@endauth
 
 <!-- Vertical Overlay -->
 <div class="vertical-overlay"></div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Classe;
 use App\Models\Cours;
 use App\Models\CoursResource;
 use Illuminate\Http\Request;
@@ -43,6 +44,10 @@ class CoursResourceController extends Controller
      */
     public function store(Request $request, Cours $cours)
     {
+
+        // Admin : toujours autorisé. Formateur : seulement pour un cours dont il anime une classe.
+        $this->autoriserDepot($cours);
+
         $data = $request->validate([
             'type' => [
                 'required',
@@ -112,7 +117,7 @@ class CoursResourceController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.cours.contenus', $cours)
+                ->to($this->urlRetour($cours))
                 ->with('success', 'Document ajouté avec succès.');
         }
 
@@ -168,7 +173,7 @@ class CoursResourceController extends Controller
                 ]);
 
                 return redirect()
-                    ->route('admin.cours.contenus', $cours)
+                    ->to($this->urlRetour($cours))
                     ->with('success', 'Vidéo ajoutée avec succès.');
             }
 
@@ -199,10 +204,8 @@ class CoursResourceController extends Controller
                 ]);
 
                 return redirect()
-                    ->route('admin.cours.contenus', $cours)
-                    ->with(
-                        'success',
-                        'Vidéo externe ajoutée avec succès.'
+                    ->to($this->urlRetour($cours))
+                    ->with('success','Vidéo externe ajoutée avec succès.'
                     );
             }
         }
@@ -226,7 +229,7 @@ class CoursResourceController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.cours.contenus', $cours)
+                ->to($this->urlRetour($cours))
                 ->with('success', 'Lien ajouté avec succès.');
         }
 
@@ -278,6 +281,47 @@ class CoursResourceController extends Controller
     }
 
     /**
+     * Le formateur connecté anime-t-il au moins une classe de ce cours ?
+     */
+    private function estFormateurDuCours(Cours $cours): bool
+    {
+        $user = Auth::user();
+
+        return $user
+            && $user->role?->nom === 'formateur'
+            && Classe::where('formateur_id', $user->id)
+                ->where('cours_id', $cours->id)
+                ->exists();
+    }
+
+    /**
+     * Autorise le dépôt d'un support : administrateur, ou formateur du cours.
+     */
+    private function autoriserDepot(Cours $cours): void
+    {
+        if (Auth::user()->role?->nom === 'admin') {
+            return;
+        }
+
+        abort_unless(
+            $this->estFormateurDuCours($cours),
+            403,
+            'Vous n\'animez aucune classe de ce cours.'
+        );
+    }
+
+    /**
+     * Où renvoyer l'utilisateur après un dépôt/suppression :
+     * l'admin retourne sur la gestion des contenus, le formateur sur sa page de supports.
+     */
+    private function urlRetour(Cours $cours): string
+    {
+        return Auth::user()->role?->nom === 'formateur'
+            ? route('cours.resources.formateur.index', $cours)
+            : route('admin.cours.contenus', $cours);
+    }
+
+    /**
      * Vérifier que l'utilisateur peut accéder
      * à une ressource du cours.
      */
@@ -299,6 +343,17 @@ class CoursResourceController extends Controller
         */
 
         if ($user->role?->nom === 'admin') {
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | FORMATEUR DU COURS
+        |--------------------------------------------------------------------------
+        | Le formateur doit pouvoir relire ce qu'il dépose, sans être "inscrit payé".
+        */
+
+        if ($this->estFormateurDuCours($cours)) {
             return;
         }
 
