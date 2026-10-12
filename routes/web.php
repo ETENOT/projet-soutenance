@@ -346,7 +346,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/utilisateurs/{user}', [App\Http\Controllers\UserController::class, 'destroy'])
             ->name('users.destroy');
 
-        Route::post('/classe', [App\Http\Controllers\ClasseController::class, 'toutes'])
+        Route::get('/classe', [App\Http\Controllers\ClasseController::class, 'toutes'])
             ->name('classes.index');
 
         // ------------------------------------------------------------------

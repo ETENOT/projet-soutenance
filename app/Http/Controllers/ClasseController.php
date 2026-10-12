@@ -17,42 +17,42 @@ class ClasseController extends Controller
 {
 
     public function toutes(Request $request)
-{
-    $aujourdhui = today()->toDateString();
+    {
+        $aujourdhui = today()->toDateString();
 
-    $query = Classe::with('cours')->withCount('inscriptions');
+        $query = Classe::with('cours')->withCount('inscriptions');
 
-    if ($recherche = trim((string) $request->input('q'))) {
-        $query->where(function ($q) use ($recherche) {
-            $q->where('nom', 'like', "%{$recherche}%")
-            ->orWhere('lieu', 'like', "%{$recherche}%")
-            ->orWhereHas('cours', fn ($c) => $c->where('titre', 'like', "%{$recherche}%"));
-        });
+        if ($recherche = trim((string) $request->input('q'))) {
+            $query->where(function ($q) use ($recherche) {
+                $q->where('nom', 'like', "%{$recherche}%")
+                ->orWhere('lieu', 'like', "%{$recherche}%")
+                ->orWhereHas('cours', fn ($c) => $c->where('titre', 'like', "%{$recherche}%"));
+            });
+        }
+
+        if ($request->filled('cours_id')) {
+            $query->where('cours_id', $request->input('cours_id'));
+        }
+
+        match ($request->input('etat')) {
+            'a_venir'  => $query->whereDate('date_debut', '>', $aujourdhui),
+            'en_cours' => $query->whereDate('date_debut', '<=', $aujourdhui)
+                                ->whereDate('date_fin', '>=', $aujourdhui),
+            'terminee' => $query->whereDate('date_fin', '<', $aujourdhui),
+            default    => null,
+        };
+
+        return view('classes.liste', [
+            'classes' => $query->orderByDesc('date_debut')->paginate(10)->withQueryString(),
+            'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
+            'stats' => [
+                'en_cours'   => Classe::whereDate('date_debut', '<=', $aujourdhui)->whereDate('date_fin', '>=', $aujourdhui)->count(),
+                'a_venir'    => Classe::whereDate('date_debut', '>', $aujourdhui)->count(),
+                'terminees'  => Classe::whereDate('date_fin', '<', $aujourdhui)->count(),
+                'formations' => Classe::distinct()->count('cours_id'),
+            ],
+        ]);
     }
-
-    if ($request->filled('cours_id')) {
-        $query->where('cours_id', $request->input('cours_id'));
-    }
-
-    match ($request->input('etat')) {
-        'a_venir'  => $query->whereDate('date_debut', '>', $aujourdhui),
-        'en_cours' => $query->whereDate('date_debut', '<=', $aujourdhui)
-                            ->whereDate('date_fin', '>=', $aujourdhui),
-        'terminee' => $query->whereDate('date_fin', '<', $aujourdhui),
-        default    => null,
-    };
-
-    return view('classes.liste', [
-        'classes' => $query->orderByDesc('date_debut')->paginate(10)->withQueryString(),
-        'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
-        'stats' => [
-            'en_cours'   => Classe::whereDate('date_debut', '<=', $aujourdhui)->whereDate('date_fin', '>=', $aujourdhui)->count(),
-            'a_venir'    => Classe::whereDate('date_debut', '>', $aujourdhui)->count(),
-            'terminees'  => Classe::whereDate('date_fin', '<', $aujourdhui)->count(),
-            'formations' => Classe::distinct()->count('cours_id'),
-        ],
-    ]);
-}
 
     public function index(Cours $cours)
     {

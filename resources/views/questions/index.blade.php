@@ -30,6 +30,12 @@
                 <a href="{{ route('admin.quiz.reglages') }}" class="btn btn-soft-secondary">
                     <i class="ri-settings-3-line me-1"></i>Noté sur…
                 </a>
+
+                {{-- Import en masse : page dédiée (choix du fichier, cours par défaut, modèle à télécharger) --}}
+                <a href="{{ route('admin.questions.import') }}" class="btn btn-success">
+                    <i class="ri-file-upload-line me-1"></i>Importer .csv
+                </a>
+
                 {{-- On garde le filtre de cours : la nouvelle question sera pré-associée à ce cours --}}
                 <a href="{{ route('admin.questions.create', request()->only('cours_id')) }}" class="btn btn-primary">
                     <i class="ri-add-line me-1"></i>Ajouter une question
