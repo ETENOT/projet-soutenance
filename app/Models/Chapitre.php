@@ -23,11 +23,4 @@ class Chapitre extends Model
         return $this->belongsTo(Cours::class);
     }
 
-    /**
-     * Un chapitre possède plusieurs ressources.
-     */
-    public function resources(): HasMany
-    {
-        return $this->hasMany(CoursResource::class);
-    }
 }

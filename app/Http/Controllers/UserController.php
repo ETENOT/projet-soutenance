@@ -14,14 +14,38 @@ class UserController extends Controller
     /**
      * Affiche la liste des utilisateurs avec leur rôle.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $utilisateurs = User::with('role')
-            ->orderBy('name')
-            ->paginate(15);
+        $query = User::with('role')->withCount('inscriptions');
+
+        if ($recherche = trim((string) $request->input('q'))) {
+            $query->where(function ($q) use ($recherche) {
+                $q->where('name', 'like', "%{$recherche}%")
+                ->orWhere('email', 'like', "%{$recherche}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->whereHas('role', fn ($q) => $q->where('nom', $request->input('role')));
+        }
+
+        match ($request->input('statut')) {
+            'verifie'     => $query->whereNotNull('email_verified_at'),
+            'non_verifie' => $query->whereNull('email_verified_at'),
+            default       => null,
+        };
+
+        $compter = fn (string $role) => User::whereHas('role', fn ($q) => $q->where('nom', $role))->count();
 
         return view('users.index', [
-            'utilisateurs' => $utilisateurs,
+            'utilisateurs' => $query->orderByDesc('created_at')->paginate(10)->withQueryString(),
+            'roles' => Role::orderBy('nom')->get(),
+            'stats' => [
+                'particuliers' => $compter('particulier'),
+                'entreprises'  => $compter('entreprise'),
+                'admins'       => $compter('admin'),
+                'total'        => User::count(),
+            ],
         ]);
     }
 

@@ -223,4 +223,5 @@ class Classe extends Model
             ->groupBy('user_id')
             ->pluck('total', 'user_id');
     }
+
 }

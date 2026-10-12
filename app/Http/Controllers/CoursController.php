@@ -24,7 +24,8 @@ class CoursController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $cours = Cours::withCount(['classes', 'quizzes', 'chapitres'])
+        $cours = Cours::withCount(['classes', 'quizzes', 'chapitres', 'avis'])
+            ->withAvg('avis', 'note')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('titre', 'like', '%' . $search . '%')
@@ -105,12 +106,39 @@ class CoursController extends Controller
             );
         }
 
+                // ----- Avis du cours -----
+        $statsAvis = $cours->avis()->selectRaw('COUNT(*) as total, AVG(note) as moyenne')->first();
+        $nombreAvis = (int) $statsAvis->total;
+        $moyenneAvis = $nombreAvis ? round($statsAvis->moyenne, 1) : null;
+
+        // Nombre d'avis par note : [5 => 12, 4 => 3, ...]
+        $repartitionAvis = $cours->avis()
+            ->selectRaw('note, COUNT(*) as total')
+            ->groupBy('note')
+            ->pluck('total', 'note');
+
+        $listeAvis = $cours->avis()->with('user')->latest()
+            ->paginate(10, ['*'], 'avis_page')
+            ->fragment('avis');
+
+        $monAvis = Auth::check()
+            ? $cours->avis()->where('user_id', Auth::id())->first()
+            : null;
+
+        $peutDonnerAvis = Auth::check() && Auth::user()->aPayeCours($cours->id);
+
         return view('cours.show', [
             'cours' => $cours,
             'mesInscriptions' => $mesInscriptions,
             'mesInscriptionsPayees' => $mesInscriptionsPayees,
             'accesDocuments' => $accesDocuments,
             'quizEnCours' => $quizEnCours,
+            'nombreAvis' => $nombreAvis,
+            'moyenneAvis' => $moyenneAvis,
+            'repartitionAvis' => $repartitionAvis,
+            'listeAvis' => $listeAvis,
+            'monAvis' => $monAvis,
+            'peutDonnerAvis' => $peutDonnerAvis,
         ]);
     }
 
@@ -121,9 +149,10 @@ class CoursController extends Controller
     {
         $cours->load([
             'chapitres' => function ($query) {
-                $query->with('resources')
-                    ->orderBy('ordre');
+                $query->orderBy('ordre');
             },
+
+            'resources',
 
             'classes' => function ($query) {
                 $query->withCount('inscriptions')
@@ -145,18 +174,21 @@ class CoursController extends Controller
      */
     public function index()
     {
-       /**
-        * withCount('classes') ajoute "classes_count" sur chaque cours
-        *en une seule requête SQL (pas de boucle N+1)
-        */
-        $cours = Cours::withCount('classes')
+        /**
+         * withCount ajoute "classes_count" et "chapitres_count" sur chaque cours
+         * en une seule requête SQL (pas de boucle N+1)
+         */
+        $cours = Cours::withCount(['classes', 'chapitres'])
             ->orderBy('titre')
             // ordre stable si deux cours ont le même titre
-            ->orderBy('id') 
+            ->orderBy('id')
             ->paginate(10);
 
         return view('cours.index', [
             'cours' => $cours,
+            // Totaux sur toute la base (pas seulement la page affichée)
+            'nombreChapitres' => Chapitre::count(),
+            'nombreClasses' => \App\Models\Classe::count(),
         ]);
     }
 
@@ -380,44 +412,12 @@ class CoursController extends Controller
             'chapitres' => function ($query) {
                 $query->orderBy('ordre');
             },
-            'chapitres.resources'
+            'resources'
         ]);
 
         return view('cours.espace', [
             'cours' => $cours,
             'classe' => $inscription->classe,
-        ]);
-    }
-
-    public function chapitre(Cours $cours, Chapitre $chapitre)
-    {
-        if (!$this->utilisateurAAccesPaye($cours)) {
-            return redirect()
-                ->route('cours.show', $cours)
-                ->with(
-                    'error',
-                    'Accès réservé aux apprenants inscrits.'
-                );
-        }
-
-        // Sécurité : vérifier que le chapitre appartient bien au cours
-        if ($chapitre->cours_id !== $cours->id) {
-            abort(404);
-        }
-
-        $cours->load([
-            'chapitres' => function ($query) {
-                $query->orderBy('ordre');
-            }
-        ]);
-
-        $chapitre->load([
-            'resources'
-        ]);
-
-        return view('cours.chapitre', [
-            'cours' => $cours,
-            'chapitre' => $chapitre,
         ]);
     }
 
@@ -437,20 +437,12 @@ class CoursController extends Controller
             abort(404);
         }
 
-        // Charge les chapitres + leurs ressources pour le menu gauche
-        $chapitres = $cours->chapitres()
-            ->with([
-                'resources' => function ($query) {
-                    $query->orderBy('id');
-                }
-            ])
-            ->orderBy('ordre')
-            ->get();
+        $ressources = $cours->resources()->orderBy('id')->get();
 
         return view('cours.ressource', [
             'cours' => $cours,
             'resource' => $resource,
-            'chapitres' => $chapitres,
+            'ressources' => $ressources,
         ]);
     }
 }

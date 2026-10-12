@@ -566,6 +566,7 @@ class PaiementController extends Controller
                 'montant' => $montant,
                 'inscription_id' => $insc->id,
                 'mode' => $mode,
+                'statut' => 'valide',
                 'reference' => $reference,
                 'singpay_transaction_id' => $singpayTransactionId,
                 'singpay_status' => $singpayStatus,

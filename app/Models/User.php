@@ -90,6 +90,13 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(ResultatQuiz::class);
     }
+
+    // Les classes dont cet utilisateur est le formateur (colonne classes.formateur_id)
+    public function classesAnimes()
+    {
+        return $this->hasMany(Classe::class, 'formateur_id');
+    }
+
         /**
      * Génère un code à 6 chiffres et l'enregistre (haché) dans la table
      * verification_codes, indexée par email — même logique que password_resets.
@@ -162,5 +169,19 @@ class User extends Authenticatable implements MustVerifyEmail
         $remaining = self::RESEND_COOLDOWN_SECONDS - $secondsElapsed;
 
         return max(0, $remaining);
+    }
+
+        public function avis()
+    {
+        return $this->hasMany(Avis::class);
+    }
+
+    // Vrai si l'utilisateur est inscrit à une classe de ce cours ET a un paiement validé
+    public function aPayeCours(int $coursId): bool
+    {
+        return $this->inscriptions()
+            ->whereHas('classe', fn ($q) => $q->where('cours_id', $coursId))
+            ->whereHas('paiement', fn ($q) => $q->where('statut', 'valide'))
+            ->exists();
     }
 }

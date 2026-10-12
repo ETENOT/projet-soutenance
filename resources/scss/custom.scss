@@ -1,9 +1,608 @@
-/*
-Template Name: Velzon - Admin & Dashboard Template
-Author: Themesbrand
-Website: https://themesbrand.com/
-Contact: support@themesbrand.com
-File: Custom Css File
-*/
+// ============================================================
+// NEO VISION : styles personnalisés (chargés après app.min.css)
+//   1. Page d'accueil (.nv-*)
+//   2. Sidebar de l'administration (bleu foncé, élément actif en rouge)
+// ============================================================
 
 
+// ------------------------------------------------------------
+// Variables
+// ------------------------------------------------------------
+
+$nv-red: #d8332b;
+$nv-blue-dark: #155b8a;
+$nv-blue: #1c7fc4;
+$nv-blue-light: #eaf6ff;
+$nv-text: #172033;
+$nv-border: #e3edf5;
+
+
+// ============================================================
+// 1. PAGE D'ACCUEIL
+// ============================================================
+
+.nv-home {
+    background: #fff;
+    color: $nv-text;
+    overflow-x: hidden;
+
+    // Les ancres (#formations, #pourquoi...) ne passent pas sous la barre fixe
+    [id] {
+        scroll-margin-top: 80px;
+    }
+}
+
+
+// ------------------------------------------------------------
+// Barre de navigation
+// ------------------------------------------------------------
+
+.nv-navbar {
+    padding: 0.75rem 0;
+    background: rgba(255, 255, 255, 0.97);
+    border-bottom: 1px solid rgba($nv-blue, 0.1);
+    box-shadow: 0 4px 18px rgba($nv-blue, 0.07);
+    backdrop-filter: blur(10px);
+
+    .navbar-brand img {
+        transition: transform 0.2s ease;
+    }
+
+    .navbar-brand:hover img {
+        transform: scale(1.04);
+    }
+
+    .nav-link {
+        padding: 0.5rem 1rem;
+        border-radius: 50rem;
+        color: $nv-text;
+        font-weight: 600;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        &:hover {
+            color: $nv-blue;
+        }
+
+        &.active {
+            color: $nv-blue;
+            background: $nv-blue-light;
+        }
+    }
+}
+
+// Recherche compacte de l'en-tête
+.nv-nav-search {
+    position: relative;
+    width: 100%;
+
+    @media (min-width: 992px) {
+        width: 280px;
+    }
+
+    i {
+        position: absolute;
+        top: 50%;
+        left: 1rem;
+        transform: translateY(-50%);
+        color: $nv-blue;
+        pointer-events: none;
+    }
+
+    .form-control {
+        padding-left: 2.6rem;
+        border: 1px solid $nv-border;
+        border-radius: 50rem;
+        background: #f6fbff;
+
+        &:focus {
+            border-color: $nv-blue;
+            box-shadow: 0 0 0 0.2rem rgba($nv-blue, 0.15);
+            background: #fff;
+        }
+    }
+}
+
+// Icône + liens Connexion / Inscription
+.nv-user-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: $nv-blue;
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.nv-user-link {
+    color: $nv-text;
+
+    &:hover {
+        color: $nv-red;
+    }
+}
+
+
+// ------------------------------------------------------------
+// Héros
+// ------------------------------------------------------------
+
+.nv-hero {
+    padding: 3.5rem 0 6rem;
+    background: linear-gradient(135deg, #f4faff 0%, #edf8ff 100%);
+
+    @media (min-width: 992px) {
+        padding: 4.5rem 0 7rem;
+    }
+
+    h1 {
+        font-size: clamp(2rem, 4vw, 3.1rem);
+        line-height: 1.2;
+        color: $nv-text;
+    }
+}
+
+.nv-hero-badge {
+    background: #fff;
+    color: $nv-blue;
+    border: 1px solid rgba($nv-blue, 0.2);
+    font-weight: 600;
+}
+
+// Petit trait rouge sous le titre
+.nv-underline {
+    width: 72px;
+    height: 4px;
+    margin: 0 0 1.25rem;
+    border: 0;
+    border-radius: 4px;
+    background: $nv-red;
+    opacity: 1;
+}
+
+// Grande recherche
+.nv-search {
+    max-width: 640px;
+    border-radius: 50rem;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba($nv-blue, 0.15);
+    overflow: hidden;
+
+    .input-group-text {
+        border: 0;
+        background: #fff;
+        padding-left: 1.25rem;
+        color: $nv-blue;
+        font-size: 1.1rem;
+    }
+
+    .form-control {
+        border: 0;
+        box-shadow: none;
+        padding: 0.9rem 0.5rem;
+    }
+
+    .btn {
+        border-radius: 0;
+        font-weight: 600;
+    }
+}
+
+.nv-domain-badge {
+    background: #fff;
+    color: $nv-blue;
+    border: 1px solid rgba($nv-blue, 0.25);
+    font-weight: 600;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    &:hover {
+        background: $nv-blue;
+        color: #fff;
+    }
+}
+
+// Visuel : photo + formes bleue et rouge + phrase d'accroche
+.nv-hero-visual {
+    position: relative;
+    padding: 1.5rem;
+
+    // Forme bleue derrière la photo
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 72%;
+        height: 78%;
+        border-radius: 2rem;
+        background: linear-gradient(135deg, $nv-blue 0%, $nv-blue-dark 100%);
+    }
+
+    // Forme rouge en bas à droite
+    &::after {
+        content: "";
+        position: absolute;
+        right: 0.25rem;
+        bottom: 0.25rem;
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        background: $nv-red;
+        opacity: 0.9;
+    }
+
+    img {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 380px;
+        object-fit: cover;
+    }
+}
+
+.nv-tagline {
+    position: absolute;
+    left: 0;
+    bottom: 2.75rem;
+    z-index: 2;
+    padding: 0.9rem 1.4rem;
+    border-left: 5px solid $nv-red;
+    border-radius: 0.75rem;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba($nv-text, 0.18);
+    color: $nv-blue-dark;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-align: left;
+}
+
+
+// ------------------------------------------------------------
+// Chiffres clés (carte qui chevauche le héros)
+// ------------------------------------------------------------
+
+.nv-stats {
+    position: relative;
+    z-index: 2;
+    margin-top: -3.5rem;
+
+    .card {
+        border: 0;
+        border-radius: 1.25rem;
+        box-shadow: 0 16px 40px rgba($nv-blue, 0.14);
+    }
+}
+
+.nv-stat-item {
+    @media (min-width: 992px) {
+        &:not(:first-child) {
+            padding-left: 1.5rem;
+            border-left: 1px solid $nv-border;
+        }
+    }
+}
+
+.nv-icon-circle {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.5rem;
+}
+
+// Variante douce (fond clair, icône colorée) : les couleurs viennent des classes bg-*-subtle / text-*
+.nv-icon-soft {
+    width: 46px;
+    height: 46px;
+    font-size: 1.35rem;
+}
+
+
+// ------------------------------------------------------------
+// Formations
+// ------------------------------------------------------------
+
+// Petite barre rouge au-dessus des titres de section
+.nv-bar {
+    width: 56px;
+    height: 4px;
+    margin: 0 0 0.75rem;
+    border: 0;
+    border-radius: 4px;
+    background: $nv-red;
+    opacity: 1;
+}
+
+// Filtres de catégories
+.nv-pill {
+    border: 1px solid $nv-border;
+    background: #fff;
+    color: $nv-text;
+    font-weight: 600;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+        border-color: $nv-blue;
+        background: $nv-blue-light;
+        color: $nv-blue;
+    }
+}
+
+// Carte d'une formation
+.nv-course {
+    border: 1px solid $nv-border;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba($nv-blue, 0.07);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 30px rgba($nv-blue, 0.16);
+    }
+
+    h6 {
+        color: $nv-text;
+    }
+}
+
+.nv-course-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nv-cat-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 50rem;
+    background: $nv-red;
+    color: #fff;
+    font-weight: 600;
+}
+
+// Description limitée à 2 lignes
+.nv-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+// Bouton rond avec une flèche
+.nv-arrow-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: $nv-blue;
+    color: #fff;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+
+    &:hover {
+        background: $nv-red;
+        color: #fff;
+        transform: translateX(2px);
+    }
+}
+
+
+// ------------------------------------------------------------
+// Pourquoi choisir NEO VISION
+// ------------------------------------------------------------
+
+.nv-why {
+    border: 1px solid $nv-border;
+    background: linear-gradient(135deg, $nv-blue-light 0%, #fff 70%);
+}
+
+// Grande icône décorative
+.nv-why-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 140px;
+    aspect-ratio: 1;
+    border-radius: 2rem;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba($nv-blue, 0.15);
+    color: $nv-blue;
+    font-size: 4.5rem;
+}
+
+.nv-why-item {
+    .fw-semibold {
+        color: $nv-text;
+    }
+}
+
+// Carte d'appel à l'action
+.nv-cta-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, $nv-blue-dark 0%, $nv-blue 100%);
+
+    // Rond rouge décoratif dans le coin
+    &::after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        background: $nv-red;
+        opacity: 0.85;
+    }
+
+    > * {
+        position: relative;
+        z-index: 1;
+    }
+}
+
+.nv-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.35rem 0.35rem 0.35rem 1.4rem;
+    border-radius: 50rem;
+    background: #fff;
+    color: $nv-text;
+    font-weight: 600;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+    &:hover {
+        color: $nv-text;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+    }
+
+    .nv-arrow-btn {
+        background: $nv-red;
+    }
+}
+
+
+// ------------------------------------------------------------
+// Pied de page
+// ------------------------------------------------------------
+
+.nv-footer {
+    border-top: 1px solid $nv-border;
+    background: #fff;
+
+    a {
+        color: $nv-text;
+        font-weight: 500;
+
+        &:hover {
+            color: $nv-blue;
+        }
+    }
+}
+
+
+// ============================================================
+// 2. SIDEBAR DE L'ADMINISTRATION : bleu foncé, élément actif en rouge
+// ============================================================
+
+html[data-sidebar="dark"] {
+
+    --vz-vertical-menu-bg: #0a3a85;
+    --vz-vertical-menu-border: #0a3a85;
+    --vz-vertical-menu-item-color: rgba(255, 255, 255, 0.85);
+    --vz-vertical-menu-item-hover-color: #ffffff;
+    --vz-vertical-menu-item-active-color: #ffffff;
+    --vz-vertical-menu-sub-item-color: rgba(255, 255, 255, 0.7);
+    --vz-vertical-menu-sub-item-hover-color: #ffffff;
+    --vz-vertical-menu-sub-item-active-color: #ffffff;
+    --vz-vertical-menu-title-color: #8fb0e6;
+
+    // Fond en dégradé bleu foncé
+    .app-menu {
+        background: linear-gradient(180deg, #0b4fa8 0%, #0a3a85 45%, #072a66 100%);
+        border-right-color: transparent;
+    }
+
+    // Le bloc du logo prend le fond du dégradé
+    .navbar-brand-box {
+        background: transparent;
+        border-right-color: transparent;
+    }
+
+    // Titres de section (ADMINISTRATION, ÉVALUATIONS...)
+    .navbar-menu .navbar-nav .menu-title span {
+        color: #8fb0e6;
+        letter-spacing: 0.08em;
+    }
+
+    // Éléments du menu : arrondis, texte blanc
+    .navbar-menu .navbar-nav .nav-link.menu-link {
+        color: rgba(255, 255, 255, 0.85);
+        margin: 2px 0;
+        padding: 0.7rem 1rem;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        transition: background-color 0.15s ease, color 0.15s ease;
+
+        i {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        &:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.12);
+
+            i {
+                color: #ffffff;
+            }
+        }
+
+        // Page courante : rouge
+        &.active {
+            color: #ffffff;
+            background: linear-gradient(90deg, #f0463b 0%, #d8332b 100%);
+            box-shadow: 0 4px 12px rgba(216, 51, 43, 0.35);
+
+            i {
+                color: #ffffff;
+            }
+
+            &::after {
+                color: #ffffff;
+            }
+        }
+
+        // Menu déroulant ouvert (parent) : léger surlignage, pas de rouge
+        &[data-bs-toggle="collapse"] {
+            &.active,
+            &[aria-expanded="true"] {
+                color: #ffffff;
+                background: rgba(255, 255, 255, 0.12);
+                box-shadow: none;
+
+                i {
+                    color: #ffffff;
+                }
+            }
+        }
+
+        // Éléments désactivés ("Bientôt")
+        &.disabled {
+            opacity: 0.55;
+        }
+    }
+
+    // Sous-menus
+    .navbar-menu .navbar-nav .nav-sm .nav-link {
+        color: rgba(255, 255, 255, 0.7);
+        border-radius: 0.5rem;
+
+        &:hover {
+            color: #ffffff;
+        }
+
+        &.active {
+            color: #ffffff;
+            font-weight: 600;
+
+            &::before {
+                background-color: #ff6b63;
+            }
+        }
+    }
+}

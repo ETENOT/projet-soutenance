@@ -96,4 +96,10 @@ public function classes()
     {
         return $this->hasMany(Chapitre::class)->orderBy('ordre');
     }
+
+    // Un Cours reçoit plusieurs Avis
+    public function avis()
+    {
+        return $this->hasMany(Avis::class);
+    }
 }

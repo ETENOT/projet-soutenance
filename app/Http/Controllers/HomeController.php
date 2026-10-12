@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -34,13 +35,18 @@ class HomeController extends Controller
     }
 
   public function root()
-{
-    if (Auth::check()) {
-        return redirect()->route('dashboard');
-    }
+    {
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
 
-    return view('accueil');
-}
+        // Données réelles pour la page d'accueil
+        $coursPopulaires = \App\Models\Cours::latest()->take(5)->get();
+        $categories      = \App\Models\Cours::whereNotNull('categorie')->distinct()->pluck('categorie');
+        $nbCours         = \App\Models\Cours::count();
+
+        return view('accueil', compact('coursPopulaires', 'categories', 'nbCours'));
+    }
 
     /*Language Translation*/
     public function lang($locale)

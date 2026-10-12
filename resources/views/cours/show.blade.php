@@ -2,1228 +2,403 @@
 
 @section('title', $cours->titre)
 
+{{-- Le layout visiteur attend la balise <body> depuis la vue --}}
+@guest
+    @section('body')
+    <body>
+    @endsection
+@endguest
+
 @section('content')
 
 @php
-$role = Auth::user()?->role?->nom;
+    $role = Auth::user()?->role?->nom;
+
+    // Prochaines classes : les 3 plus proches dans le futur
+    $prochainesSessions = $cours->classes
+        ->filter(fn ($classe) => \Carbon\Carbon::parse($classe->date_debut)->isFuture())
+        ->sortBy('date_debut')
+        ->take(3);
 @endphp
 
-<style>
-
-/* =========================================================
-   PAGE
-========================================================= */
-
-.course-page {
-    padding-bottom: 50px;
-}
-
-.course-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    color: #0f47ad;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.course-back:hover {
-    color: #08377f;
-}
-
-
-/* =========================================================
-   HERO
-========================================================= */
-
-.course-detail-hero {
-    position: relative;
-    overflow: hidden;
-    min-height: 310px;
-    padding: 35px;
-    border-radius: 18px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 8px 25px rgba(15, 71, 173, 0.08);
-    display: flex;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.course-detail-hero-content {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 35px;
-}
-
-.course-detail-image {
-    width: 330px;
-    height: 210px;
-    flex-shrink: 0;
-    object-fit: cover;
-    border-radius: 14px;
-    background: #f7f9fc;
-}
-
-.course-detail-image-placeholder {
-    width: 330px;
-    height: 210px;
-    flex-shrink: 0;
-    border-radius: 14px;
-    background: #f1f5f9;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 60px;
-    color: #0f47ad;
-}
-
-.course-detail-hero-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.course-detail-hero h1 {
-    margin: 0 0 12px;
-    font-size: 36px;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #172b4d !important;
-}
-
-
-/* =========================================================
-   CATÉGORIE
-========================================================= */
-
-.course-category-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 13px;
-    margin-bottom: 14px;
-    border-radius: 30px;
-    background: #eaf2ff;
-    border: 1px solid #d5e4ff;
-    color: #0f47ad !important;
-    font-size: 13px;
-    font-weight: 600;
-}
-
-.course-category-badge i {
-    color: #0f47ad;
-}
-
-
-/* =========================================================
-   DESCRIPTION HERO
-========================================================= */
-
-.course-detail-hero-description {
-    margin: 0 0 0;
-    max-width: 750px;
-    color: #667085 !important;
-    line-height: 1.7;
-    font-size: 15px;
-}
-
-
-/* =========================================================
-   NOTE + CLASSES
-========================================================= */
-
-.course-rating-classes {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 20px;
-}
-
-.course-rating {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    color: #172b4d;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.course-rating i {
-    color: #f5b301;
-    font-size: 18px;
-}
-
-.course-rating .rating-value {
-    font-weight: 700;
-    color: #172b4d;
-}
-
-.course-rating .rating-count {
-    color: #667085;
-    font-weight: 400;
-}
-
-.course-classes-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    color: #172b4d;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.course-classes-badge i {
-    color: #0f47ad;
-    font-size: 18px;
-}
-
-
-/* =========================================================
-   DÉCORATION HERO
-========================================================= */
-
-.course-hero-decoration {
-    position: absolute;
-    width: 250px;
-    height: 250px;
-    border-radius: 50%;
-    background: rgba(15, 71, 173, 0.035);
-    right: -80px;
-    top: -100px;
-}
-
-
-/* =========================================================
-   ONGLET
-========================================================= */
-
-.course-tabs-wrapper {
-    background: #ffffff;
-    border-radius: 14px;
-    border: 1px solid #e8edf5;
-    margin-bottom: 25px;
-    box-shadow: 0 3px 12px rgba(15, 71, 173, 0.05);
-    overflow-x: auto;
-}
-
-.course-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    min-width: max-content;
-    margin: 0;
-    padding: 0 10px;
-    border-bottom: none;
-}
-
-.course-tabs .nav-item {
-    margin-bottom: 0;
-}
-
-.course-tabs .nav-link {
-    border: none;
-    border-bottom: 3px solid transparent;
-    border-radius: 0;
-    padding: 17px 22px;
-    color: #667085;
-    font-weight: 600;
-    font-size: 14px;
-    background: transparent;
-    transition: all 0.2s ease;
-}
-
-.course-tabs .nav-link:hover {
-    color: #0f47ad;
-    background: #f7f9fc;
-}
-
-.course-tabs .nav-link.active {
-    color: #0f47ad;
-    background: #ffffff;
-    border-bottom-color: #0f47ad;
-}
-
-.course-tabs .nav-link i {
-    margin-right: 7px;
-}
-
-
-/* =========================================================
-   CONTENU DES ONGLET
-========================================================= */
-
-.course-tab-content {
-    min-height: 250px;
-}
-
-.course-section {
-    background: #ffffff;
-    border: 1px solid #e8edf5;
-    border-radius: 16px;
-    padding: 25px;
-    margin-bottom: 20px;
-}
-
-.course-section-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 20px;
-    color: #172b4d;
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.course-section-title i {
-    color: #0f47ad;
-}
-
-.course-description {
-    color: #667085;
-    line-height: 1.8;
-    white-space: pre-line;
-}
-
-
-/* =========================================================
-   INFORMATIONS DE LA FORMATION
-   TABLEAU INVISIBLE
-========================================================= */
-
-.course-info-table {
-    width: 100%;
-    margin-top: 25px;
-    border-collapse: collapse;
-}
-
-.course-info-table tr {
-    border: none;
-}
-
-.course-info-table td {
-    padding: 13px 0;
-    border: none;
-    vertical-align: middle;
-}
-
-.course-info-label {
-    width: 45%;
-    color: #667085;
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.course-info-value {
-    color: #172b4d;
-    font-size: 14px;
-    font-weight: 700;
-    text-align: right;
-}
-
-
-/* =========================================================
-   PROCHAINES SESSIONS
-========================================================= */
-
-.next-sessions {
-    margin-top: 0;
-}
-
-.next-session-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 18px;
-    border: 1px solid #e8edf5;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    background: #ffffff;
-}
-
-.next-session-name {
-    color: #172b4d;
-    font-weight: 700;
-    font-size: 15px;
-}
-
-.next-session-date {
-    color: #667085;
-    font-size: 13px;
-    margin-top: 6px;
-}
-
-
-/* =========================================================
-   BADGE DISPONIBLE
-========================================================= */
-
-.next-session-available {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    padding: 9px 14px;
-    border-radius: 30px;
-    background: #e8f7ee;
-    border: 1px solid #c9ebd5;
-    color: #198754;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.next-session-available i {
-    font-size: 15px;
-}
-
-
-/* =========================================================
-   PRIX
-========================================================= */
-
-.course-price-card {
-    background: #f7f9fc;
-    border: 1px solid #e4e9f2;
-    border-radius: 14px;
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.course-price-label {
-    color: #667085;
-    font-size: 13px;
-    margin-bottom: 5px;
-}
-
-.course-price {
-    color: #0f47ad;
-    font-size: 28px;
-    font-weight: 700;
-}
-
-.course-price-separator {
-    color: #98a2b3;
-    margin: 0 8px;
-}
-
-.program-download {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    margin-top: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1px solid #0f47ad;
-    color: #0f47ad !important;
-    font-weight: 600;
-    font-size: 14px;
-    text-decoration: none;
-    transition: background 0.15s ease;
-}
-
-.program-download:hover {
-    background: #eaf2ff;
-}
-
-
-/* =========================================================
-   PROGRAMME
-========================================================= */
-
-.chapter-accordion .accordion-item {
-    border: 1px solid #e8edf5;
-    border-radius: 10px !important;
-    margin-bottom: 10px;
-    overflow: hidden;
-}
-
-.chapter-accordion .accordion-button {
-    font-weight: 600;
-    color: #172b4d;
-    background: #ffffff;
-}
-
-.chapter-accordion .accordion-button:not(.collapsed) {
-    color: #0f47ad;
-    background: #f7f9fc;
-    box-shadow: none;
-}
-
-.chapter-number {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #e8f0ff;
-    color: #0f47ad;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    margin-right: 12px;
-}
-
-.chapter-content {
-    color: #667085;
-    line-height: 1.8;
-}
-
-
-/* =========================================================
-   CLASSES
-========================================================= */
-
-.session-item {
-    border: 1px solid #e8edf5;
-    border-radius: 13px;
-    padding: 20px;
-    margin-bottom: 14px;
-    background: #ffffff;
-}
-
-.session-header {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    align-items: flex-start;
-}
-
-.session-name {
-    font-size: 17px;
-    font-weight: 700;
-    color: #172b4d;
-    margin-bottom: 8px;
-}
-
-.session-date {
-    color: #667085;
-    font-size: 14px;
-    margin-bottom: 5px;
-}
-
-.session-capacity {
-    color: #98a2b3;
-    font-size: 13px;
-}
-
-
-/* =========================================================
-   QUIZ
-========================================================= */
-
-.quiz-item {
-    border: 1px solid #e8edf5;
-    border-radius: 13px;
-    padding: 20px;
-    margin-bottom: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-}
-
-.quiz-title {
-    color: #172b4d;
-    font-weight: 700;
-    margin-bottom: 7px;
-}
-
-.quiz-time {
-    color: #667085;
-    font-size: 13px;
-}
-
-
-/* =========================================================
-   CONTENU / RESSOURCES
-========================================================= */
-
-.resource-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 16px;
-    border: 1px solid #e8edf5;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    background: #ffffff;
-}
-
-.resource-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.resource-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: #e8f0ff;
-    color: #0f47ad;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.resource-name {
-    font-weight: 600;
-    color: #172b4d;
-}
-
-.course-content-access {
-    padding: 30px;
-    border-radius: 14px;
-    background: #f0f6ff;
-    border: 1px solid #cfe0ff;
-    color: #24518d;
-}
-
-.course-content-access i {
-    font-size: 30px;
-    margin-bottom: 12px;
-}
-
-
-/* =========================================================
-   EMPTY
-========================================================= */
-
-.empty-state {
-    text-align: center;
-    padding: 45px 20px;
-    color: #98a2b3;
-}
-
-.empty-state i {
-    font-size: 35px;
-    margin-bottom: 12px;
-}
-
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 768px) {
-
-    .course-detail-hero {
-        padding: 22px;
-    }
-
-    .course-detail-hero-content {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .course-detail-image,
-    .course-detail-image-placeholder {
-        width: 100%;
-        height: 190px;
-    }
-
-    .course-detail-hero h1 {
-        font-size: 27px;
-    }
-
-    .course-info-label {
-        width: 45%;
-    }
-
-    .course-info-value {
-        text-align: right;
-    }
-
-    .course-tabs .nav-link {
-        padding: 14px 15px;
-    }
-
-    .session-header,
-    .quiz-item {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .resource-item {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .next-session-item {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .next-session-available {
-        margin-top: 5px;
-    }
-}
-
-</style>
-
+{{-- ===== Fil d'Ariane (connectés) ===== --}}
 @auth
-
-@component('components.breadcrumb')
-
-    @slot('li_1')
-        <a href="{{ route('cours.catalogue') }}">Cours</a>
-    @endslot
-
-    @slot('title')
-        {{ $cours->titre }}
-    @endslot
-
-@endcomponent
-
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('cours.catalogue') }}">Cours</a>
+        @endslot
+        @slot('title')
+            {{ $cours->titre }}
+        @endslot
+    @endcomponent
 @endauth
 
-<div class="container-fluid course-page">
+<div class="{{ Auth::check() ? 'container-fluid pb-4' : 'container pb-5' }}">
 
-{{-- =====================================================
-HERO + PRIX (côte à côte)
-====================================================== --}}
-
-<div class="row g-3">
-
-    <div class="col-lg-8">
-
-        <div class="course-detail-hero mb-0" style="height: 100%;">
-
-            <div class="course-detail-hero-content">
-
-                @if($cours->image)
-
-                    <img
-                        src="{{ asset('storage/' . $cours->image) }}"
-                        alt="{{ $cours->titre }}"
-                        class="course-detail-image"
-                    >
-
-                @else
-
-                    <div class="course-detail-image-placeholder">
-                        <i class="bi bi-book"></i>
-                    </div>
-
-                @endif
-
-
-                <div class="course-detail-hero-info">
-
-                    <h1>
-                        {{ $cours->titre }}
-                    </h1>
-
-
-                    {{-- Catégorie juste sous le titre --}}
-
-                    <div>
-
-                        <span class="course-category-badge">
-                            <i class="bi bi-bookmark"></i>
-                            {{ $cours->categorie }}
-                        </span>
-
-                    </div>
-
-
-                    {{-- Description --}}
-
-                    <p class="course-detail-hero-description">
-                        {{ $cours->description }}
-                    </p>
-
-
-                    {{-- Note + nombre de classes --}}
-
-                    <div class="course-rating-classes">
-
-                        <div class="course-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span class="rating-value">5,0</span>
-                            <span class="rating-count">(0 avis)</span>
-                        </div>
-
-
-                        <div class="course-classes-badge">
-                            <i class="bi bi-people-fill"></i>
-                            <span>{{ $cours->classes->count() }} classes</span>
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="course-hero-decoration"></div>
-
-        </div>
-
-    </div>
-
-
-    <div class="col-lg-4">
-
-        <div class="course-price-card" style="height: 100%;">
-
-            <div class="course-price-label">
-                Tarif de la formation
-            </div>
-
-
-            @if($role === 'entreprise')
-
-                <div class="course-price">
-                    {{ number_format($cours->prix_entreprise, 0, ',', ' ') }}
-                    FCFA
-                </div>
-
-
-            @elseif($role === 'particulier')
-
-                <div class="course-price">
-                    {{ number_format($cours->prix_particulier, 0, ',', ' ') }}
-                    FCFA
-                </div>
-
-
-            @else
-
-                <div class="course-price">
-                    {{ number_format($cours->prix_particulier, 0, ',', ' ') }}
-                    FCFA
-                </div>
-
-                <span class="course-price-separator">/</span>
-
-                <span>
-                    {{ number_format($cours->prix_entreprise, 0, ',', ' ') }}
-                    FCFA
-                </span>
-
-            @endif
-
-
-            <a href="{{ route('cours.espace', $cours) }}" class="btn btn-primary w-100 mt-3">
-                Accéder au cours
+    {{-- ===== Barre visiteur ===== --}}
+    @guest
+        <div class="d-flex justify-content-between align-items-center py-3 mb-3">
+            <a href="{{ url('/') }}">
+                <img src="{{ asset('images/logo_neovision.png') }}" alt="NEO VISION" height="40">
             </a>
-
-            <a href="#" class="program-download">
-                <i class="bi bi-download"></i>
-                Télécharger le programme
-            </a>
-
+            <div class="d-flex gap-2">
+                <a href="{{ route('cours.catalogue') }}" class="btn btn-outline-primary">Catalogue</a>
+                <a href="{{ route('login') }}" class="btn btn-primary">Se connecter</a>
+            </div>
         </div>
+    @endguest
 
-    </div>
-
-</div>
-
-{{-- =====================================================
-ONGLET
-====================================================== --}}
-
-
-<div class="course-tabs-wrapper mt-3">
-
-    <ul class="nav course-tabs" id="courseTabs" role="tablist">
-
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="presentation-tab" data-bs-toggle="tab" data-bs-target="#presentation" type="button" role="tab" aria-controls="presentation" aria-selected="true">
-                <i class="bi bi-info-circle"></i>
-                Présentation
-            </button>
-        </li>
-
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="programme-tab" data-bs-toggle="tab" data-bs-target="#programme" type="button" role="tab" aria-controls="programme" aria-selected="false">
-                <i class="bi bi-list-ul"></i>
-                Programme
-            </button>
-        </li>
-
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="classes-tab" data-bs-toggle="tab" data-bs-target="#classes" type="button" role="tab" aria-controls="classes" aria-selected="false">
-                <i class="bi bi-calendar3"></i>
-                Classes
-            </button>
-        </li>
-
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="quiz-tab" data-bs-toggle="tab" data-bs-target="#quiz" type="button" role="tab" aria-controls="quiz" aria-selected="false">
-                <i class="bi bi-question-circle"></i>
-                Quiz
-            </button>
-        </li>
-
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="contenu-tab" data-bs-toggle="tab" data-bs-target="#contenu" type="button" role="tab" aria-controls="contenu" aria-selected="false">
-                <i class="bi bi-folder2-open"></i>
-               Avis
-            </button>
-        </li>
-
-    </ul>
-
-</div>
-
-{{-- =====================================================
-CONTENU DES ONGLET
-====================================================== --}}
-
-<div class="tab-content course-tab-content" id="courseTabsContent">
-
-{{-- =====================================================
-PRÉSENTATION + PROCHAINES CLASSES (côte à côte)
-====================================================== --}}
-
-<div class="tab-pane fade show active" id="presentation" role="tabpanel" aria-labelledby="presentation-tab">
-
-    <div class="row">
+    {{-- ===== Présentation du cours + prix (côte à côte) ===== --}}
+    <div class="row g-3">
 
         <div class="col-lg-8">
+            <div class="card h-100 border shadow-sm mb-0">
+                <div class="card-body p-4">
+                    <div class="row align-items-center g-4">
 
-            {{-- Présentation --}}
+                        <div class="col-md-5">
+                            @if($cours->image)
+                                <div class="ratio ratio-16x9">
+                                    <img src="{{ asset('storage/' . $cours->image) }}"
+                                         alt="{{ $cours->titre }}" class="object-fit-cover rounded-3">
+                                </div>
+                            @else
+                                <div class="ratio ratio-16x9 bg-primary-subtle rounded-3">
+                                    <div class="d-flex align-items-center justify-content-center text-primary display-4">
+                                        <i class="ri-book-open-line"></i>
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
 
-            <div class="course-section">
-                {{-- Tableau invisible des informations --}}
-                <table class="course-info-table">
-                    <tbody>
+                        <div class="col-md-7">
+                            <h1 class="h2 fw-bold mb-2">{{ $cours->titre }}</h1>
 
-                        <tr>
-                            <td class="course-info-label">Catégorie</td>
-                            <td class="course-info-value">{{ $cours->categorie }}</td>
-                        </tr>
+                            {{-- Catégorie juste sous le titre --}}
+                            <div class="mb-3">
+                                <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">
+                                    <i class="ri-bookmark-line me-1"></i>{{ $cours->categorie }}
+                                </span>
+                            </div>
 
+                            <p class="text-muted mb-3">{{ $cours->description }}</p>
 
-                        <tr>
-                            <td class="course-info-label">Niveau</td>
-                            <td class="course-info-value">
-                                @if($cours->niveau)
-                                    {{ $cours->niveau }}
-                                @else
-                                    Non précisé
-                                @endif
-                            </td>
-                        </tr>
+                            {{-- Note + nombre de classes --}}
+                            <div class="d-flex flex-wrap align-items-center gap-4 small fw-semibold">
+                                <span>
+                                    @include('cours.partials.etoiles', ['note' => $moyenneAvis ?? 0, 'taille' => 'fs-5'])
+                                    <span class="ms-1">{{ $moyenneAvis ? number_format($moyenneAvis, 1, ',', '') : '—' }}</span>
+                                    <span class="fw-normal text-muted">({{ $nombreAvis }} avis)</span>
+                                </span>
+                                <span>
+                                    <i class="ri-group-line text-danger fs-5 align-middle me-1"></i>{{ $cours->classes->count() }} classes
+                                </span>
+                            </div>
+                        </div>
 
-
-                        <tr>
-                            <td class="course-info-label">Durée estimée du cours</td>
-                            <td class="course-info-value">
-                                @if($cours->duree)
-                                    {{ $cours->duree }}
-                                @else
-                                    Non précisée
-                                @endif
-                            </td>
-                        </tr>
-
-
-                        <tr>
-                            <td class="course-info-label">Formateur</td>
-                            <td class="course-info-value">Non précisé</td>
-                        </tr>
-
-                    </tbody>
-
-                </table>
-
+                    </div>
+                </div>
             </div>
-
         </div>
-
 
         <div class="col-lg-4">
+            <div class="card h-100 border shadow-sm bg-light mb-0">
+                <div class="card-body p-4">
+                    <div class="text-muted small mb-1">Tarif de la formation</div>
 
-            {{-- Prochaines classes --}}
-
-            <div class="course-section next-sessions">
-
-                <h2 class="course-section-title">
-                    <i class="bi bi-calendar-event"></i>
-                    Prochaines classes
-                </h2>
-
-
-                @php
-
-                    $prochainesSessions = $cours->classes
-                        ->filter(function ($classe) {
-                            return \Carbon\Carbon::parse($classe->date_debut)->isFuture();
-                        })
-                        ->sortBy('date_debut')
-                        ->take(3);
-
-                @endphp
-
-
-                @forelse($prochainesSessions as $classe)
-
-                    <div class="next-session-item">
-
-                        <div>
-
-                            <div class="next-session-name">
-                                {{ $classe->nom }}
-                            </div>
-
-
-                            <div class="next-session-date">
-                                <i class="bi bi-calendar3"></i>
-                                Du
-                                {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
-                                au
-                                {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
-                            </div>
-
+                    @if($role === 'entreprise')
+                        <div class="fs-2 fw-bold text-danger">
+                            {{ number_format($cours->prix_entreprise, 0, ',', ' ') }} FCFA
                         </div>
+                    @elseif($role === 'particulier')
+                        <div class="fs-2 fw-bold text-danger">
+                            {{ number_format($cours->prix_particulier, 0, ',', ' ') }} FCFA
+                        </div>
+                    @else
+                        <div class="fs-2 fw-bold text-danger">
+                            {{ number_format($cours->prix_particulier, 0, ',', ' ') }} FCFA
+                            <small class="fs-6 fw-normal text-muted">particulier</small>
+                        </div>
+                        <div class="fw-semibold">
+                            {{ number_format($cours->prix_entreprise, 0, ',', ' ') }} FCFA
+                            <small class="fw-normal text-muted">entreprise</small>
+                        </div>
+                    @endif
 
+                    <a href="{{ route('cours.espace', $cours) }}" class="btn btn-danger w-100 mt-3">
+                        Accéder au cours
+                    </a>
 
-                        <span class="next-session-available">
-                            <i class="bi bi-check-circle-fill"></i>
-                            Disponible
-                        </span>
-
-                    </div>
-
-                @empty
-
-                    <div class="empty-state">
-                        <i class="bi bi-calendar-x d-block"></i>
-                        Aucune prochaine classe programmée.
-                    </div>
-
-                @endforelse
-
+                    <a href="#" class="btn btn-outline-primary w-100 mt-2">
+                        <i class="ri-download-2-line me-1"></i> Télécharger le programme
+                    </a>
+                </div>
             </div>
-
         </div>
 
     </div>
 
-</div>
+    {{-- ===== Onglets ===== --}}
+    <div class="card border shadow-sm mt-3 mb-3">
+        <div class="card-body p-2">
+            <ul class="nav nav-pills flex-nowrap overflow-auto gap-1" id="courseTabs" role="tablist">
 
-{{-- =================================================
-PROGRAMME
-================================================== --}}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active text-nowrap" id="presentation-tab" data-bs-toggle="tab"
+                            data-bs-target="#presentation" type="button" role="tab"
+                            aria-controls="presentation" aria-selected="true">
+                        <i class="ri-information-line me-1"></i> Présentation
+                    </button>
+                </li>
 
-<div class="tab-pane fade" id="programme" role="tabpanel" aria-labelledby="programme-tab">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-nowrap" id="programme-tab" data-bs-toggle="tab"
+                            data-bs-target="#programme" type="button" role="tab"
+                            aria-controls="programme" aria-selected="false">
+                        <i class="ri-list-check me-1"></i> Programme
+                    </button>
+                </li>
 
-    <div class="course-section">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-nowrap" id="classes-tab" data-bs-toggle="tab"
+                            data-bs-target="#classes" type="button" role="tab"
+                            aria-controls="classes" aria-selected="false">
+                        <i class="ri-calendar-line me-1"></i> Classes
+                    </button>
+                </li>
 
-        <h2 class="course-section-title">
-            <i class="bi bi-list-ul"></i>
-            Programme de la formation
-        </h2>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-nowrap" id="quiz-tab" data-bs-toggle="tab"
+                            data-bs-target="#quiz" type="button" role="tab"
+                            aria-controls="quiz" aria-selected="false">
+                        <i class="ri-question-line me-1"></i> Quiz
+                    </button>
+                </li>
 
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link text-nowrap" id="avis-tab" data-bs-toggle="tab"
+                            data-bs-target="#avis" type="button" role="tab"
+                            aria-controls="avis" aria-selected="false">
+                        <i class="ri-star-line me-1"></i> Avis
+                        @if($nombreAvis)
+                            <span class="badge bg-danger ms-1">{{ $nombreAvis }}</span>
+                        @endif
+                    </button>
+                </li>
 
-        @if($cours->chapitres->count())
-
-            <div class="accordion chapter-accordion" id="chapitresAccordion">
-
-                @foreach($cours->chapitres as $chapitre)
-
-                    <div class="accordion-item">
-
-                        <h2 class="accordion-header">
-
-                            <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#chapitre{{ $chapitre->id }}" aria-expanded="{{ $loop->first ? 'true' : 'false' }}">
-                                <span class="chapter-number">{{ $chapitre->ordre }}</span>
-                                {{ $chapitre->titre }}
-                            </button>
-
-                        </h2>
-
-
-                        <div id="chapitre{{ $chapitre->id }}" class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" data-bs-parent="#chapitresAccordion">
-
-                            <div class="accordion-body chapter-content">
-                                {!! nl2br(e($chapitre->contenu)) !!}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                @endforeach
-
-            </div>
-
-
-        @elseif($cours->programme)
-
-            <div class="course-description">
-                {!! nl2br(e($cours->programme)) !!}
-            </div>
-
-
-        @else
-
-            <div class="empty-state">
-                <i class="bi bi-journal-x d-block"></i>
-                Le programme de cette formation n'est pas encore disponible.
-            </div>
-
-        @endif
-
+            </ul>
+        </div>
     </div>
 
-</div>
+    {{-- ===== Contenu des onglets ===== --}}
+    <div class="tab-content" id="courseTabsContent">
 
-{{-- =================================================
-CLASSES
-================================================== --}}
+        {{-- ---------- Présentation + prochaines classes ---------- --}}
+        <div class="tab-pane fade show active" id="presentation" role="tabpanel" aria-labelledby="presentation-tab">
+            <div class="row g-3">
 
-<div class="tab-pane fade" id="classes" role="tabpanel" aria-labelledby="classes-tab">
-
-    <div class="course-section">
-
-        <h2 class="course-section-title">
-            <i class="bi bi-calendar3"></i>
-            Classes disponibles
-        </h2>
-
-
-        @forelse($cours->classes as $classe)
-
-            <div class="session-item">
-
-                <div class="session-header">
-
-                    <div>
-
-                        <div class="session-name">
-                            {{ $classe->nom }}
+                <div class="col-lg-8">
+                    <div class="card border shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <table class="table table-borderless align-middle mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted"><i class="ri-bookmark-line text-danger me-2"></i>Catégorie</td>
+                                        <td class="text-end fw-bold">{{ $cours->categorie }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted"><i class="ri-bar-chart-line text-danger me-2"></i>Niveau</td>
+                                        <td class="text-end fw-bold">{{ $cours->niveau ?: 'Non précisé' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted"><i class="ri-time-line text-danger me-2"></i>Durée estimée du cours</td>
+                                        <td class="text-end fw-bold">{{ $cours->duree ?: 'Non précisée' }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted"><i class="ri-user-star-line text-danger me-2"></i>Formateur</td>
+                                        <td class="text-end fw-bold">Non précisé</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-
-
-                        <div class="session-date">
-                            <i class="bi bi-calendar-event"></i>
-                            Du
-                            {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
-                            au
-                            {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
-                        </div>
-
-
-                        <div class="session-capacity">
-                            <i class="bi bi-people"></i>
-                            {{ $classe->inscriptions_count ?? 0 }}
-                            /
-                            {{ $classe->capacite_max }}
-                            inscrits
-                        </div>
-
                     </div>
+                </div>
 
+                <div class="col-lg-4">
+                    <div class="card border shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4">
+                                <i class="ri-calendar-event-line text-danger me-2"></i>Prochaines classes
+                            </h5>
 
-                    <div>
-
-                        @auth
-
-                            @if($mesInscriptions->contains($classe->id))
-
-                                @if($mesInscriptionsPayees->contains($classe->id))
-
-                                   <span class="badge bg-success fs-6 px-3 py-2">
-                                        <i class="bi bi-check-circle me-1"></i>
-                                        Inscription confirmée
-                                    </span>
-
-
-                                @else
-
-                                    <div class="d-flex align-items-center gap-2">
-
-                                       <span class="badge bg-warning text-white fs-6 px-3 py-2">
-                                            <i class="bi bi-clock-history me-1"></i>
-                                            Inscription en attente de paiement
-                                        </span>
-
-
-                                        <form method="POST" action="{{ route('classes.inscription.destroy', $classe) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                Annuler
-                                            </button>
-                                        </form>
-
+                            @forelse($prochainesSessions as $classe)
+                                <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center gap-2">
+                                    <div>
+                                        <div class="fw-bold">{{ $classe->nom }}</div>
+                                        <div class="text-muted small mt-1">
+                                            <i class="ri-calendar-line text-danger me-1"></i>
+                                            Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
+                                            au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
+                                        </div>
                                     </div>
-
-                                @endif
-
-
-                            @elseif($classe->inscriptions_count >= $classe->capacite_max)
-
-                                <span class="badge bg-secondary">
-                                    Complet
-                                </span>
-
-
-                            @else
-
-                                <form method="POST" action="{{ route('classes.inscription.store', $classe) }}">
-                                    @csrf
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-plus-circle"></i>
-                                        S'inscrire
-                                    </button>
-                                </form>
-
-                            @endif
-
-
-                        @else
-
-                            <a href="{{ route('login') }}" class="btn btn-primary">
-                                Se connecter pour s'inscrire
-                            </a>
-
-                        @endauth
-
+                                    <span class="badge bg-success-subtle text-success flex-shrink-0">
+                                        <i class="ri-checkbox-circle-fill me-1"></i>Disponible
+                                    </span>
+                                </div>
+                            @empty
+                                <div class="text-center text-muted py-4">
+                                    <i class="ri-calendar-close-line fs-2 d-block mb-2"></i>
+                                    Aucune prochaine classe programmée.
+                                </div>
+                            @endforelse
+                        </div>
                     </div>
-
                 </div>
 
             </div>
+        </div>
 
+        {{-- ---------- Programme ---------- --}}
+        <div class="tab-pane fade" id="programme" role="tabpanel" aria-labelledby="programme-tab">
+            <div class="card border shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">
+                        <i class="ri-list-check text-danger me-2"></i>Programme de la formation
+                    </h5>
 
-        @empty
+                    @if($cours->chapitres->count())
+                        <div class="accordion" id="chapitresAccordion">
+                            @foreach($cours->chapitres as $chapitre)
+                                <div class="accordion-item border rounded-3 overflow-hidden mb-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button fw-semibold {{ $loop->first ? '' : 'collapsed' }}"
+                                                type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#chapitre{{ $chapitre->id }}"
+                                                aria-expanded="{{ $loop->first ? 'true' : 'false' }}">
+                                            <span class="avatar-xs me-3 flex-shrink-0">
+                                                <span class="avatar-title rounded-circle bg-danger-subtle text-danger fw-bold">
+                                                    {{ $chapitre->ordre }}
+                                                </span>
+                                            </span>
+                                            {{ $chapitre->titre }}
+                                        </button>
+                                    </h2>
 
-            <div class="empty-state">
-                <i class="bi bi-calendar-x d-block"></i>
-                Aucune classe n'est disponible pour le moment.
+                                    <div id="chapitre{{ $chapitre->id }}"
+                                         class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}"
+                                         data-bs-parent="#chapitresAccordion">
+                                        <div class="accordion-body text-muted">
+                                            {!! nl2br(e($chapitre->contenu)) !!}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                    @elseif($cours->programme)
+                        <div class="text-muted">
+                            {!! nl2br(e($cours->programme)) !!}
+                        </div>
+
+                    @else
+                        <div class="text-center text-muted py-5">
+                            <i class="ri-file-warning-line fs-1 d-block mb-2"></i>
+                            Le programme de cette formation n'est pas encore disponible.
+                        </div>
+                    @endif
+                </div>
             </div>
+        </div>
 
-        @endforelse
+        {{-- ---------- Classes ---------- --}}
+        <div class="tab-pane fade" id="classes" role="tabpanel" aria-labelledby="classes-tab">
+            <div class="card border shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">
+                        <i class="ri-calendar-line text-danger me-2"></i>Classes disponibles
+                    </h5>
 
-    </div>
+                    @forelse($cours->classes as $classe)
+                        <div class="border rounded-3 p-3 mb-3">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
 
-</div>
+                                <div>
+                                    <h6 class="fw-bold mb-2"><i class="ri-graduation-cap-line text-danger me-1"></i>{{ $classe->nom }}</h6>
 
-{{-- =================================================
-QUIZ
-================================================== --}}
+                                    <div class="text-muted small mb-1">
+                                        <i class="ri-calendar-event-line text-danger me-1"></i>
+                                        Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
+                                        au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
+                                    </div>
 
-<div class="tab-pane fade" id="quiz" role="tabpanel" aria-labelledby="quiz-tab">
+                                    <div class="text-muted small">
+                                        <i class="ri-group-line me-1"></i>
+                                        {{ $classe->inscriptions_count ?? 0 }} / {{ $classe->capacite_max }} inscrits
+                                    </div>
+                                </div>
 
-    <div class="course-section">
+                                <div>
+                                    @auth
+                                        @if($mesInscriptions->contains($classe->id))
 
-        <h2 class="course-section-title">
-            <i class="bi bi-question-circle"></i>
-            Quiz de la formation
-        </h2>
+                                            @if($mesInscriptionsPayees->contains($classe->id))
+                                                <span class="badge bg-success-subtle text-success fs-6 px-3 py-2">
+                                                    <i class="ri-checkbox-circle-line me-1"></i>
+                                                    Inscription confirmée
+                                                </span>
+                                            @else
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
+                                                        <i class="ri-time-line me-1"></i>
+                                                        Inscription en attente de paiement
+                                                    </span>
+
+                                                    <form method="POST" action="{{ route('classes.inscription.destroy', $classe) }}">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger">Annuler</button>
+                                                    </form>
+                                                </div>
+                                            @endif
+
+                                        @elseif($classe->inscriptions_count >= $classe->capacite_max)
+                                            <span class="badge bg-secondary">Complet</span>
+
+                                        @else
+                                            <form method="POST" action="{{ route('classes.inscription.store', $classe) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="ri-add-circle-line me-1"></i> S'inscrire
+                                                </button>
+                                            </form>
+                                        @endif
+                                    @else
+                                        <a href="{{ route('login') }}" class="btn btn-primary">
+                                            Se connecter pour s'inscrire
+                                        </a>
+                                    @endauth
+                                </div>
+
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-5">
+                            <i class="ri-calendar-close-line fs-1 d-block mb-2"></i>
+                            Aucune classe n'est disponible pour le moment.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        {{-- ---------- Quiz ---------- --}}
+        <div class="tab-pane fade" id="quiz" role="tabpanel" aria-labelledby="quiz-tab">
+            <div class="card border shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">
+                        <i class="ri-question-line text-danger me-2"></i>Quiz de la formation
+                    </h5>
+
                     @if(session('quiz_en_cours'))
                         <a href="{{ session('quiz_en_cours')['url'] }}" class="alert alert-danger d-block text-decoration-none">
                             Veuillez terminer ou annuler votre quiz en cours dans le cours "{{ session('quiz_en_cours')['cours'] }}"
@@ -1232,58 +407,107 @@ QUIZ
 
                     @auth
                         @if(auth()->user()->role?->nom === 'particulier')
-                            <div class="d-grid gap-2 mb-3" style="max-width: 260px;">
-                                <a href="{{ route('quiz.tentative.show', $cours) }}" class="btn btn-primary">
-                                    {{ ($quizEnCours ?? false) ? 'Continuer le quiz' : 'Passer le quiz' }}
-                                </a>
-                                <a href="{{ route('quiz.historique', $cours) }}" class="btn btn-outline-primary">
-                                    Historique de quiz
-                                </a>
+                            <div class="col-12 col-sm-8 col-md-5 col-lg-4 px-0">
+                                <div class="d-grid gap-2 mb-3">
+                                    <a href="{{ route('quiz.tentative.show', $cours) }}" class="btn btn-primary">
+                                        {{ ($quizEnCours ?? false) ? 'Continuer le quiz' : 'Passer le quiz' }}
+                                    </a>
+                                    <a href="{{ route('quiz.historique', $cours) }}" class="btn btn-outline-primary">
+                                        Historique de quiz
+                                    </a>
+                                </div>
                             </div>
                         @endif
                     @endauth
+
                     @guest
-                    <div class="d-grid gap-2 mb-3" style="max-width: 260px;">
-                        <a href="{{ route('quiz.tentative.show', $cours) }}" class="btn btn-primary">
-                            {{ $quizEnCours ? 'Continuer le quiz' : 'Passer le quiz' }}
-                        </a>
-                    </div>
+                        <div class="col-12 col-sm-8 col-md-5 col-lg-4 px-0">
+                            <div class="d-grid gap-2 mb-3">
+                                <a href="{{ route('quiz.tentative.show', $cours) }}" class="btn btn-primary">
+                                    {{ $quizEnCours ? 'Continuer le quiz' : 'Passer le quiz' }}
+                                </a>
+                            </div>
+                        </div>
                     @endguest
+                </div>
+            </div>
+        </div>
+
+        {{-- ---------- Avis ---------- --}}
+        <div class="tab-pane fade" id="avis" role="tabpanel" aria-labelledby="avis-tab">
+            @include('cours.partials.avis')
+        </div>
     </div>
-</div>
-
-</div>
-
-</div>
-
 </div>
 
 @endsection
 
-@section('page-script')
-
+@section('script')
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
 
-    const triggerTabList = document.querySelectorAll('#courseTabs button[data-bs-toggle="tab"]');
-
-    triggerTabList.forEach(function (triggerEl) {
-
-        triggerEl.addEventListener('click', function (event) {
-
-            event.preventDefault();
-
-            const tab = new bootstrap.Tab(triggerEl);
-
-            tab.show();
-
-        });
-
+    // ----- Barres de répartition des notes -----
+    document.querySelectorAll('.progress-bar[data-pct]').forEach(function (barre) {
+        barre.style.width = barre.dataset.pct + '%';
     });
 
+    // ----- Ouvre l'onglet Avis (lien #avis, ou erreur de validation du formulaire) -----
+    const erreurAvis = {{ $errors->has('note') || $errors->has('commentaire') ? 'true' : 'false' }};
+    if (window.location.hash === '#avis' || erreurAvis) {
+        const ongletAvis = document.getElementById('avis-tab');
+        if (ongletAvis) {
+            ongletAvis.click();
+        }
+    }
+
+    // ----- Saisie de la note avec les étoiles -----
+    const champNote = document.getElementById('champNote');
+    const zoneEtoiles = document.getElementById('etoilesSaisie');
+    const erreurNote = document.getElementById('erreurNote');
+    const formulaire = document.getElementById('formAvis');
+
+    if (champNote && zoneEtoiles && formulaire) {
+        const boutons = zoneEtoiles.querySelectorAll('[data-note]');
+
+        // Remplit les étoiles jusqu'à la note donnée
+        function afficher(note) {
+            boutons.forEach(function (bouton) {
+                const remplie = Number(bouton.dataset.note) <= note;
+                const icone = bouton.querySelector('i');
+                icone.classList.toggle('ri-star-fill', remplie);
+                icone.classList.toggle('ri-star-line', !remplie);
+            });
+        }
+
+        afficher(Number(champNote.value) || 0);
+
+        boutons.forEach(function (bouton) {
+            // Survol : aperçu de la note
+            bouton.addEventListener('mouseenter', function () {
+                afficher(Number(bouton.dataset.note));
+            });
+
+            // Clic : on retient la note
+            bouton.addEventListener('click', function () {
+                champNote.value = bouton.dataset.note;
+                afficher(Number(champNote.value));
+                erreurNote.classList.add('d-none');
+            });
+        });
+
+        // On quitte la zone : retour à la note choisie
+        zoneEtoiles.addEventListener('mouseleave', function () {
+            afficher(Number(champNote.value) || 0);
+        });
+
+        // Empêche l'envoi sans note
+        formulaire.addEventListener('submit', function (event) {
+            if (!champNote.value) {
+                event.preventDefault();
+                erreurNote.classList.remove('d-none');
+            }
+        });
+    }
 });
-
 </script>
-
 @endsection
