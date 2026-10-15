@@ -27,20 +27,20 @@
         </a>
     </div>
 
-    {{-- ===== Statistiques ===== --}}
-    <div class="row g-3 mb-4">
+    {{-- ===== Statistiques (cartes compactes : avatar-sm, chiffre en h5, libellé en fs-12) ===== --}}
+    <div class="row g-2 mb-3">
 
         <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="avatar-md flex-shrink-0">
-                        <span class="avatar-title rounded-3 bg-success-subtle text-success fs-2">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <span class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title rounded-3 bg-success-subtle text-success fs-4">
                             <i class="ri-user-3-line"></i>
                         </span>
                     </span>
                     <div>
-                        <h4 class="fw-bold mb-0">{{ $stats['particuliers'] }}</h4>
-                        <p class="text-muted mb-0">Particuliers</p>
+                        <h5 class="fw-bold mb-0">{{ $stats['particuliers'] }}</h5>
+                        <p class="text-muted mb-0 fs-12">Particuliers</p>
                     </div>
                 </div>
             </div>
@@ -48,15 +48,15 @@
 
         <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="avatar-md flex-shrink-0">
-                        <span class="avatar-title rounded-3 bg-info-subtle text-info fs-2">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <span class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title rounded-3 bg-info-subtle text-info fs-4">
                             <i class="ri-building-line"></i>
                         </span>
                     </span>
                     <div>
-                        <h4 class="fw-bold mb-0">{{ $stats['entreprises'] }}</h4>
-                        <p class="text-muted mb-0">Entreprises</p>
+                        <h5 class="fw-bold mb-0">{{ $stats['entreprises'] }}</h5>
+                        <p class="text-muted mb-0 fs-12">Entreprises</p>
                     </div>
                 </div>
             </div>
@@ -64,15 +64,15 @@
 
         <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="avatar-md flex-shrink-0">
-                        <span class="avatar-title rounded-3 bg-danger-subtle text-danger fs-2">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <span class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title rounded-3 bg-danger-subtle text-danger fs-4">
                             <i class="ri-shield-user-line"></i>
                         </span>
                     </span>
                     <div>
-                        <h4 class="fw-bold mb-0">{{ $stats['admins'] }}</h4>
-                        <p class="text-muted mb-0">Administrateurs</p>
+                        <h5 class="fw-bold mb-0">{{ $stats['admins'] }}</h5>
+                        <p class="text-muted mb-0 fs-12">Administrateurs</p>
                     </div>
                 </div>
             </div>
@@ -80,15 +80,15 @@
 
         <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
-                <div class="card-body d-flex align-items-center gap-3">
-                    <span class="avatar-md flex-shrink-0">
-                        <span class="avatar-title rounded-3 bg-primary-subtle text-primary fs-2">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <span class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title rounded-3 bg-primary-subtle text-primary fs-4">
                             <i class="ri-group-line"></i>
                         </span>
                     </span>
                     <div>
-                        <h4 class="fw-bold mb-0">{{ $stats['total'] }}</h4>
-                        <p class="text-muted mb-0">Total utilisateurs</p>
+                        <h5 class="fw-bold mb-0">{{ $stats['total'] }}</h5>
+                        <p class="text-muted mb-0 fs-12">Total utilisateurs</p>
                     </div>
                 </div>
             </div>
@@ -147,18 +147,39 @@
         </div>
     </div>
 
+    {{-- ===== Barre de suppression multiple =====
+         Cachée tant qu'aucun utilisateur n'est coché. Les cases du tableau sont rattachées à CE formulaire
+         par leur attribut form="formSuppression" (on ne peut pas imbriquer ce formulaire autour du tableau,
+         qui contient déjà les formulaires de suppression de chaque ligne). --}}
+    <form id="formSuppression" method="POST" action="{{ route('admin.users.destroy-multiple') }}">
+        @csrf
+        <div id="barreSelection" class="card border shadow-sm mb-3 d-none">
+            <div class="card-body d-flex flex-wrap align-items-center gap-2">
+                <strong><span id="nbSelection">0</span> utilisateur(s) sélectionné(s)</strong>
+
+                <button type="submit" class="btn btn-danger">
+                    <i class="ri-delete-bin-line me-1"></i> Supprimer la sélection
+                </button>
+                <button type="button" id="annulerSelection" class="btn btn-outline-secondary">Désélectionner</button>
+            </div>
+        </div>
+    </form>
+
     {{-- ===== Tableau des utilisateurs ===== --}}
     <div class="card border shadow-sm">
         <div class="table-responsive">
             <table class="table table-hover align-middle table-nowrap mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>ID</th>
-                        <th>Nom complet</th>
+                        {{-- Coche / décoche tous les utilisateurs de la page --}}
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
+                        </th>
+                        <th>Nom</th>
                         <th>E-mail</th>
                         <th>Rôle</th>
                         <th>Statut</th>
-                        <th>Formations</th>
+                        <th>Inscriptions</th>
                         <th>Inscrit le</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -172,17 +193,23 @@
                                 'admin'       => ['bg-danger-subtle text-danger', 'Administrateur'],
                                 'entreprise'  => ['bg-info-subtle text-info', 'Entreprise'],
                                 'particulier' => ['bg-primary-subtle text-primary', 'Particulier'],
-                                default       => ['bg-secondary-subtle text-secondary', 'Aucun rôle'],
+                                'formateur'      => ['bg-secondary-subtle text-secondary', 'Formateur'],
                             };
                             $protege = $nomRole === 'admin' || $utilisateur->id === auth()->id();
                         @endphp
 
                         <tr>
-                            <td class="text-muted">USR-{{ str_pad($utilisateur->id, 3, '0', STR_PAD_LEFT) }}</td>
+                            {{-- Case de sélection : rattachée au formulaire de suppression multiple.
+                                 Désactivée pour les comptes protégés (administrateurs et vous-même). --}}
+                            <td>
+                                <input type="checkbox" name="ids[]" value="{{ $utilisateur->id }}" form="formSuppression"
+                                       class="form-check-input case-utilisateur" aria-label="Sélectionner {{ $utilisateur->name }}"
+                                       @disabled($protege)>
+                            </td>
 
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    @if($utilisateur->avatar)
+                                    {{--@if($utilisateur->avatar)
                                         <img src="{{ asset('storage/' . $utilisateur->avatar) }}"
                                              alt="{{ $utilisateur->name }}"
                                              class="avatar-xs rounded-circle object-fit-cover flex-shrink-0">
@@ -192,7 +219,7 @@
                                                 {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($utilisateur->name, 0, 1)) }}
                                             </span>
                                         </span>
-                                    @endif
+                                    @endif--}}
                                     <span class="fw-medium">{{ $utilisateur->name }}</span>
                                 </div>
                             </td>
@@ -266,5 +293,48 @@
     </div>
 
 </div>
+
+<script>
+    // Sélection multiple : affiche la barre de suppression dès qu'au moins un utilisateur est coché.
+    document.addEventListener('DOMContentLoaded', function () {
+        // Les comptes protégés ont une case désactivée : on ne les sélectionne jamais
+        const cases = Array.from(document.querySelectorAll('.case-utilisateur:not(:disabled)'));
+        const toutes = document.getElementById('toutSelectionner');
+        const barre = document.getElementById('barreSelection');
+        const compteur = document.getElementById('nbSelection');
+        const formulaire = document.getElementById('formSuppression');
+
+        // Met à jour le compteur, la barre et l'état de la case "tout sélectionner"
+        function majSelection() {
+            const nb = cases.filter(c => c.checked).length;
+            compteur.textContent = nb;
+            barre.classList.toggle('d-none', nb === 0);
+            toutes.checked = nb > 0 && nb === cases.length;
+            toutes.indeterminate = nb > 0 && nb < cases.length;
+        }
+
+        cases.forEach(c => c.addEventListener('change', majSelection));
+
+        toutes.addEventListener('change', function () {
+            cases.forEach(c => c.checked = toutes.checked);
+            majSelection();
+        });
+
+        document.getElementById('annulerSelection').addEventListener('click', function () {
+            cases.forEach(c => c.checked = false);
+            majSelection();
+        });
+
+        // Confirmation avant la suppression : action définitive
+        formulaire.addEventListener('submit', function (e) {
+            const nb = cases.filter(c => c.checked).length;
+            if (!confirm('Supprimer définitivement ' + nb + ' utilisateur(s) ?')) {
+                e.preventDefault();
+            }
+        });
+
+        majSelection();
+    });
+</script>
 
 @endsection

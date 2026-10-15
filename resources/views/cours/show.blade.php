@@ -214,10 +214,6 @@
                                         <td class="text-muted"><i class="ri-time-line text-danger me-2"></i>Durée estimée du cours</td>
                                         <td class="text-end fw-bold">{{ $cours->duree ?: 'Non précisée' }}</td>
                                     </tr>
-                                    <tr>
-                                        <td class="text-muted"><i class="ri-user-star-line text-danger me-2"></i>Formateur</td>
-                                        <td class="text-end fw-bold">Non précisé</td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -417,6 +413,8 @@
                                     </a>
                                 </div>
                             </div>
+                            {{-- Graphique de progression du particulier sur ce cours --}}
+                            @include('quiz.partials.progression', ['progression' => $progressionQuiz ?? []])
                         @endif
                     @endauth
 
@@ -443,6 +441,14 @@
 @endsection
 
 @section('script')
+
+{{-- Graphique de progression des quiz (onglet Quiz, particulier) --}}
+@auth
+    @if(auth()->user()->role?->nom === 'particulier')
+        @include('quiz.partials.progression-script')
+    @endif
+@endauth
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -454,59 +460,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----- Ouvre l'onglet Avis (lien #avis, ou erreur de validation du formulaire) -----
     const erreurAvis = {{ $errors->has('note') || $errors->has('commentaire') ? 'true' : 'false' }};
     if (window.location.hash === '#avis' || erreurAvis) {
-        const ongletAvis = document.getElementById('avis-tab');
-        if (ongletAvis) {
-            ongletAvis.click();
-        }
-    }
-
-    // ----- Saisie de la note avec les étoiles -----
-    const champNote = document.getElementById('champNote');
-    const zoneEtoiles = document.getElementById('etoilesSaisie');
-    const erreurNote = document.getElementById('erreurNote');
-    const formulaire = document.getElementById('formAvis');
-
-    if (champNote && zoneEtoiles && formulaire) {
-        const boutons = zoneEtoiles.querySelectorAll('[data-note]');
-
-        // Remplit les étoiles jusqu'à la note donnée
-        function afficher(note) {
-            boutons.forEach(function (bouton) {
-                const remplie = Number(bouton.dataset.note) <= note;
-                const icone = bouton.querySelector('i');
-                icone.classList.toggle('ri-star-fill', remplie);
-                icone.classList.toggle('ri-star-line', !remplie);
-            });
-        }
-
-        afficher(Number(champNote.value) || 0);
-
-        boutons.forEach(function (bouton) {
-            // Survol : aperçu de la note
-            bouton.addEventListener('mouseenter', function () {
-                afficher(Number(bouton.dataset.note));
-            });
-
-            // Clic : on retient la note
-            bouton.addEventListener('click', function () {
-                champNote.value = bouton.dataset.note;
-                afficher(Number(champNote.value));
-                erreurNote.classList.add('d-none');
-            });
-        });
-
-        // On quitte la zone : retour à la note choisie
-        zoneEtoiles.addEventListener('mouseleave', function () {
-            afficher(Number(champNote.value) || 0);
-        });
-
-        // Empêche l'envoi sans note
-        formulaire.addEventListener('submit', function (event) {
-            if (!champNote.value) {
-                event.preventDefault();
-                erreurNote.classList.remove('d-none');
-            }
-        });
+        document.getElementById('avis-tab')?.click();  
     }
 });
 </script>

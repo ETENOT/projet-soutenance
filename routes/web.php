@@ -181,15 +181,12 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     Route::get('/cours/{cours}/espace', [CoursController::class, 'espace'])
         ->name('cours.espace');
 
-           // Évaluation de la formation (formateur + formation) à la fin d'une classe
+    // Evaluation de la formation (formateur + formation) à la fin d'une classe
     Route::get('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'create'])
         ->name('evaluations.create');
 
     Route::post('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'store'])
         ->name('evaluations.store');
-    // Consulter une ressource
-    Route::get('/cours/{cours}/ressource/{resource}', [CoursController::class, 'ressource'])
-        ->name('cours.ressource');
 });
 
 
@@ -266,17 +263,17 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])
             ->name('cours.destroy');
 
-               // ------------------------------------------------------------------
-        // ÉVALUATIONS (avis sur les formateurs + évaluations des formations)
-        // ------------------------------------------------------------------
+        // Suppression multiple des cours cochés dans la liste
+        Route::post('/cours/suppression-multiple', [App\Http\Controllers\CoursController::class, 'destroyMultiple'])
+            ->name('cours.destroy-multiple');
 
+        // Evaluation de la formation (formateur + formation) à la fin d'une classe
         Route::get('/evaluations', [App\Http\Controllers\AdminEvaluationController::class, 'index'])
             ->name('evaluations.index');
 
-        Route::get('/evaluations/{evaluation}', [App\Http\Controllers\AdminEvaluationController::class, 'show'])
+        Route::post('/evaluations/{evaluation}', [App\Http\Controllers\AdminEvaluationController::class, 'store'])
             ->name('evaluations.show');
-
-
+        
         // ------------------------------------------------------------------
         // CHAPITRES
         // ------------------------------------------------------------------
@@ -312,6 +309,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/questions/import', [App\Http\Controllers\QuestionImportController::class, 'form'])->name('questions.import');
         Route::post('/questions/import', [App\Http\Controllers\QuestionImportController::class, 'traiter'])->name('questions.import.store');
         Route::get('/questions/import/modele', [App\Http\Controllers\QuestionImportController::class, 'modele'])->name('questions.import.modele');
+        // Actions groupées sur les questions cochées (changer de cours, supprimer).
+        // Déclarée AVANT la resource, comme les routes d'import.
+        Route::post('/questions/actions', [App\Http\Controllers\QuestionController::class, 'actionsGroupees'])->name('questions.actions');
         Route::resource('questions', App\Http\Controllers\QuestionController::class)->except(['show']);
 
         // Suivi des quiz (tentatives des particuliers et des visiteurs) : liste
@@ -346,8 +346,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/utilisateurs/{user}', [App\Http\Controllers\UserController::class, 'destroy'])
             ->name('users.destroy');
 
+        // Suppression multiple des utilisateurs cochés dans la liste
+        Route::post('/utilisateurs/suppression-multiple', [App\Http\Controllers\UserController::class, 'destroyMultiple'])
+            ->name('users.destroy-multiple');
+
         Route::get('/classe', [App\Http\Controllers\ClasseController::class, 'toutes'])
             ->name('classes.index');
+
+        // Actions groupées sur les classes cochées dans la liste (affecter formateur, fermer, supprimer...)
+        Route::post('/classe/actions', [App\Http\Controllers\ClasseController::class, 'actionsGroupees'])
+            ->name('classes.actions');
 
         // ------------------------------------------------------------------
         // CLASSES
@@ -437,10 +445,17 @@ Route::middleware(['auth', 'role:admin'])
             Route::post('/cours/{cours}/supports', [App\Http\Controllers\CoursResourceController::class, 'store'])
                 ->name('cours.resources.formateur.store');
 
-                        // Avis reçus par le formateur (sans le nom des stagiaires)
+            // Correction détaillée (question par question) d'une tentative d'un stagiaire de la classe
+            Route::get('/classes/{classe}/quiz/resultats/{resultatQuiz}', [App\Http\Controllers\Formateur\QuizController::class, 'correction'])
+                ->name('quiz.formateur.correction');
+            
+            // Entrée du menu « Quiz des stagiaires » : liste de mes classes avec accès à leurs résultats
+            Route::get('/quiz', [App\Http\Controllers\Formateur\QuizController::class, 'classes'])
+                ->name('quiz.formateur.classes');
+
+            // Avis reçus par le formateur (sans le nom des stagiaires)
             Route::get('/avis', [App\Http\Controllers\Formateur\AvisFormateurController::class, 'index'])
                 ->name('avis_formateurs.formateur.index');
-                
         });
 
     // ==========================================================================

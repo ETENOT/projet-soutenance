@@ -35,9 +35,6 @@
                     <a href="{{ route('admin.cours.edit', $cours) }}" class="btn btn-light">
                         <i class="ri-edit-line me-1"></i> Modifier
                     </a>
-                    <a href="{{ route('admin.cours.contenus', $cours) }}" class="btn btn-danger">
-                        <i class="ri-folder-open-line me-1"></i> Gérer les contenus
-                    </a>
                 </div>
             </div>
 
@@ -222,22 +219,6 @@
             </div>
         </div>
 
-    </div>
-
-    {{-- ===== Actions finales ===== --}}
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-        <a href="{{ route('admin.cours.index') }}" class="btn btn-light">
-            <i class="ri-arrow-left-line me-1"></i> Retour aux formations
-        </a>
-
-        <div class="d-flex flex-wrap gap-2">
-            <a href="{{ route('admin.cours.edit', $cours) }}" class="btn btn-outline-primary">
-                <i class="ri-edit-line me-1"></i> Modifier la formation
-            </a>
-            <a href="{{ route('admin.cours.contenus', $cours) }}" class="btn btn-danger">
-                <i class="ri-folder-open-line me-1"></i> Gérer les contenus
-            </a>
-        </div>
     </div>
 
 </div>

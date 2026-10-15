@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CoursResource;
 use App\Models\Quiz;
+use App\Models\ResultatQuiz;
 
 class CoursController extends Controller
 {
@@ -65,7 +66,7 @@ class CoursController extends Controller
             },
         ]);
 
-        // Classes auxquelles l'utilisateur connecté est déjà inscrit
+        // Classes auxquelles l'utilisateur connecté est déjà inscrit (paiement validé)
         $mesInscriptions = Auth::check()
             ? Auth::user()->inscriptions()->pluck('classe_id')
             : collect();
@@ -73,11 +74,11 @@ class CoursController extends Controller
         // Classes déjà inscrites ET payées
         $mesInscriptionsPayees = Auth::check()
             ? Auth::user()->inscriptions()
-                ->whereHas('paiement')
+                ->payees()
                 ->pluck('classe_id')
             : collect();
 
-        // Accès aux documents du cours
+        // Accès aux documents du cours (inscription + paiement validé)
         $accesDocuments = Auth::check()
             ? Auth::user()->inscriptions()
                 ->whereHas('classe', function ($query) use ($cours) {
@@ -89,6 +90,9 @@ class CoursController extends Controller
 
         $quizEnCours = null;
 
+        // Progression du particulier sur ce cours (graphique de l'onglet Quiz)
+        $progressionQuiz = [];
+
         $service = app(\App\Services\QuizFinalisationService::class);
 
         if (Auth::check()) {
@@ -97,6 +101,7 @@ class CoursController extends Controller
                     Auth::user(),
                     $cours->id
                 );
+                $progressionQuiz = ResultatQuiz::progressionPour(Auth::id(), $cours->id);
             }
         } else {
             $quizEnCours = $service->tentativeEnCours(
@@ -106,7 +111,9 @@ class CoursController extends Controller
             );
         }
 
-                // ----- Avis du cours -----
+        // ----- Avis du cours (table avis : une par stagiaire et par cours)-----
+        //Chaque stagiaire compte pour une voix, quelle que soit sa classe
+        //La moyenne est donc naturellement pondérée par le nombre d'avis de chaque stagiaire.
         $statsAvis = $cours->avis()->selectRaw('COUNT(*) as total, AVG(note) as moyenne')->first();
         $nombreAvis = (int) $statsAvis->total;
         $moyenneAvis = $nombreAvis ? round($statsAvis->moyenne, 1) : null;
@@ -121,24 +128,17 @@ class CoursController extends Controller
             ->paginate(10, ['*'], 'avis_page')
             ->fragment('avis');
 
-        $monAvis = Auth::check()
-            ? $cours->avis()->where('user_id', Auth::id())->first()
-            : null;
-
-        $peutDonnerAvis = Auth::check() && Auth::user()->aPayeCours($cours->id);
-
         return view('cours.show', [
             'cours' => $cours,
             'mesInscriptions' => $mesInscriptions,
             'mesInscriptionsPayees' => $mesInscriptionsPayees,
             'accesDocuments' => $accesDocuments,
             'quizEnCours' => $quizEnCours,
+            'progressionQuiz' => $progressionQuiz,
             'nombreAvis' => $nombreAvis,
             'moyenneAvis' => $moyenneAvis,
             'repartitionAvis' => $repartitionAvis,
             'listeAvis' => $listeAvis,
-            'monAvis' => $monAvis,
-            'peutDonnerAvis' => $peutDonnerAvis,
         ]);
     }
 
@@ -172,21 +172,59 @@ class CoursController extends Controller
     /**
      * Liste des cours côté admin.
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Validation des filtres numériques : un nombre négatif ou un maximum inférieur
+        // au minimum renvoie un message d'erreur au lieu d'une page cassée.
+        $request->validate([
+            'classes_min' => ['nullable', 'integer', 'min:0'],
+            // La comparaison avec le minimum n'a de sens QUE si un minimum est saisi :
+            // sans cela, "gte" échoue dès que le champ minimum est vide.
+            'classes_max' => array_filter([
+                'nullable', 'integer', 'min:0',
+                $request->filled('classes_min') ? 'gte:classes_min' : null,
+            ]),
+        ], [
+            // Messages en français (le fichier de langue n'a pas ces textes)
+            'classes_min.integer' => 'Le nombre minimum de classes doit être un nombre entier.',
+            'classes_min.min'     => 'Le nombre minimum de classes ne peut pas être négatif.',
+            'classes_max.integer' => 'Le nombre maximum de classes doit être un nombre entier.',
+            'classes_max.min'     => 'Le nombre maximum de classes ne peut pas être négatif.',
+            'classes_max.gte'     => 'Le nombre maximum de classes doit être supérieur ou égal au minimum.',
+        ]);
+
         /**
          * withCount ajoute "classes_count" et "chapitres_count" sur chaque cours
          * en une seule requête SQL (pas de boucle N+1)
          */
         $cours = Cours::withCount(['classes', 'chapitres'])
+            // Recherche texte : titre, catégorie ou description
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $mot = '%' . $request->input('q') . '%';
+                $query->where(function ($w) use ($mot) {
+                    $w->where('titre', 'like', $mot)
+                        ->orWhere('categorie', 'like', $mot)
+                        ->orWhere('description', 'like', $mot);
+                });
+            })
+            // Catégorie exacte choisie dans la liste
+            ->when($request->filled('categorie'), fn ($query) => $query->where('categorie', $request->input('categorie')))
+            // Nombre de classes minimum / maximum : has('classes', '>=', N) compte en SQL
+            ->when($request->filled('classes_min'), fn ($query) => $query->has('classes', '>=', (int) $request->input('classes_min')))
+            ->when($request->filled('classes_max'), fn ($query) => $query->has('classes', '<=', (int) $request->input('classes_max')))
             ->orderBy('titre')
             // ordre stable si deux cours ont le même titre
             ->orderBy('id')
-            ->paginate(10);
+            ->paginate(10)
+            // conserve les filtres dans les liens de pagination
+            ->withQueryString();
 
         return view('cours.index', [
             'cours' => $cours,
-            // Totaux sur toute la base (pas seulement la page affichée)
+            // Liste des catégories pour le menu déroulant (sur TOUS les cours, pas seulement la page)
+            'toutesLesCategories' => Cours::query()->whereNotNull('categorie')->distinct()->orderBy('categorie')->pluck('categorie'),
+            // Totaux sur toute la base (pas seulement la page affichée, ni le filtre)
+            'nombreCours' => Cours::count(),
             'nombreChapitres' => Chapitre::count(),
             'nombreClasses' => \App\Models\Classe::count(),
         ]);
@@ -294,12 +332,62 @@ class CoursController extends Controller
     }
 
     /**
+     * Suppression multiple : supprime les cours cochés dans la liste.
+     * Chaque cours est traité séparément : ceux qui ne peuvent pas être supprimés sont ignorés
+     * et expliqués dans le message, les autres sont supprimés normalement.
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:cours,id'],
+        ], [
+            'ids.required' => 'Sélectionnez au moins un cours.',
+        ]);
+
+        $supprimes = 0;
+        $ignores = [];   // explications pour les cours non supprimés
+
+        foreach (Cours::whereIn('id', $data['ids'])->get() as $unCours) {
+
+            // Protection propre à la suppression en masse : supprimer un cours supprime aussi ses classes,
+            // leurs inscriptions et leurs paiements. Un cours qui a déjà des inscriptions PAYÉES doit être
+            // supprimé individuellement (bouton de sa ligne), en connaissance de cause.
+            $aDesPaiements = $unCours->classes()
+                ->whereHas('inscriptions', fn ($i) => $i->payees())
+                ->exists();
+
+            if ($aDesPaiements) {
+                $ignores[] = "« {$unCours->titre} » : a des inscriptions payées";
+                continue;
+            }
+
+            $unCours->delete();
+            $supprimes++;
+        }
+
+        // back() : on revient sur la liste avec les mêmes filtres
+        $retour = back();
+        if ($supprimes > 0) {
+            $retour->with('success', "{$supprimes} cours supprimé(s).");
+        }
+        if ($ignores) {
+            $retour->with('error', 'Non supprimé(s) : ' . implode(' ; ', $ignores) . '.');
+        }
+
+        return $retour;
+    }
+
+    /**
      * Affiche les cours de l'utilisateur particulier.
      */
     public function mesCours()
     {
+        //Seulement les inscriptions dont le paiement est validé (sinon pas d'accès aux contenus)
+        //(même règle que l'évaluation de fin de formation et l'accès aux cours)
         $inscriptions = Auth::user()
             ->inscriptions()
+            ->payees()
             ->with('classe.cours', 'paiement')
             ->get();
 
@@ -308,57 +396,35 @@ class CoursController extends Controller
         // =========================================================
 
         $inscriptionsEnCours = $inscriptions
-            ->filter(function ($inscription) {
-
-                if (!$inscription->paiement) {
-                    return false;
-                }
-
-                return $inscription->classe->date_debut <= now()
-                    && $inscription->classe->date_fin >= now();
-            });
+            ->filter(fn ($inscription) => $inscription->classe->date_debut <= now()
+                    && $inscription->classe->date_fin >= now());
 
         // =========================================================
         // PROCHAINES FORMATIONS
         // =========================================================
 
         $prochainesFormations = $inscriptions
-            ->filter(function ($inscription) {
-
-                if (!$inscription->paiement) {
-                    return false;
-                }
-
-                return $inscription->classe->date_debut > now();
-            })
-            ->sortBy(function ($inscription) {
-                return $inscription->classe->date_debut;
-            });
+            ->filter(fn ($inscription) => $inscription->classe->date_debut > now())
+            ->sortBy(fn ($inscription) => $inscription->classe->date_debut);
 
         // =========================================================
         // ANCIENS COURS
         // =========================================================
 
         $anciensCours = $inscriptions
-            ->filter(function ($inscription) {
-
-                if (!$inscription->paiement) {
-                    return false;
-                }
-
-                return $inscription->classe->date_fin < now();
-            })
-            ->sortByDesc(function ($inscription) {
-                return $inscription->classe->date_fin;
-            });
+            ->filter(fn ($inscription) => $inscription->classe->date_fin < now())
+            ->sortByDesc(fn ($inscription) => $inscription->classe->date_fin);
 
         return view('cours.mes_cours', [
             'inscriptionsEnCours' => $inscriptionsEnCours,
             'prochainesFormations' => $prochainesFormations,
             'anciensCours' => $anciensCours,
+            //Classes pour le stagiaire a déjà rempli l'évaluation de fin de formation
+            'classesEvaluees' => Auth::user()->evaluationsFormation()->pluck('classe_id')->toArray(),
         ]);
     }
 
+    //Statut des paiements : affiche TOUTES les inscriptions (y compris non payées)
     public function statutPaiement()
     {
         $inscriptions = Auth::user()
@@ -381,9 +447,7 @@ class CoursController extends Controller
             ->whereHas('classe', function ($query) use ($cours) {
                 $query->where('cours_id', $cours->id);
             })
-            ->whereHas('paiement', function ($query) {
-                $query->where('statut', 'valide');
-            })
+            ->payees()
             ->exists();
     }
 
@@ -403,9 +467,7 @@ class CoursController extends Controller
             ->whereHas('classe', function ($query) use ($cours) {
                 $query->where('cours_id', $cours->id);
             })
-            ->whereHas('paiement', function ($query) {
-                $query->where('statut', 'valide');
-            })
+            ->payees()
             ->first();
 
         $cours->load([

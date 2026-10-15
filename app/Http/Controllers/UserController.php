@@ -44,9 +44,60 @@ class UserController extends Controller
                 'particuliers' => $compter('particulier'),
                 'entreprises'  => $compter('entreprise'),
                 'admins'       => $compter('admin'),
+                'formateurs'   => $compter('formateur'),
                 'total'        => User::count(),
             ],
         ]);
+    }
+
+    /**
+     * Suppression multiple : supprime les utilisateurs cochés dans la liste.
+     * Chaque compte est traité séparément : ceux qui ne peuvent pas être supprimés sont ignorés
+     * et expliqués dans le message, les autres sont supprimés normalement.
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:users,id'],
+        ], [
+            'ids.required' => 'Sélectionnez au moins un utilisateur.',
+        ]);
+
+        $supprimes = 0;
+        $ignores = [];   // explications pour les comptes non supprimés
+
+        foreach (User::with('role')->whereIn('id', $data['ids'])->get() as $utilisateur) {
+
+            // Mêmes protections que le bouton de suppression individuel :
+            // ni un compte administrateur, ni son propre compte.
+            if ($utilisateur->role?->nom === 'admin' || $utilisateur->id === Auth::id()) {
+                $ignores[] = "{$utilisateur->name} : compte protégé (administrateur ou vous-même)";
+                continue;
+            }
+
+            // Protection supplémentaire propre à la suppression en masse : supprimer un compte supprime
+            // aussi ses inscriptions et ses paiements. Un utilisateur qui a déjà payé doit être supprimé
+            // individuellement (bouton de sa ligne), en connaissance de cause.
+            if ($utilisateur->inscriptions()->has('paiement')->exists()) {
+                $ignores[] = "{$utilisateur->name} : a des inscriptions payées";
+                continue;
+            }
+
+            $utilisateur->delete();
+            $supprimes++;
+        }
+
+        // back() : on revient sur la liste avec les mêmes filtres
+        $retour = back();
+        if ($supprimes > 0) {
+            $retour->with('success', "{$supprimes} utilisateur(s) supprimé(s).");
+        }
+        if ($ignores) {
+            $retour->with('error', 'Non supprimé(s) : ' . implode(' ; ', $ignores) . '.');
+        }
+
+        return $retour;
     }
 
     /**
@@ -74,7 +125,12 @@ class UserController extends Controller
         // Le mot de passe est hache avant d'etre enregistre en base.
         $data['password'] = Hash::make($data['password']);
 
-        User::create($data);
+        // Crée l'utilisateur depuis l'interface d'administration.
+        $user = User::create($data);
+
+        // L'adresse e-mail est considérée comme vérifiée immédiatement.
+        // L'utilisateur n'a donc pas besoin de saisir le code de vérification.
+        $user->markEmailAsVerified();
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Utilisateur cree avec succes.');

@@ -12,6 +12,15 @@
 
     <h2 class="my-3">Historique de quiz — {{ $cours->titre }}</h2>
 
+    {{-- Graphique de progression : évolution du score au fil des tentatives --}}
+    @if ($resultats->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-body p-3 pb-0 pt-0">
+                @include('quiz.partials.progression', ['progression' => $progression])
+            </div>
+        </div>
+    @endif
+
     @forelse ($resultats as $resultat)
         @php
             $bareme = $resultat->quiz->bareme;
@@ -40,4 +49,7 @@
         <p class="text-muted">Vous n'avez pas encore terminé de quiz pour ce cours.</p>
     @endforelse
 </div>
+@endsection
+@section('script')
+    @include('quiz.partials.progression-script')
 @endsection

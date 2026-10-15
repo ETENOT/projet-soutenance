@@ -266,7 +266,10 @@ class QuizAttemptController extends Controller
             ->latest()
             ->get();
 
-        return view('quiz.historique', compact('cours', 'resultats'));
+        // Points du graphique de progression (ordre chronologique, en pourcentage)
+        $progression = ResultatQuiz::progressionPour($request->user()->id, $cours->id);
+        
+        return view('quiz.historique', compact('cours', 'resultats', 'progression'));
     }
 
     // Liste des cours où le particulier a passé au moins un quiz,
@@ -343,21 +346,35 @@ class QuizAttemptController extends Controller
         return redirect()->route('quiz.tentative.show', $cours);
     }
 
-    // Étape finale visiteur : quiz terminé, résultat masqué tant qu'il n'est pas inscrit
+    // Étape finale visiteur : quiz terminé. La note est visible, mais la correction détaillée
+    // (bonnes/mauvaises réponses) reste réservée aux utilisateurs inscrits.
     public function termineVisiteur(Request $request, Quiz $quiz)
     {
+        // Un utilisateur connecté n'a rien à faire ici : on le renvoie vers le cours
         if ($request->user()) {
             return redirect()->route('cours.show', $quiz->cours);
         }
+
+        // Seul le visiteur qui a passé ce quiz (token de session identique) peut voir la page
         abort_unless($this->estProprietaire($request, $quiz), 403);
 
+        // Quiz pas encore clôturé : on le renvoie le terminer
         if (!$quiz->resultats()->exists()) {
             return redirect()->route('quiz.tentative.show', $quiz->cours);
         }
 
         return view('quiz.visiteur-termine', [
-            'cours' => $quiz->cours,
-            'email' => $quiz->email_visiteur,
+            'cours'  => $quiz->cours,
+            'email'  => $quiz->email_visiteur,
+            // Score déjà calculé et enregistré par QuizFinalisationService::finaliser()
+            // dans resultats_quiz : on le lit simplement, sans rien recalculer.
+            'score'  => $quiz->resultats()->value('score'),
+            // Barème = nombre de questions posées (noté sur X)
+            'bareme' => $quiz->bareme,
+            // On ne transmet volontairement NI les réponses NI les options correctes :
+            // la correction reste inaccessible côté visiteur.
+            'reussi' => $quiz->bareme > 0
+                && ((float) $quiz->resultats()->value('score')) * 2 >= $quiz->bareme,
         ]);
     }
 }

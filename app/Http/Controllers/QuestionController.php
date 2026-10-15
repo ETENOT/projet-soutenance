@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Validation\Rule;
 use App\Models\Cours;
 use App\Models\Question;
 use Illuminate\Http\Request;
@@ -31,7 +32,59 @@ class QuestionController extends Controller
         // questions_count sert à repérer d'un coup d'œil les cours dont la banque est vide
         $cours = Cours::withCount('questions')->orderBy('titre')->get();
 
-        return view('questions.index', compact('questions', 'cours'));
+        // Chiffres des cartes du haut de page (sur TOUTE la banque, indépendamment des filtres)
+        $stats = [
+            'total'         => Question::count(),
+            'cours_couverts' => Cours::has('questions')->count(),
+            'cours_vides'    => Cours::doesntHave('questions')->count(),
+            // Jamais posée = aucune ligne reponses_quiz ne la référence : on peut la modifier sans risque
+            'jamais_posees' => Question::doesntHave('reponses')->count(),
+        ];
+
+        return view('questions.index', compact('questions', 'cours', 'stats'));
+    }
+
+    /**
+     * Actions groupées sur les questions cochées dans la liste.
+     * Actions : changer_cours (rattacher les questions à un autre cours) | supprimer.
+     */
+    public function actionsGroupees(Request $request)
+    {
+        $data = $request->validate([
+            'ids'         => ['required', 'array', 'min:1'],
+            'ids.*'       => ['integer', 'exists:questions,id'],
+            'action'      => ['required', Rule::in(['changer_cours', 'supprimer'])],
+            // Le cours cible est obligatoire seulement pour "changer de cours"
+            'cours_cible' => ['required_if:action,changer_cours', 'nullable', 'exists:cours,id'],
+        ], [
+            'ids.required'            => 'Sélectionnez au moins une question.',
+            'action.required'         => 'Choisissez une action à appliquer.',
+            'cours_cible.required_if' => 'Choisissez le cours vers lequel déplacer les questions.',
+        ]);
+
+        if ($data['action'] === 'supprimer') {
+            // Comme pour une suppression individuelle, les options et les lignes reponses_quiz liées
+            // partent en cascade (clés étrangères).
+            $nombre = Question::whereIn('id', $data['ids'])->delete();
+
+            return back()->with('success', "{$nombre} question(s) supprimée(s).");
+        }
+
+        // --- changer_cours : on ne modifie que les questions qui ne sont PAS déjà dans le cours cible ---
+        $cible = Cours::findOrFail($data['cours_cible']);
+
+        $nombre = Question::whereIn('id', $data['ids'])
+            ->where('cours_id', '!=', $cible->id)
+            ->update(['cours_id' => $cible->id]);
+
+        $dejaLa = count($data['ids']) - $nombre;
+
+        $retour = back()->with('success', "{$nombre} question(s) rattachée(s) au cours « {$cible->titre} ».");
+        if ($dejaLa > 0) {
+            $retour->with('error', "{$dejaLa} question(s) étaient déjà dans ce cours : inchangées.");
+        }
+
+        return $retour;
     }
 
     public function create(Request $request)

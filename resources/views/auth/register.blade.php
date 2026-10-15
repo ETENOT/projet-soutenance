@@ -596,6 +596,21 @@
 
     <link rel="stylesheet" href="{{ URL::asset('build/libs/intl-tel-input/css/intlTelInput.min.css') }}">
 
+    <style>
+        /* Le nom du pays ne doit plus s'étirer sur toute la ligne :
+        sinon le drapeau et l'indicatif seraient collés à droite, loin du nom. */
+        .iti__country-list .iti__country-name { flex-grow: 0; }
+
+        /* Espace entre le nom du pays et le drapeau (le drapeau est maintenant après le nom). */
+        .iti__country-list .iti__flag { margin-left: var(--iti-spacer-horizontal); }
+
+        /* La coche du pays sélectionné reste alignée à l'extrémité droite de la ligne. */
+        .iti__country-list .iti__country-check {
+            margin-left: auto;
+            padding-left: var(--iti-spacer-horizontal);
+        }
+    </style>
+
 @endsection
 
 @section('script')
@@ -641,6 +656,39 @@
         // son propre pays sélectionné, sa propre validité.
 
         // ------------------------------------------------------------------
+
+        // Réorganise chaque ligne de la liste des pays en "Nom  drapeau  +indicatif".
+        // Par défaut, la bibliothèque affiche "drapeau  Nom (+indicatif)".
+        // Idempotente : les lignes déjà traitées sont ignorées, donc on peut
+        // l'appeler une fois par champ téléphone sans risque.
+        function formaterListePays() {
+            // On cible uniquement les lignes pas encore traitées (marquées data-format-ok).
+            document.querySelectorAll('.iti__country-list li.iti__country:not([data-format-ok])').forEach(li => {
+
+                // Les trois éléments d'une ligne, tels que créés par la bibliothèque :
+                const flag   = li.querySelector(':scope > .iti__flag');          // le drapeau
+                const nameEl = li.querySelector(':scope > .iti__country-name');  // le nom du pays
+                // L'indicatif est imbriqué DANS le nom : "Gabon <span>(+241)</span>"
+                const dialEl = nameEl ? nameEl.querySelector('.iti__dial-code') : null;
+
+                // Structure inattendue (autre version de la bibliothèque) : on ne touche à rien.
+                if (!flag || !dialEl) return;
+
+                // Remplace "(+241)" par "+241" : on retire les parenthèses.
+                // data-dial-code est fourni par la bibliothèque sur chaque <li>.
+                dialEl.textContent = '+' + li.dataset.dialCode;
+
+                // Nouvel ordre : nom → drapeau → indicatif.
+                // nameEl.after(flag)  : place le drapeau juste après le nom.
+                // flag.after(dialEl)  : place l'indicatif juste après le drapeau
+                //                       (ce qui le sort aussi du <span> du nom).
+                nameEl.after(flag);
+                flag.after(dialEl);
+
+                // Marque la ligne comme traitée.
+                li.dataset.formatOk = '1';
+            });
+        }
 
         function setupPhoneField(inputId, oldValue) {
 

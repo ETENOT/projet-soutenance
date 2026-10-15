@@ -31,6 +31,7 @@
                             <th>Email</th>
                             <th>Date du quiz</th>
                             <th class="text-center">Note</th>
+                            <th class="text-end">Correction</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -50,10 +51,18 @@
                                         {{ rtrim(rtrim(number_format($resultat->score, 2, ',', ''), '0'), ',') }} / {{ $quiz->bareme }}
                                     </span>
                                 </td>
+                                {{-- Colonne « Correction » : DANS la ligne du quiz, car $resultat n'existe qu'ici --}}
+                                <td class="text-end">
+                                    <a href="{{ route('quiz.formateur.correction', [$classe, $resultat]) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                        Voir la correction
+                                    </a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-4">
+                                {{-- 5 colonnes maintenant (Stagiaire, Email, Date, Note, Correction) --}}
+                                <td colspan="5" class="text-center text-muted py-4">
                                     Aucun résultat de quiz pour cette classe pendant sa période.
                                 </td>
                             </tr>
