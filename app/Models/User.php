@@ -91,6 +91,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(ResultatQuiz::class);
     }
 
+    // Les avis sur un formateur que CE stagiaire a donnés (un par classe)
+    public function avisFormateurs()
+    {
+        return $this->hasMany(AvisFormateur::class);
+    }
+
+    // Les évaluations de formation que CE stagiaire a remplies (une par classe)
+    public function evaluationsFormation()
+    {
+        return $this->hasMany(EvaluationFormation::class);
+    }
+
     // Les classes dont cet utilisateur est le formateur (colonne classes.formateur_id)
     public function classesAnimes()
     {

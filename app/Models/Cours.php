@@ -102,4 +102,5 @@ public function classes()
     {
         return $this->hasMany(Avis::class);
     }
+
 }

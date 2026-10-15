@@ -1,6 +1,6 @@
 @extends('layouts.master')
 
-@section('title', 'Mes formations')
+@section('title', 'Mes classes')
 
 @section('content')
 
@@ -10,7 +10,7 @@
         <a href="{{ route('dashboard') }}">Formation</a>
     @endslot
     @slot('title')
-        Mes formations
+        Mes classes
     @endslot
 @endcomponent
 
@@ -21,9 +21,9 @@
         <span class="badge rounded-pill bg-white bg-opacity-25 text-white px-3 py-2 mb-3">
             <i class="ri-graduation-cap-line me-1"></i> Mon parcours
         </span>
-        <h3 class="fw-bold text-white mb-2">Mes formations</h3>
+        <h3 class="fw-bold text-white mb-2">Mes classes</h3>
         <p class="text-white opacity-75 mb-0 col-lg-8 px-0">
-            Retrouvez vos formations en cours, celles à venir et votre historique.
+            Retrouvez vos classes en cours, celles à venir et votre historique.
         </p>
     </div>
 
@@ -102,7 +102,7 @@
                 <div class="card border shadow-sm">
                     <div class="card-body text-center text-muted py-5">
                         <i class="ri-book-open-line display-5 d-block mb-2"></i>
-                        Aucune formation en cours.
+                        Aucune classe en cours.
                     </div>
                 </div>
             @endforelse
@@ -151,7 +151,7 @@
                 <div class="card border shadow-sm">
                     <div class="card-body text-center text-muted py-5">
                         <i class="ri-calendar-line display-5 d-block mb-2"></i>
-                        Aucune prochaine formation.
+                        Aucune prochaine classe.
                     </div>
                 </div>
             @endforelse
@@ -192,6 +192,20 @@
                                    class="btn btn-outline-primary btn-sm text-nowrap">
                                     Revoir le cours <i class="ri-arrow-right-line ms-1"></i>
                                 </a>
+
+                                {{-- Évaluation de fin de formation : remplir, puis modifier si déjà envoyée --}}
+                                @if (in_array($inscription->classe_id, $classesEvaluees))
+                                    <a href="{{ route('evaluations.create', $inscription->classe) }}"
+                                       class="btn btn-outline-success btn-sm text-nowrap">
+                                        <i class="ri-edit-line me-1"></i>Modifier mon évaluation
+                                    </a>
+                                @else
+                                    <a href="{{ route('evaluations.create', $inscription->classe) }}"
+                                       class="btn btn-danger btn-sm text-nowrap">
+                                        <i class="ri-star-line me-1"></i>Évaluer la formation
+                                    </a>
+                                @endif
+
                             </div>
 
                         </div>
@@ -201,7 +215,7 @@
                 <div class="card border shadow-sm">
                     <div class="card-body text-center text-muted py-5">
                         <i class="ri-archive-line display-5 d-block mb-2"></i>
-                        Aucune formation terminée.
+                        Aucune classe terminée.
                     </div>
                 </div>
             @endforelse

@@ -53,6 +53,18 @@ class Classe extends Model
         return $this->hasMany(Presence::class);
     }
 
+    // Les avis des stagiaires sur le formateur de cette classe
+    public function avisFormateurs()
+    {
+        return $this->hasMany(AvisFormateur::class);
+    }
+
+    // Les évaluations de la formation (critères + remarques) remplies par les stagiaires
+    public function evaluations()
+    {
+        return $this->hasMany(EvaluationFormation::class);
+    }
+
     // Les messages du forum de discussion de la classe
     public function messagesForum()
     {
@@ -160,6 +172,13 @@ class Classe extends Model
             'en_cours' => 'success',
             default => 'secondary',
         };
+    }
+
+    // Les stagiaires peuvent donner leur avis sur le formateur dès le dernier jour de la
+    // formation (inclus) ou dès que la classe est fermée.
+    public function peutEtreEvaluee(): bool
+    {
+        return $this->estFermee() || today()->gte($this->date_fin);
     }
 
     // Une classe se ferme seulement si elle n'est pas déjà fermée ET qu'elle a commencé

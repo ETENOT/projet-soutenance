@@ -80,13 +80,16 @@
                     <a href="{{ route('presences.formateur.edit', $classe) }}" class="btn btn-primary">
                         <i class="ri-checkbox-circle-line me-1"></i>Feuille de présence
                     </a>
-                    <a href="{{ route('quiz.formateur.index', $classe) }}" class="btn btn-soft-primary">
+                                        <a href="{{ route('quiz.formateur.index', $classe) }}" class="btn btn-soft-primary">
                         <i class="ri-file-list-3-line me-1"></i>Résultats au quiz
-
+                    </a>
                     <a href="{{ route('forum.show', $classe) }}" class="btn btn-soft-primary">
                         <i class="ri-chat-3-line me-1"></i>Forum de la classe
-                        
                     </a>
+                    <a href="{{ route('avis_formateurs.formateur.index', ['classe' => $classe->id]) }}" class="btn btn-soft-primary">
+                        <i class="ri-user-star-line me-1"></i>Avis des stagiaires
+                    </a>
+                    
                     <a href="{{ route('cours.resources.formateur.index', $cours) }}" class="btn btn-soft-primary">
                         <i class="ri-folder-upload-line me-1"></i>Supports de cours
                     </a>

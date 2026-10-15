@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\EvaluationFormation;
+use App\Models\AvisFormateur;
 use App\Models\Classe;
 use App\Models\Cours;
 use App\Models\Inscription;
@@ -147,6 +149,40 @@ class FormateurSeeder extends Seeder
             'classe_id' => $enCours->id, 'user_id' => $brice->id,
             'contenu' => 'Quelqu\'un a les notes du module 1 ?',
         ]);
+
+                // ---------------------------------------------------------------
+        // 6 ter. Avis sur le formateur pour la classe TERMINÉE
+        //    Alice et Brice ont donné leur avis ; Carine NON (cas de test du bouton « Noter le formateur »)
+        // ---------------------------------------------------------------
+               AvisFormateur::create([
+            'classe_id' => $terminee->id, 'user_id' => $alice->id,
+            'note_maitrise_sujet' => 5, 'note_qualites_pedagogiques' => 5, 'note_comprehension_problemes' => 4,
+            'commentaire' => 'Formateur très clair, avec des exemples concrets.',
+        ]);
+        AvisFormateur::create([
+            'classe_id' => $terminee->id, 'user_id' => $brice->id,
+            'note_maitrise_sujet' => 4, 'note_qualites_pedagogiques' => 3, 'note_comprehension_problemes' => 3,
+            'commentaire' => 'Bon formateur mais le rythme était parfois trop rapide.',
+        ]);
+
+        // Évaluation de la formation (critères + remarques) des mêmes stagiaires
+        EvaluationFormation::create([
+            'classe_id' => $terminee->id, 'user_id' => $alice->id,
+            'note_materiel' => 5, 'note_support_cours' => 4,
+            'note_info_prealable' => 4, 'note_contenu_adapte' => 5, 'note_contenu_conforme' => 5,
+            'note_groupe_homogene' => 4, 'note_correspond_besoin' => 5,
+            'points_forts' => 'Exemples concrets, bonne ambiance.',
+            'observations' => 'Très satisfait de la formation.',
+            'autre_formation' => 'Une formation plus approfondie.',
+        ]);
+        EvaluationFormation::create([
+            'classe_id' => $terminee->id, 'user_id' => $brice->id,
+            'note_materiel' => 3, 'note_support_cours' => 3,
+            'note_info_prealable' => 3, 'note_contenu_adapte' => 4, 'note_contenu_conforme' => 4,
+            'note_groupe_homogene' => 2, 'note_correspond_besoin' => 4,
+            'points_faibles' => 'Niveau du groupe trop différent.',
+        ]);
+
         // ---------------------------------------------------------------
         // 7. Support de cours : volontairement aucun (le formateur en dépose depuis l'interface).
         // ---------------------------------------------------------------

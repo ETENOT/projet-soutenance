@@ -1,6 +1,7 @@
 {{--
-    Onglet "Avis" d'un cours.
-    Variables : $cours, $nombreAvis, $moyenneAvis, $repartitionAvis, $listeAvis, $monAvis, $peutDonnerAvis
+    Onglet "Avis" d'un cours : LECTURE SEULE.
+    On donne son avis depuis « Mes classes » (bouton Évaluer / Modifier mon évaluation).
+    Variables : $cours, $nombreAvis, $moyenneAvis, $repartitionAvis, $listeAvis, $accesDocuments
 --}}
 <div class="row g-4">
 
@@ -39,129 +40,63 @@
         </div>
     </div>
 
-    {{-- ===== Colonne droite : formulaire + liste ===== --}}
+    {{-- ===== Colonne droite : liste des avis (zone déroulante) ===== --}}
     <div class="col-lg-8">
 
-        {{-- ---------- Donner / modifier son avis ---------- --}}
-        @guest
-            <div class="alert alert-info border-0 mb-4">
-                <i class="ri-information-line me-1"></i>
-                <a href="{{ route('login') }}" class="fw-semibold">Connectez-vous</a>
-                pour donner votre avis sur cette formation.
-            </div>
-        @else
-            @if($peutDonnerAvis)
-                <div class="card border shadow-sm mb-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3">
-                            <i class="ri-edit-line text-danger me-2"></i>{{ $monAvis ? 'Modifier mon avis' : 'Donner mon avis' }}
-                        </h5>
-
-                        <form method="POST" action="{{ route('avis.store', $cours) }}" id="formAvis">
-                            @csrf
-
-                            {{-- La note choisie avec les étoiles est stockée ici (voir le script de la page) --}}
-                            <input type="hidden" name="note" id="champNote" value="{{ old('note', $monAvis?->note) }}">
-
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold d-block">Votre note</label>
-
-                                <div id="etoilesSaisie" class="d-inline-flex gap-1" role="group" aria-label="Note de 1 à 5 étoiles">
-                                    @for($i = 1; $i <= 5; $i++)
-                                        <button type="button"
-                                                class="btn btn-link p-0 text-warning fs-2 lh-1 text-decoration-none"
-                                                data-note="{{ $i }}"
-                                                aria-label="{{ $i }} étoile{{ $i > 1 ? 's' : '' }}">
-                                            <i class="ri-star-line"></i>
-                                        </button>
-                                    @endfor
-                                </div>
-
-                                @error('note')
-                                    <div class="text-danger small mt-1">{{ $message }}</div>
-                                @enderror
-                                <div id="erreurNote" class="text-danger small mt-1 d-none">
-                                    Choisissez une note de 1 à 5 étoiles.
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="commentaire" class="form-label fw-semibold">
-                                    Votre commentaire <span class="text-muted fw-normal">(facultatif)</span>
-                                </label>
-                                <textarea name="commentaire" id="commentaire" rows="4" maxlength="1000"
-                                          class="form-control @error('commentaire') is-invalid @enderror"
-                                          placeholder="Partagez votre expérience : contenu, formateur, organisation...">{{ old('commentaire', $monAvis?->commentaire) }}</textarea>
-                                @error('commentaire')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-
-                            <button type="submit" class="btn btn-danger fw-semibold">
-                                <i class="ri-send-plane-line me-1"></i>{{ $monAvis ? 'Mettre à jour mon avis' : 'Publier mon avis' }}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            @elseif(auth()->user()->role?->nom !== 'admin')
-                <div class="alert alert-warning border-0 mb-4">
-                    <i class="ri-lock-line me-1"></i>
-                    Seuls les stagiaires inscrits à cette formation (paiement validé) peuvent donner leur avis.
+        {{-- Rappel pour les stagiaires ayant payé une classe de ce cours --}}
+        @auth
+            @if($accesDocuments && auth()->user()->role?->nom === 'particulier')
+                <div class="alert alert-info border-0 mb-3">
+                    <i class="ri-information-line me-1"></i>
+                    Vous avez suivi cette formation ? Donnez ou modifiez votre avis depuis
+                    <a href="{{ route('cours.mes') }}" class="fw-semibold">Mes classes</a>.
                 </div>
             @endif
-        @endguest
+        @endauth
 
-        {{-- ---------- Liste des avis ---------- --}}
         <div class="card border shadow-sm mb-0">
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-4">
+                <h5 class="fw-bold mb-3">
                     <i class="ri-chat-quote-line text-danger me-2"></i>Avis des stagiaires
+                    <span class="text-muted fs-13 fw-normal">({{ $nombreAvis }})</span>
                 </h5>
 
-                @forelse($listeAvis as $avis)
-                    <div class="border rounded-3 p-3 mb-3">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
+                {{-- Hauteur limitée : la liste défile au lieu d'allonger la page --}}
+                <div class="pe-2" style="max-height: 460px; overflow-y: auto;">
+                    @forelse($listeAvis as $avis)
+                        <div class="border rounded-3 p-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
 
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="avatar-xs flex-shrink-0">
-                                    <span class="avatar-title rounded-circle bg-primary-subtle text-primary fw-semibold">
-                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($avis->user?->name ?? '?', 0, 1)) }}
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="avatar-xs flex-shrink-0">
+                                        <span class="avatar-title rounded-circle bg-primary-subtle text-primary fw-semibold">
+                                            {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($avis->user?->name ?? '?', 0, 1)) }}
+                                        </span>
                                     </span>
-                                </span>
 
-                                <div>
-                                    <div class="fw-semibold">{{ $avis->user?->name ?? 'Utilisateur supprimé' }}</div>
-                                    <small class="text-muted">{{ $avis->created_at->format('d/m/Y') }}</small>
+                                    <div>
+                                        <div class="fw-semibold">{{ $avis->user?->name ?? 'Utilisateur supprimé' }}</div>
+                                        <small class="text-muted">{{ $avis->created_at->format('d/m/Y') }}</small>
+                                    </div>
                                 </div>
+
+                                <div class="flex-shrink-0">
+                                    @include('cours.partials.etoiles', ['note' => $avis->note, 'taille' => 'fs-6'])
+                                </div>
+
                             </div>
 
-                            @if(auth()->check() && (auth()->id() === $avis->user_id || auth()->user()->role?->nom === 'admin'))
-                                <form action="{{ route('avis.destroy', $avis) }}" method="POST"
-                                      onsubmit="return confirm('Supprimer cet avis ?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer l'avis">
-                                        <i class="ri-delete-bin-line"></i>
-                                    </button>
-                                </form>
+                            @if($avis->commentaire)
+                                <p class="text-muted mt-2 mb-0 text-break">{!! nl2br(e($avis->commentaire)) !!}</p>
                             @endif
-
                         </div>
-
-                        <div class="mt-2">
-                            @include('cours.partials.etoiles', ['note' => $avis->note, 'taille' => 'fs-6'])
+                    @empty
+                        <div class="text-center text-muted py-4">
+                            <i class="ri-star-line fs-1 d-block mb-2"></i>
+                            Aucun avis pour le moment.
                         </div>
-
-                        @if($avis->commentaire)
-                            <p class="text-muted mt-2 mb-0">{!! nl2br(e($avis->commentaire)) !!}</p>
-                        @endif
-                    </div>
-                @empty
-                    <div class="text-center text-muted py-4">
-                        <i class="ri-star-line fs-1 d-block mb-2"></i>
-                        Aucun avis pour le moment.
-                    </div>
-                @endforelse
+                    @endforelse
+                </div>
 
                 @if($listeAvis->hasPages())
                     <div class="mt-3">

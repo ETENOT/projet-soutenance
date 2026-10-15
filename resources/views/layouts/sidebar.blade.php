@@ -138,6 +138,21 @@
 
                     </li>  
 
+                                        {{-- ================================
+                         AVIS SUR LES FORMATEURS
+                    ================================= --}}
+
+                                        {{-- ================================
+                         ÉVALUATIONS (formateurs + formations)
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('admin.evaluations.index') }}">
+                            <i class="ri-star-smile-line"></i>
+                            <span>Évaluations</span>
+                        </a>
+                    </li>
+
 
                     {{-- ================================
                          QUIZ
@@ -235,6 +250,20 @@
                             <span>Mes classes</span>
                         </a>
                     </li>
+                    //Résultat et correction des quiz:la page liste mes classes, puis chaque classe mène à ses résultats 
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('quiz.formateur.classes') }}">
+                            <i class="ri-questionnaire-line"></i>
+                            <span>Quiz des stagiaires</span>
+                        </a>
+                    </li>
+
+                                        <li class="nav-item">
+                        <a class="nav-link menu-link" href="{{ route('avis_formateurs.formateur.index') }}">
+                            <i class="ri-user-star-line"></i>
+                            <span>Avis sur moi</span>
+                        </a>
+                    </li>
 
                     <li class="nav-item">
                         <a class="nav-link menu-link" href="{{ route('forum.index') }}">
@@ -287,7 +316,7 @@
                             href="{{ route('cours.mes') }}"
                         >
                             <i class="ri-graduation-cap-line"></i>
-                            <span>Mes formations</span>
+                            <span>Mes classes</span>
                         </a>
                     </li>
 

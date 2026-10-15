@@ -119,22 +119,6 @@ Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'ca
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])
     ->name('cours.show');
 
-    // ==========================================================================
-    // AVIS SUR LES COURS (utilisateur connecté)
-    // ==========================================================================
-
-    Route::middleware('auth')->group(function () {
-
-        // Enregistrer un avis sur un cours
-        Route::post('/cours/{cours}/avis', [App\Http\Controllers\AvisController::class, 'store'])
-            ->middleware('throttle:10,1')
-            ->name('avis.store');
-
-        // Formulaire d'avis sur un cours
-        Route::get('/avis/{avis}', [App\Http\Controllers\AvisController::class, 'destroy'])
-            ->name('avis.destroy');
-    });
-
 // ==========================================================================
 // QUIZ
 // ==========================================================================
@@ -178,7 +162,7 @@ Route::middleware('quiz.acces')->group(function () {
 Route::middleware(['auth', 'role:particulier'])->group(function () {
 
     // Parcours des formations de l'utilisateur
-    Route::get('/mes-formations', [CoursController::class, 'mesCours'])
+    Route::get('/mes-classes', [CoursController::class, 'mesCours'])
         ->name('cours.mes');
 
     // Résultat d'un quiz
@@ -197,6 +181,12 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     Route::get('/cours/{cours}/espace', [CoursController::class, 'espace'])
         ->name('cours.espace');
 
+           // Évaluation de la formation (formateur + formation) à la fin d'une classe
+    Route::get('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'create'])
+        ->name('evaluations.create');
+
+    Route::post('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'store'])
+        ->name('evaluations.store');
     // Consulter une ressource
     Route::get('/cours/{cours}/ressource/{resource}', [CoursController::class, 'ressource'])
         ->name('cours.ressource');
@@ -275,6 +265,16 @@ Route::middleware(['auth', 'role:admin'])
         // Supprimer un cours
         Route::delete('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'destroy'])
             ->name('cours.destroy');
+
+               // ------------------------------------------------------------------
+        // ÉVALUATIONS (avis sur les formateurs + évaluations des formations)
+        // ------------------------------------------------------------------
+
+        Route::get('/evaluations', [App\Http\Controllers\AdminEvaluationController::class, 'index'])
+            ->name('evaluations.index');
+
+        Route::get('/evaluations/{evaluation}', [App\Http\Controllers\AdminEvaluationController::class, 'show'])
+            ->name('evaluations.show');
 
 
         // ------------------------------------------------------------------
@@ -436,6 +436,11 @@ Route::middleware(['auth', 'role:admin'])
 
             Route::post('/cours/{cours}/supports', [App\Http\Controllers\CoursResourceController::class, 'store'])
                 ->name('cours.resources.formateur.store');
+
+                        // Avis reçus par le formateur (sans le nom des stagiaires)
+            Route::get('/avis', [App\Http\Controllers\Formateur\AvisFormateurController::class, 'index'])
+                ->name('avis_formateurs.formateur.index');
+                
         });
 
     // ==========================================================================
