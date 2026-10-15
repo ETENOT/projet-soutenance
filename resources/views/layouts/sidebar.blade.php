@@ -250,7 +250,7 @@
                             <span>Mes classes</span>
                         </a>
                     </li>
-                    //Résultat et correction des quiz:la page liste mes classes, puis chaque classe mène à ses résultats 
+                    <!-- Résultat et correction des quiz:la page liste mes classes, puis chaque classe mène à ses résultats -->
                     <li class="nav-item">
                         <a class="nav-link menu-link" href="{{ route('quiz.formateur.classes') }}">
                             <i class="ri-questionnaire-line"></i>
@@ -258,7 +258,7 @@
                         </a>
                     </li>
 
-                                        <li class="nav-item">
+                    <li class="nav-item">
                         <a class="nav-link menu-link" href="{{ route('avis_formateurs.formateur.index') }}">
                             <i class="ri-user-star-line"></i>
                             <span>Avis sur moi</span>
