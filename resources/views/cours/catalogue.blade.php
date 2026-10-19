@@ -37,29 +37,28 @@ Catalogue des cours
         </div>
     @endguest
 
-    {{-- ===== Hero + recherche ===== --}}
-    <div class="bg-primary bg-gradient text-white rounded-4 p-4 p-md-5 mb-4">
-        <span class="badge rounded-pill bg-white bg-opacity-25 text-white px-3 py-2 mb-3">
-            <i class="ri-graduation-cap-line me-1"></i> Formations professionnelles
-        </span>
-
-        <h1 class="fw-bold text-white mb-2">Découvrez nos formations</h1>
-        <p class="text-white opacity-75 col-lg-7 px-0 mb-4">
-            Développez vos compétences grâce à nos formations conçues pour vous accompagner dans votre progression.
-        </p>
-
-        <form method="GET" action="{{ route('cours.catalogue') }}" class="col-md-8 col-lg-5 px-0">
-            <div class="input-group input-group-sm bg-white rounded-3 shadow-sm p-1">
-                <span class="input-group-text bg-transparent border-0 text-primary">
-                    <i class="ri-search-line"></i>
-                </span>
-                <input type="search" name="search" value="{{ $search }}"
-                       class="form-control border-0 shadow-none"
-                       placeholder="Rechercher une formation..."
-                       aria-label="Rechercher une formation">
-                <button type="submit" class="btn btn-danger px-3 fw-semibold rounded-2">Rechercher</button>
+    {{-- ===== Bannière compacte : titre + recherche sur une seule ligne ===== --}}
+    <div class="bg-primary bg-gradient text-white rounded-3 px-4 py-3 mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-md-6">
+                <h4 class="fw-bold text-white mb-0">Découvrez nos formations</h4>
             </div>
-        </form>
+
+            <div class="col-md-6">
+                <form method="GET" action="{{ route('cours.catalogue') }}">
+                    <div class="input-group input-group-sm bg-white rounded-3 shadow-sm p-1">
+                        <span class="input-group-text bg-transparent border-0 text-primary">
+                            <i class="ri-search-line"></i>
+                        </span>
+                        <input type="search" name="search" value="{{ $search }}"
+                               class="form-control border-0 shadow-none"
+                               placeholder="Rechercher une formation..."
+                               aria-label="Rechercher une formation">
+                        <button type="submit" class="btn btn-danger px-3 fw-semibold rounded-2">Rechercher</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     {{-- ===== En-tête des résultats ===== --}}

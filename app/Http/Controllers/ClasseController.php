@@ -10,11 +10,16 @@ use App\Models\Role;
 use App\Services\ClasseClotureService;
 use DomainException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ClasseController extends Controller
 {
+    // États et regroupements acceptés par la liste admin (tout le reste est ignoré)
+    private const ETATS = ['en_cours', 'a_venir', 'terminee'];
+    private const GROUPES = ['formation', 'formateur', 'etat', 'categorie', 'lieu'];
 
     public function toutes(Request $request)
     {
@@ -35,6 +40,8 @@ class ClasseController extends Controller
             'nullable', 'integer', 'min:0',
             $request->filled('inscrits_min') ? 'gte:inscrits_min' : null,
         ]),
+        'jours_exclus' => ['nullable', 'array'],
+        'jours_exlus' => ['date_format:Y-m-d', 'distinct'],
     ], [
         // Messages en français (le fichier de langue n'a pas ces textes)
         'date_du.date'           => 'La date de début de période est invalide.',
@@ -62,6 +69,7 @@ class ClasseController extends Controller
         }
 
         // --- Formateur : un id précis, ou "aucun" pour les classes pas encore affectées ---
+        // (la case rapide "Sans formateur" du menu Filtres équivaut à formateur_id=aucun)
         if ($request->input('formateur_id') === 'aucun') {
             $query->whereNull('formateur_id');
         } elseif ($request->filled('formateur_id')) {
@@ -95,24 +103,78 @@ class ClasseController extends Controller
             $query->has('inscriptions', '<=', (int) $request->input('inscrits_max'));
         }
 
-        match ($request->input('etat')) {
-            'a_venir'  => $query->whereDate('date_debut', '>', $aujourdhui),
-            'en_cours' => $query->whereDate('date_debut', '<=', $aujourdhui)
-                                ->whereDate('date_fin', '>=', $aujourdhui),
-            'terminee' => $query->whereDate('date_fin', '<', $aujourdhui),
-            default    => null,
-        };
+        // --- Statut (plusieurs possibles, comme dans Odoo : cocher "En cours" ET "À venir" = l'un OU l'autre) ---
+        // "etat" peut aussi arriver en simple texte (anciens liens) : (array) le transforme en tableau.
+        $etats = array_values(array_intersect((array) $request->input('etat', []), self::ETATS));
+        if ($etats) {
+            $query->where(function ($q) use ($etats) {
+                foreach ($etats as $etat) {
+                    $q->orWhere(fn ($w) => $w->avecEtat($etat));
+                }
+            });
+        }
+
+        // --- Filtres rapides du menu "Filtres" ---
+        if ($request->boolean('completes')) {
+            $query->whereRaw('(select count(*) from inscriptions where inscriptions.classe_id = classes.id) >= classes.capacite_max');
+        }
+        if ($request->boolean('sous_minimum')) {
+            $query->whereRaw('(select count(*) from inscriptions where inscriptions.classe_id = classes.id) < classes.capacite_min');
+        }
+        if ($request->boolean('sans_formateur')) {
+            $query->whereNull('formateur_id');
+        }
+
+        // --- Regroupement (comme "Regrouper par" d'Odoo) ---
+        $groupe = in_array($request->input('groupe'), self::GROUPES, true) ? $request->input('groupe') : null;
+        $comptesGroupes = collect();
+        $cleGroupe = null;
+
+        if ($groupe) {
+            // Clé de groupe d'une classe (la même sert à ordonner l'affichage et à compter)
+            $cleGroupe = match ($groupe) {
+                'formation' => fn (Classe $c) => (string) $c->cours_id,
+                'formateur' => fn (Classe $c) => (string) ($c->formateur_id ?? 'aucun'),
+                'etat'      => fn (Classe $c) => $c->etat,
+                'categorie' => fn (Classe $c) => (string) ($c->cours?->categorie ?? ''),
+                'lieu'      => fn (Classe $c) => (string) $c->lieu,
+            };
+
+            // Nombre de classes par groupe sur TOUT le résultat filtré (pas seulement la page courante)
+            $comptesGroupes = (clone $query)->get()->countBy($cleGroupe);
+
+            // Les classes d'un même groupe doivent se suivre : on trie d'abord sur la clé de groupe
+            $aujourdhui = today()->toDateString();
+            match ($groupe) {
+                'formation' => $query->orderBy(Cours::select('titre')->whereColumn('cours.id', 'classes.cours_id')),
+                'formateur' => $query->orderByRaw('formateur_id is null')
+                    ->orderBy(User::select('name')->whereColumn('users.id', 'classes.formateur_id')),
+                'categorie' => $query->orderBy(Cours::select('categorie')->whereColumn('cours.id', 'classes.cours_id')),
+                'lieu'      => $query->orderBy('lieu'),
+                // en cours, puis à venir, puis terminées (une classe fermée est terminée)
+                'etat'      => $query->orderByRaw(
+                    'case when fermee_le is not null then 2'
+                    . ' when date_debut <= ? and date_fin >= ? then 0'
+                    . ' when date_debut > ? then 1 else 2 end',
+                    [$aujourdhui, $aujourdhui, $aujourdhui]
+                ),
+            };
+        }
 
         return view('classes.liste', [
             'classes' => $query->orderByDesc('date_debut')->paginate(10)->withQueryString(),
+            'groupe' => $groupe,
+            'cleGroupe' => $cleGroupe,
+            'comptesGroupes' => $comptesGroupes,
+            'etatsChoisis' => $etats,
             'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
             'tousLesFormateurs' => $this->formateurs(),
-            'toutesLesCategories' => Cours::query()->distinct()->orderBy('categorie')->pluck('categorie'),
+            'toutesLesCategories' => Cours::query()->whereNotNull('categorie')->distinct()->orderBy('categorie')->pluck('categorie'),
             'tousLesLieux' => Classe::query()->distinct()->orderBy('lieu')->pluck('lieu'),
             'stats' => [
-                'en_cours'   => Classe::whereDate('date_debut', '<=', $aujourdhui)->whereDate('date_fin', '>=', $aujourdhui)->count(),
-                'a_venir'    => Classe::whereDate('date_debut', '>', $aujourdhui)->count(),
-                'terminees'  => Classe::whereDate('date_fin', '<', $aujourdhui)->count(),
+                'en_cours'   => Classe::avecEtat('en_cours')->count(),
+                'a_venir'    => Classe::avecEtat('a_venir')->count(),
+                'terminees'  => Classe::avecEtat('terminee')->count(),
                 'formations' => Classe::distinct()->count('cours_id'),
             ],
         ]);
@@ -227,9 +289,14 @@ class ClasseController extends Controller
     {
         return [
             'nom' => ['required', 'string', 'max:255'],
+            // capacité minimale obligatoire, jamais supérieure à la capacité maximale
+            'capacite_min' => ['required', 'integer', 'min:1', 'max:255', 'lte:capacite_max'],
             'capacite_max' => ['required', 'integer', 'min:1', 'max:255'],
             // le lieu de la formation (colonne "lieu" de la table classes)
             'lieu' => ['required', 'string', 'max:255'],
+            // lien Google Maps (facultatif) et photo du lieu (facultative)
+            'lieu_lien' => ['nullable', 'url', 'max:500'],
+            'lieu_image' => ['nullable', 'image', 'max:2048'],
             'date_debut' => ['required', 'date'],
             // la date de fin ne peut pas précéder la date de début
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
@@ -242,9 +309,30 @@ class ClasseController extends Controller
         ];
     }
 
-    public function store(Request $request, Cours $cours)
+    /**
+     * Valide le formulaire et range la photo du lieu sur le disque public.
+     * À la modification, une nouvelle photo remplace l'ancienne (qui est supprimée) ;
+     * sans nouvelle photo, l'ancienne est conservée.
+     */
+    private function donneesValidees(Request $request, ?Classe $classe = null): array
     {
         $data = $request->validate($this->validationRules());
+
+        if ($request->hasFile('lieu_image')) {
+            if ($classe?->lieu_image) {
+                Storage::disk('public')->delete($classe->lieu_image);
+            }
+            $data['lieu_image'] = $request->file('lieu_image')->store('classes/lieux', 'public');
+        } else {
+            unset($data['lieu_image']);
+        }
+
+        return $data;
+    }
+
+    public function store(Request $request, Cours $cours)
+    {
+        $data = $this->donneesValidees($request);
 
         // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
         $cours->classes()->create($data);
@@ -269,7 +357,9 @@ class ClasseController extends Controller
 
     public function update(Request $request, Cours $cours, Classe $classe)
     {
-        $classe->update($request->validate($this->validationRules()));
+        $data = $this->donneesValidees($request, $classe);
+
+        $classe->update($data);
 
         return redirect()->route('admin.cours.classes.index', $cours)
             ->with('success', 'Classe modifiée avec succès.');
@@ -314,6 +404,9 @@ class ClasseController extends Controller
         ]);
 
         $classe->update($data);
+
+        // Un jour exclu qui sort de la nouvelle période n'a plus de sens : on le retire
+        $classe->purgerJoursExclusHorsPeriode();
 
         return redirect()->route('admin.cours.classes.index', $cours)
             ->with('success', 'Sessions reportées avec succès.');

@@ -40,6 +40,9 @@ class DatabaseSeeder extends Seeder
             // Compte formateur de test + classes, stagiaires, paiements, quiz et présences
             // (après ClasseSeeder : il affecte le formateur à une classe existante)
             FormateurSeeder::class,
+
+            // Classes de test (lieu cliquable, capacité minimale, inscriptions closes)
+            ClasseScenariosSeeder::class,
         ]);
     }
 }

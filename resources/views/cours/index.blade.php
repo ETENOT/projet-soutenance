@@ -91,56 +91,65 @@
         </div>
     @endif
 
-    {{-- ===== Filtres (GET : les filtres restent dans l'URL et s'appliquent à TOUTES les pages) ===== --}}
-    <div class="card border shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.cours.index') }}">
-                <div class="row g-3 align-items-center">
+    {{-- ===== Recherche façon Odoo (étiquettes + menu Filtres / Regrouper par) ===== --}}
+    @php
+        $libellesGroupe = ['categorie' => 'Catégorie', 'disponibilite' => 'Disponibilité'];
+        $libellesDispo = [
+            'a_venir' => 'Classes à venir',
+            'sans_a_venir' => 'Aucune classe à venir',
+            'aucune' => 'Aucune classe',
+        ];
 
-                    <div class="col-lg-4">
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent">
-                                <i class="ri-search-line text-primary"></i>
-                            </span>
-                            <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                                   placeholder="Rechercher un cours..." aria-label="Rechercher un cours">
-                        </div>
-                    </div>
+        // Étiquettes des filtres actifs : [texte, paramètres à retirer, icône]
+        $etiquettes = [];
 
-                    <div class="col-sm-6 col-lg-3">
-                        <select name="categorie" class="form-select" aria-label="Filtrer par catégorie"
-                                onchange="this.form.submit()">
-                            <option value="">Toutes les catégories</option>
-                            @foreach($toutesLesCategories as $categorie)
-                                <option value="{{ $categorie }}" @selected(request('categorie') === $categorie)>{{ $categorie }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+        if (request()->boolean('avec_classes_a_venir')) {
+            $etiquettes[] = ['Avec classes à venir', ['avec_classes_a_venir'], 'ri-calendar-event-line'];
+        }
+        if (request()->boolean('sans_classe')) {
+            $etiquettes[] = ['Sans classe', ['sans_classe'], 'ri-group-line'];
+        }
+        if (request()->boolean('sans_chapitre')) {
+            $etiquettes[] = ['Sans chapitre', ['sans_chapitre'], 'ri-list-check-2'];
+        }
+        if (request()->boolean('sans_quiz')) {
+            $etiquettes[] = ['Sans quiz', ['sans_quiz'], 'ri-questionnaire-line'];
+        }
+        if (request()->filled('categorie')) {
+            $etiquettes[] = ['Catégorie : ' . request('categorie'), ['categorie'], 'ri-price-tag-3-line'];
+        }
+        if (request()->filled('classes_min') || request()->filled('classes_max')) {
+            $etiquettes[] = ['Classes : ' . (request('classes_min') ?: '0') . ' à ' . (request('classes_max') ?: '∞'), ['classes_min', 'classes_max'], 'ri-group-line'];
+        }
+        if (request()->filled('prix_min') || request()->filled('prix_max')) {
+            $etiquettes[] = ['Prix : ' . number_format((int) request('prix_min', 0), 0, ',', ' ') . ' à ' . (request()->filled('prix_max') ? number_format((int) request('prix_max'), 0, ',', ' ') : '∞') . ' FCFA', ['prix_min', 'prix_max'], 'ri-money-dollar-circle-line'];
+        }
+        if ($groupe) {
+            $etiquettes[] = ['Regroupé par ' . mb_strtolower($libellesGroupe[$groupe]), ['groupe'], 'ri-stack-line'];
+        }
 
-                    {{-- Nombre de classes : de ... à ... (laisser vide = pas de limite) --}}
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="input-group">
-                            <span class="input-group-text">Classes</span>
-                            <input type="number" name="classes_min" min="0" value="{{ request('classes_min') }}"
-                                   class="form-control" placeholder="min" aria-label="Nombre de classes minimum">
-                            <input type="number" name="classes_max" min="0" value="{{ request('classes_max') }}"
-                                   class="form-control" placeholder="max" aria-label="Nombre de classes maximum">
-                        </div>
-                    </div>
+        // Cases du menu "Filtres" (un bloc = une section séparée par un trait)
+        $filtres = [
+            [
+                ['nom' => 'avec_classes_a_venir', 'valeur' => '1', 'libelle' => 'Avec classes à venir', 'coche' => request()->boolean('avec_classes_a_venir')],
+                ['nom' => 'sans_classe', 'valeur' => '1', 'libelle' => 'Sans classe', 'coche' => request()->boolean('sans_classe')],
+            ],
+            [
+                ['nom' => 'sans_chapitre', 'valeur' => '1', 'libelle' => 'Sans chapitre', 'coche' => request()->boolean('sans_chapitre')],
+                ['nom' => 'sans_quiz', 'valeur' => '1', 'libelle' => 'Sans quiz', 'coche' => request()->boolean('sans_quiz')],
+            ],
+        ];
+    @endphp
 
-                    <div class="col-lg-2 d-flex gap-2 justify-content-lg-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ri-filter-3-line me-1"></i> Filtrer
-                        </button>
-                        <a href="{{ route('admin.cours.index') }}" class="btn btn-outline-secondary" title="Réinitialiser">
-                            <i class="ri-refresh-line"></i>
-                        </a>
-                    </div>
-
-                </div>
-            </form>
-        </div>
-    </div>
+    @include('partials.barre-recherche', [
+        'action' => route('admin.cours.index'),
+        'placeholder' => 'Rechercher une formation (titre, catégorie, description)…',
+        'etiquettes' => $etiquettes,
+        'filtres' => $filtres,
+        'groupes' => $libellesGroupe,
+        'groupe' => $groupe,
+        'vueCriteres' => 'cours.partials.criteres-recherche',
+    ])
 
     {{-- ===== Barre de suppression multiple =====
          Cachée tant qu'aucun cours n'est coché. Les cases du tableau sont rattachées à CE formulaire
@@ -181,7 +190,32 @@
                 </thead>
 
                 <tbody>
+                    @php
+                        // dernier groupe affiché : sert à n'écrire l'en-tête qu'au changement de groupe
+                        $groupePrecedent = null;
+                    @endphp
                     @forelse($cours as $unCours)
+                        {{-- En-tête de groupe (Regrouper par) --}}
+                        @if ($groupe)
+                            @php
+                                $cle = $cleGroupe($unCours);
+                                $libelleGroupe = $groupe === 'categorie'
+                                    ? ($unCours->categorie ?: 'Sans catégorie')
+                                    : $libellesDispo[$cle];
+                            @endphp
+                            @if ($cle !== $groupePrecedent)
+                                @php
+                                    $groupePrecedent = $cle;
+                                @endphp
+                                <tr class="table-active">
+                                    <td colspan="8" class="fw-semibold">
+                                        <i class="ri-stack-line text-primary me-1"></i>{{ $libelleGroupe }}
+                                        <span class="badge bg-primary-subtle text-primary ms-1">{{ $comptesGroupes[$cle] ?? 0 }}</span>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endif
+
                         <tr>
                             {{-- Case de sélection : rattachée au formulaire de suppression multiple.
                                  data-classes = nombre de classes du cours (sert à avertir avant la suppression). --}}
@@ -263,6 +297,9 @@
                             <td colspan="8" class="text-center text-muted py-5">
                                 <i class="ri-book-open-line display-5 d-block mb-2"></i>
                                 Aucun cours ne correspond à votre recherche.
+                                @if ($etiquettes || request()->filled('q'))
+                                    <a href="{{ route('admin.cours.index') }}" class="d-block mt-2">Réinitialiser les filtres</a>
+                                @endif
                             </td>
                         </tr>
                     @endforelse

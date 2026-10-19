@@ -60,7 +60,7 @@
                     <h5 class="card-title mb-0">Informations</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.cours.classes.update', [$cours, $classe]) }}" method="POST">
+                    <form action="{{ route('admin.cours.classes.update', [$cours, $classe]) }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 
@@ -69,6 +69,14 @@
                             <input type="text" name="nom" id="nom" class="form-control @error('nom') is-invalid @enderror"
                                    value="{{ old('nom', $classe->nom) }}">
                             @error('nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="capacite_min" class="form-label">Capacité minimale <span class="text-danger">*</span></label>
+                            <input type="number" name="capacite_min" id="capacite_min" min="1" max="255" required
+                                   class="form-control @error('capacite_min') is-invalid @enderror"
+                                   value="{{ old('capacite_min', $classe->capacite_min) }}">
+                            @error('capacite_min')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="mb-3">
@@ -83,8 +91,32 @@
                     <label for="lieu" class="form-label">Lieu</label>
                     <input type="text" name="lieu" id="lieu"
                            class="form-control @error('lieu') is-invalid @enderror"
-                           value="{{ old('lieu') }}">
+                           value="{{ old('lieu', $classe->lieu) }}">
                     @error('lieu')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="mb-3">
+                    <label for="lieu_lien" class="form-label">Lien Google Maps du lieu <span class="text-muted">(facultatif)</span></label>
+                    <input type="url" name="lieu_lien" id="lieu_lien" placeholder="https://maps.app.goo.gl/..."
+                           class="form-control @error('lieu_lien') is-invalid @enderror"
+                           value="{{ old('lieu_lien', $classe->lieu_lien) }}">
+                    <div class="form-text">Sans lien, une recherche Google Maps sur le nom du lieu est utilisée.</div>
+                    @error('lieu_lien')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="lieu_image" class="form-label">Photo du lieu <span class="text-muted">(facultative)</span></label>
+                    @if ($classe->lieu_image_url)
+                        <div class="mb-2">
+                            <img src="{{ $classe->lieu_image_url }}" alt="Photo actuelle du lieu" class="avatar-lg rounded object-fit-cover">
+                        </div>
+                    @endif
+                    <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
+                           class="form-control @error('lieu_image') is-invalid @enderror">
+                    @error('lieu_image')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -127,28 +159,7 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Reporter les sessions</h5>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('admin.cours.classes.reporter', [$cours, $classe]) }}" method="POST" class="row g-2 align-items-end">
-                        @csrf
-                        @method('PUT')
-                        <div class="col-auto">
-                            <label class="form-label mb-0 fs-13">Nouvelle date début</label>
-                            <input type="date" name="date_debut" class="form-control form-control-sm" value="{{ $classe->date_debut->format('Y-m-d') }}">
-                        </div>
-                        <div class="col-auto">
-                            <label class="form-label mb-0 fs-13">Nouvelle date fin</label>
-                            <input type="date" name="date_fin" class="form-control form-control-sm" value="{{ $classe->date_fin->format('Y-m-d') }}">
-                        </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-sm btn-outline-warning">Reporter</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+            
         </div>
 
         <div class="col-lg-6">

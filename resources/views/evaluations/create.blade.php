@@ -103,8 +103,19 @@
                             'libelle' => 'Satisfaction globale',
                             'valeur' => old('note_globale', $avisCours?->note),
                         ])
-                        <div class="form-text mt-2">
-                            Cette note est aussi votre avis sur la formation, visible dans l'onglet « Avis » du cours.
+                                                <div class="mt-3">
+                            <label for="commentaire_cours" class="form-label fw-medium">
+                                Votre commentaire sur la formation <span class="text-muted fw-normal">(facultatif)</span>
+                            </label>
+                            <textarea id="commentaire_cours" name="commentaire_cours" rows="3" maxlength="1000"
+                                      class="form-control @error('commentaire_cours') is-invalid @enderror"
+                                      placeholder="Ce que vous avez pensé de cette formation...">{{ old('commentaire_cours', $avisCours?->commentaire) }}</textarea>
+                            @error('commentaire_cours')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text">
+                                Cette note et ce commentaire sont publics : ils apparaissent, avec votre nom, dans l'onglet « Avis » du cours.
+                            </div>
                         </div>
                     @endif
                 </div>

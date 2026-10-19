@@ -15,6 +15,9 @@ return new class extends Migration
             $table->string('nom');
             //signifie que la capacité max peut aller jusqu'à 255 et est obligatoirement un entier positif
             $table->unsignedTinyInteger('capacite_max');
+            // Capacité minimale : nombre d'inscrits en dessous duquel la classe n'est pas viable.
+            // Obligatoire à la création, toujours <= capacite_max (vérifié dans ClasseController).
+            $table->unsignedTinyInteger('capacite_min');
 
             // Dates et horaires
             $table->date('date_debut');
@@ -24,7 +27,11 @@ return new class extends Migration
 
             // Informations pratiques
             $table->string('lieu');
-            
+            // Lien Google Maps du lieu (facultatif) : posé sur le nom du lieu pour l'itinéraire.
+            $table->string('lieu_lien', 500)->nullable();
+            // Photo du lieu (facultative), stockée sur le disque public.
+            $table->string('lieu_image')->nullable();
+
             // Formateur (utilisateur au rôle "formateur") chargé d'animer la classe.
             // nullable : une classe peut exister avant qu'un formateur lui soit affecté.
             // nullOnDelete : si le compte du formateur est supprimé, la classe est conservée.

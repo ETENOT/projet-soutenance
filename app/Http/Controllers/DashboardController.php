@@ -164,6 +164,10 @@ class DashboardController extends Controller
             // Nouveaux anciens cours.
             'anciensCours' => $anciensCours,
             'totalQuizEffectues' => $totalQuizEffectues, // <-- à ajouter
+            // Calendrier : toutes les classes à venir, les siennes en rouge
+            'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir(
+                $utilisateur->inscriptions()->pluck('classe_id')->all()
+            ),
         ]);
     }
 
@@ -208,6 +212,14 @@ class DashboardController extends Controller
             'classesEnCours' => $classesEnCours,
             'apprenantsPayes' => $apprenantsPayes,
             'prochaineClasse' => $prochaineClasse,
+            // Calendrier : ses classes à venir et en cours
+            'evenementsCalendrier' => $mesClasses()
+                ->with('cours')
+                ->nonTerminees()
+                ->orderBy('date_debut')
+                ->get()
+                ->map(fn ($classe) => $classe->versEvenementCalendrier(route('classes.formateur.show', $classe)))
+                ->all(),
         ]);
     }
 
@@ -228,6 +240,7 @@ class DashboardController extends Controller
                 'employesInscrits' => 0,
                 'sessionsReservees' => 0,
                 'budgetFormation' => 0,
+                'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir(),
             ]);
         }
 
@@ -257,6 +270,7 @@ class DashboardController extends Controller
             'devisEnCours' => $devisEnCours,
             'sessionsReservees' => $sessionsReservees,
             'budgetFormation' => $budgetFormation,
+            'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir(),
         ]);
     }
 

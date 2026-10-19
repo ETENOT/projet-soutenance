@@ -12,6 +12,9 @@ use App\Models\ResultatQuiz;
 
 class CoursController extends Controller
 {
+    // Regroupements acceptés par la liste admin (tout le reste est ignoré)
+    private const GROUPES = ['categorie', 'disponibilite'];
+
     /**
      * Catalogue public de tous les cours.
      * Accessible à un visiteur anonyme ET à un utilisateur connecté
@@ -184,6 +187,11 @@ class CoursController extends Controller
                 'nullable', 'integer', 'min:0',
                 $request->filled('classes_min') ? 'gte:classes_min' : null,
             ]),
+            'prix_min' => ['nullable', 'integer', 'min:0'],
+            'prix_max' => array_filter([
+                'nullable', 'integer', 'min:0',
+                $request->filled('prix_min') ? 'gte:prix_min' : null,
+            ]),
         ], [
             // Messages en français (le fichier de langue n'a pas ces textes)
             'classes_min.integer' => 'Le nombre minimum de classes doit être un nombre entier.',
@@ -191,13 +199,23 @@ class CoursController extends Controller
             'classes_max.integer' => 'Le nombre maximum de classes doit être un nombre entier.',
             'classes_max.min'     => 'Le nombre maximum de classes ne peut pas être négatif.',
             'classes_max.gte'     => 'Le nombre maximum de classes doit être supérieur ou égal au minimum.',
+            'prix_min.integer'    => 'Le prix minimum doit être un nombre entier.',
+            'prix_min.min'        => 'Le prix minimum ne peut pas être négatif.',
+            'prix_max.integer'    => 'Le prix maximum doit être un nombre entier.',
+            'prix_max.min'        => 'Le prix maximum ne peut pas être négatif.',
+            'prix_max.gte'        => 'Le prix maximum doit être supérieur ou égal au minimum.',
         ]);
 
         /**
          * withCount ajoute "classes_count" et "chapitres_count" sur chaque cours
          * en une seule requête SQL (pas de boucle N+1)
          */
-        $cours = Cours::withCount(['classes', 'chapitres'])
+        // classes_a_venir_count : classes pas encore commencées (celles où l'on peut encore s'inscrire)
+        $query = Cours::withCount([
+                'classes',
+                'chapitres',
+                'classes as classes_a_venir_count' => fn ($q) => $q->avecEtat('a_venir'),
+            ])
             // Recherche texte : titre, catégorie ou description
             ->when($request->filled('q'), function ($query) use ($request) {
                 $mot = '%' . $request->input('q') . '%';
@@ -212,6 +230,46 @@ class CoursController extends Controller
             // Nombre de classes minimum / maximum : has('classes', '>=', N) compte en SQL
             ->when($request->filled('classes_min'), fn ($query) => $query->has('classes', '>=', (int) $request->input('classes_min')))
             ->when($request->filled('classes_max'), fn ($query) => $query->has('classes', '<=', (int) $request->input('classes_max')))
+            // Fourchette de prix (prix particulier)
+            ->when($request->filled('prix_min'), fn ($query) => $query->where('prix_particulier', '>=', (int) $request->input('prix_min')))
+            ->when($request->filled('prix_max'), fn ($query) => $query->where('prix_particulier', '<=', (int) $request->input('prix_max')))
+            // Filtres rapides du menu "Filtres"
+            ->when($request->boolean('avec_classes_a_venir'), fn ($query) => $query->whereHas('classes', fn ($c) => $c->avecEtat('a_venir')))
+            ->when($request->boolean('sans_classe'), fn ($query) => $query->doesntHave('classes'))
+            ->when($request->boolean('sans_chapitre'), fn ($query) => $query->doesntHave('chapitres'))
+            ->when($request->boolean('sans_quiz'), fn ($query) => $query->doesntHave('quizzes'));
+
+        // --- Regroupement (comme "Regrouper par" d'Odoo) ---
+        $groupe = in_array($request->input('groupe'), self::GROUPES, true) ? $request->input('groupe') : null;
+        $cleGroupe = null;
+        $comptesGroupes = collect();
+
+        if ($groupe) {
+            // Clé de groupe d'un cours : la même sert à trier, à afficher les en-têtes et à compter
+            $cleGroupe = match ($groupe) {
+                'categorie' => fn (Cours $c) => (string) ($c->categorie ?? ''),
+                'disponibilite' => fn (Cours $c) => $c->classes_a_venir_count > 0
+                    ? 'a_venir'
+                    : ($c->classes_count > 0 ? 'sans_a_venir' : 'aucune'),
+            };
+
+            // Nombre de cours par groupe sur TOUT le résultat filtré (pas seulement la page courante)
+            $comptesGroupes = (clone $query)->get()->countBy($cleGroupe);
+
+            if ($groupe === 'categorie') {
+                $query->orderByRaw('categorie is null')->orderBy('categorie');
+            } else {
+                // cours avec classes à venir, puis cours dont toutes les classes ont commencé, puis cours sans classe
+                $query->orderByRaw(
+                    'case when exists (select 1 from classes where classes.cours_id = cours.id'
+                    . ' and classes.fermee_le is null and date(classes.date_debut) > ?) then 0'
+                    . ' when exists (select 1 from classes where classes.cours_id = cours.id) then 1 else 2 end',
+                    [today()->toDateString()]
+                );
+            }
+        }
+
+        $cours = $query
             ->orderBy('titre')
             // ordre stable si deux cours ont le même titre
             ->orderBy('id')
@@ -221,6 +279,9 @@ class CoursController extends Controller
 
         return view('cours.index', [
             'cours' => $cours,
+            'groupe' => $groupe,
+            'cleGroupe' => $cleGroupe,
+            'comptesGroupes' => $comptesGroupes,
             // Liste des catégories pour le menu déroulant (sur TOUS les cours, pas seulement la page)
             'toutesLesCategories' => Cours::query()->whereNotNull('categorie')->distinct()->orderBy('categorie')->pluck('categorie'),
             // Totaux sur toute la base (pas seulement la page affichée, ni le filtre)

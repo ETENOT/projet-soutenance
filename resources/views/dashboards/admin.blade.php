@@ -14,99 +14,45 @@
         @endslot
     @endcomponent
 
-    {{-- Compteurs bruts : contexte du volume à gérer sur la plateforme --}}
-    <div class="row">
-        <div class="col-md-3 col-sm-6">
-            <div class="card card-animate">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="fw-medium text-muted mb-0">Utilisateurs</p>
-                            <h2 class="mt-4 ff-secondary fw-semibold">
-                                <span class="counter-value" data-target="{{ $totalUtilisateurs }}">0</span>
-                            </h2>
-                        </div>
-                        <div>
-                            <div class="avatar-sm flex-shrink-0">
-                                <span class="avatar-title bg-info-subtle rounded-circle fs-2">
-                                    <i data-feather="users" class="text-info"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    {{-- Compteurs : volume à gérer sur la plateforme (4 cartes de même hauteur) --}}
+    <div class="row g-3">
+        @include('dashboards.partials.carte-stat', [
+            'largeur' => 'col-xl-3 col-sm-6',
+            'titre' => 'Utilisateurs',
+            'icone' => 'users',
+            'couleur' => 'info',
+            'lien' => route('admin.users.index'),
+            'valeur' => $totalUtilisateurs,
+        ])
 
-        <div class="col-md-3 col-sm-6">
-            <div class="card card-animate">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="fw-medium text-muted mb-0">Cours</p>
-                            <h2 class="mt-4 ff-secondary fw-semibold">
-                                <span class="counter-value" data-target="{{ $totalCours }}">0</span>
-                            </h2>
-                        </div>
-                        <div>
-                            <div class="avatar-sm flex-shrink-0">
-                                <span class="avatar-title bg-success-subtle rounded-circle fs-2">
-                                    <i data-feather="book-open" class="text-success"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('dashboards.partials.carte-stat', [
+            'largeur' => 'col-xl-3 col-sm-6',
+            'titre' => 'Cours',
+            'icone' => 'book-open',
+            'couleur' => 'success',
+            'lien' => route('admin.cours.index'),
+            'valeur' => $totalCours,
+        ])
 
-        <div class="col-md-3 col-sm-6">
-            <div class="card card-animate">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="fw-medium text-muted mb-0">Classes</p>
-                            <h2 class="mt-4 ff-secondary fw-semibold">
-                                <span class="counter-value" data-target="{{ $totalClasses }}">0</span>
-                            </h2>
-                        </div>
-                        <div>
-                            <div class="avatar-sm flex-shrink-0">
-                                <span class="avatar-title bg-warning-subtle rounded-circle fs-2">
-                                    <i data-feather="calendar" class="text-warning"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('dashboards.partials.carte-stat', [
+            'largeur' => 'col-xl-3 col-sm-6',
+            'titre' => 'Classes',
+            'icone' => 'calendar',
+            'couleur' => 'warning',
+            'lien' => route('admin.classes.index'),
+            'valeur' => $totalClasses,
+        ])
 
-        <div class="col-md-3 col-sm-6">
-            <div class="card card-animate">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <p class="fw-medium text-muted mb-0">Quiz</p>
-                            <h2 class="mt-4 ff-secondary fw-semibold">
-                                <span class="counter-value" data-target="{{ $totalQuiz }}">0</span>
-                            </h2>
-                        </div>
-                        <div>
-                            <div class="avatar-sm flex-shrink-0">
-                                <span class="avatar-title bg-danger-subtle rounded-circle fs-2">
-                                    <i data-feather="help-circle" class="text-danger"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('dashboards.partials.carte-stat', [
+            'largeur' => 'col-xl-3 col-sm-6',
+            'titre' => 'Quiz',
+            'icone' => 'help-circle',
+            'couleur' => 'danger',
+            'valeur' => $totalQuiz,
+        ])
     </div>
-    <!-- end row -->
 
-    {{-- Accès rapide aux actions de gestion (cas d'utilisation admin du diagramme) --}}
+    {{-- Accès rapide à la gestion : 4 tuiles de même taille --}}
     <div class="row">
         <div class="col-12">
             <div class="card">
@@ -115,26 +61,35 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        <div class="col-md-4 col-sm-6">
-                            <a href="{{ route('admin.cours.index') }}" class="text-decoration-none">
+                        <div class="col-xl-3 col-sm-6">
+                            <a href="{{ route('admin.cours.index') }}" class="d-block h-100 text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
                                     <i data-feather="book-open" class="text-success mb-2"></i>
-                                    <p class="mb-1 fw-medium text-body">Gérer les cours</p>
+                                    <p class="mb-0 fw-medium text-body">Gérer les cours</p>
                                 </div>
                             </a>
                         </div>
-                    
-                        <div class="col-md-4 col-sm-6">
-                            <a href="{{ route('admin.users.index') }}" class="text-decoration-none">
+
+                        <div class="col-xl-3 col-sm-6">
+                            <a href="{{ route('admin.classes.index') }}" class="d-block h-100 text-decoration-none">
+                                <div class="border rounded p-3 text-center h-100">
+                                    <i data-feather="calendar" class="text-warning mb-2"></i>
+                                    <p class="mb-0 fw-medium text-body">Gérer les classes</p>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="col-xl-3 col-sm-6">
+                            <a href="{{ route('admin.users.index') }}" class="d-block h-100 text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
                                     <i data-feather="users" class="text-primary mb-2"></i>
-                                    <p class="mb-1 fw-medium text-body">Gérer les utilisateurs</p>
+                                    <p class="mb-0 fw-medium text-body">Gérer les utilisateurs</p>
                                 </div>
                             </a>
                         </div>
-                      
-                        <div class="col-md-4 col-sm-6">
-                            <a href="#" class="text-decoration-none">
+
+                        <div class="col-xl-3 col-sm-6">
+                            <a href="#" class="d-block h-100 text-decoration-none">
                                 <div class="border rounded p-3 text-center h-100">
                                     <i data-feather="help-circle" class="text-danger mb-2"></i>
                                     <p class="mb-1 fw-medium text-body">Gérer les quiz</p>
@@ -147,7 +102,6 @@
             </div>
         </div>
     </div>
-    <!-- end row -->
 @endsection
 
 @section('script')

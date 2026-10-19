@@ -34,15 +34,14 @@ class HomeController extends Controller
         return abort(404);
     }
 
-    public function root()
+     public function root()
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
 
-        // Données réelles pour la page d'accueil
-        // Les cours les mieux notés (moyenne des avis), 5 au maximum.
-        // On ne garde que les cours qui ont au moins un avis : s'il y en a moins de 5,
+        // Les 3 cours les mieux notés (moyenne des avis).
+        // On ne garde que les cours qui ont au moins un avis : s'il y en a moins de 3,
         // on affiche seulement ceux-là. Départage : plus d'avis d'abord, puis le plus récent.
         $coursPopulaires = \App\Models\Cours::has('avis')
             ->withAvg('avis', 'note')
@@ -50,12 +49,21 @@ class HomeController extends Controller
             ->orderByDesc('avis_avg_note')
             ->orderByDesc('avis_count')
             ->latest()
-            ->take(5)
+            ->take(3)
             ->get();
-        $categories      = \App\Models\Cours::whereNotNull('categorie')->distinct()->pluck('categorie');
-        $nbCours         = \App\Models\Cours::count();
 
-        return view('accueil', compact('coursPopulaires', 'categories', 'nbCours'));
+        // Chiffres clés affichés dans la bannière
+        $nbCours     = \App\Models\Cours::count();
+        $nbDomaines  = \App\Models\Cours::whereNotNull('categorie')->distinct()->count('categorie');
+        $nbClasses   = \App\Models\Classe::count();
+        $nbChapitres = \App\Models\Chapitre::count();
+
+        // Classes à venir et en cours, pour le calendrier
+        $evenementsCalendrier = \App\Models\Classe::evenementsAVenir();
+
+         return view('accueil', compact(
+            'coursPopulaires', 'nbCours', 'nbDomaines', 'nbClasses', 'nbChapitres', 'evenementsCalendrier'
+        ));
     }
 
     /*Language Translation*/

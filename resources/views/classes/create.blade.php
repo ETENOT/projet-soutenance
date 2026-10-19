@@ -16,7 +16,7 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('admin.cours.classes.store', $cours) }}" method="POST">
+            <form action="{{ route('admin.cours.classes.store', $cours) }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-3">
@@ -24,6 +24,17 @@
                     <input type="text" name="nom" id="nom" class="form-control @error('nom') is-invalid @enderror"
                            value="{{ old('nom') }}">
                     @error('nom')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="capacite_min" class="form-label">Capacité minimale <span class="text-danger">*</span></label>
+                    <input type="number" name="capacite_min" id="capacite_min" min="1" max="255" required
+                           class="form-control @error('capacite_min') is-invalid @enderror"
+                           value="{{ old('capacite_min') }}">
+                    <div class="form-text">Nombre minimal d'inscrits pour que la classe soit maintenue.</div>
+                    @error('capacite_min')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -44,6 +55,26 @@
                            class="form-control @error('lieu') is-invalid @enderror"
                            value="{{ old('lieu') }}">
                     @error('lieu')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="lieu_lien" class="form-label">Lien Google Maps du lieu <span class="text-muted">(facultatif)</span></label>
+                    <input type="url" name="lieu_lien" id="lieu_lien" placeholder="https://maps.app.goo.gl/..."
+                           class="form-control @error('lieu_lien') is-invalid @enderror"
+                           value="{{ old('lieu_lien') }}">
+                    <div class="form-text">Sans lien, une recherche Google Maps sur le nom du lieu est utilisée.</div>
+                    @error('lieu_lien')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label for="lieu_image" class="form-label">Photo du lieu <span class="text-muted">(facultative)</span></label>
+                    <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
+                           class="form-control @error('lieu_image') is-invalid @enderror">
+                    @error('lieu_image')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>

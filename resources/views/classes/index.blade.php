@@ -31,7 +31,7 @@
                             {{ $classe->date_debut->format('d/m/Y') }} → {{ $classe->date_fin->format('d/m/Y') }}
                         </p>
                         <span class="badge bg-primary-subtle text-primary mb-3">
-                            {{ $classe->inscriptions->count() }}/{{ $classe->capacite_max }} inscrits
+                            {{ $classe->inscriptions->count() }}/{{ $classe->capacite_max }} inscrits (min. {{ $classe->capacite_min }})
                         </span>
                         <div class="d-flex gap-2">
                             <a href="{{ route('admin.cours.classes.edit', [$cours, $classe]) }}" class="btn btn-sm btn-soft-primary flex-grow-1">

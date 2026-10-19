@@ -327,9 +327,15 @@
                                         au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
                                     </div>
 
-                                    <div class="text-muted small">
+                                    <div class="text-muted small mb-1">
                                         <i class="ri-group-line me-1"></i>
                                         {{ $classe->inscriptions_count ?? 0 }} / {{ $classe->capacite_max }} inscrits
+                                        <span class="ms-1">(minimum {{ $classe->capacite_min }})</span>
+                                    </div>
+
+                                    {{-- Lieu : lien Google Maps (localisation et itinéraire) avec la photo du lieu --}}
+                                    <div class="small mt-2">
+                                        @include('partials.lieu-classe', ['classe' => $classe, 'image' => true])
                                     </div>
                                 </div>
 
@@ -357,6 +363,11 @@
                                                 </div>
                                             @endif
 
+                                        @elseif(! $classe->inscriptionsOuvertes())
+                                            <span class="badge bg-secondary-subtle text-secondary fs-6 px-3 py-2">
+                                                <i class="ri-lock-line me-1"></i> Inscriptions closes
+                                            </span>
+
                                         @elseif($classe->inscriptions_count >= $classe->capacite_max)
                                             <span class="badge bg-secondary">Complet</span>
 
@@ -369,9 +380,15 @@
                                             </form>
                                         @endif
                                     @else
-                                        <a href="{{ route('login') }}" class="btn btn-primary">
-                                            Se connecter pour s'inscrire
-                                        </a>
+                                        @if($classe->inscriptionsOuvertes())
+                                            <a href="{{ route('login') }}" class="btn btn-primary">
+                                                Se connecter pour s'inscrire
+                                            </a>
+                                        @else
+                                            <span class="badge bg-secondary-subtle text-secondary fs-6 px-3 py-2">
+                                                <i class="ri-lock-line me-1"></i> Inscriptions closes
+                                            </span>
+                                        @endif
                                     @endauth
                                 </div>
 

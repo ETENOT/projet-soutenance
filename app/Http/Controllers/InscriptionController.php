@@ -16,6 +16,11 @@ class InscriptionController extends Controller
     {
         $user = Auth::user();
 
+        // Inscriptions closes dès que la date de début est atteinte (ou classe fermée).
+        if (! $classe->inscriptionsOuvertes()) {
+            return back()->with('error', $classe->motifInscriptionsFermees());
+        }
+
         // On vérifie simplement si l'utilisateur est déjà inscrit.
         if ($classe->inscriptions()->where('user_id', $user->id)->exists()) {
             return back()->with('error', 'Vous êtes déjà inscrit à cette classe.');

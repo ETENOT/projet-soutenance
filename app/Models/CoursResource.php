@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CoursResource extends Model
 {
+    /**
+     * Extensions que le navigateur sait afficher lui-même dans un nouvel onglet.
+     * Les autres (Word, PowerPoint, Excel, mov, avi, mkv...) sont à télécharger pour être lues.
+     */
+    private const EXTENSIONS_NAVIGATEUR = ['pdf', 'jpg', 'jpeg', 'png', 'mp4', 'webm', 'ogg'];
+
     protected $fillable = [
         'cours_id',
         'type',
@@ -31,6 +37,15 @@ class CoursResource extends Model
     public function estVideo(): bool
     {
         return $this->type === 'video';
+    }
+
+    /**
+     * Fichier stocké que le navigateur peut lire directement (PDF, image, vidéo mp4/webm/ogg).
+     */
+    public function ouvrableDansNavigateur(): bool
+    {
+        return $this->chemin
+            && in_array(strtolower($this->extension ?? ''), self::EXTENSIONS_NAVIGATEUR, true);
     }
 
     /**

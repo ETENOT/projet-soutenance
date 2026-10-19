@@ -123,118 +123,208 @@
         </div>
     @endif
 
-    {{-- ===== Filtres ===== --}}
-    <div class="card border shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.classes.index') }}">
-                <div class="row g-3 align-items-center">
+    {{-- ===== Recherche façon Odoo : étiquettes de filtres actifs + menu Filtres / Regrouper par ===== --}}
+    @php
+        // URL de la liste sans certains paramètres (sert au "×" de chaque étiquette)
+        $sans = fn (array $cles) => route('admin.classes.index', request()->except(array_merge($cles, ['page'])));
 
-                    <div class="col-lg-4">
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent">
-                                <i class="ri-search-line text-primary"></i>
-                            </span>
-                            <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                                   placeholder="Rechercher une classe..." aria-label="Rechercher une classe">
+        $libellesEtat = ['en_cours' => 'En cours', 'a_venir' => 'À venir', 'terminee' => 'Terminée'];
+        $libellesGroupe = [
+            'formation' => 'Formation', 'formateur' => 'Formateur', 'etat' => 'Statut',
+            'categorie' => 'Catégorie', 'lieu' => 'Lieu',
+        ];
+
+        // Étiquettes des filtres actifs : [texte, paramètres à retirer, icône]
+        $etiquettes = [];
+
+        if ($etatsChoisis) {
+            $etiquettes[] = ['Statut : ' . collect($etatsChoisis)->map(fn ($e) => $libellesEtat[$e])->implode(' ou '), ['etat'], 'ri-flag-line'];
+        }
+        if (request()->boolean('completes')) {
+            $etiquettes[] = ['Complètes', ['completes'], 'ri-group-line'];
+        }
+        if (request()->boolean('sous_minimum')) {
+            $etiquettes[] = ['Sous la capacité minimale', ['sous_minimum'], 'ri-alert-line'];
+        }
+        if (request()->boolean('sans_formateur') || request('formateur_id') === 'aucun') {
+            $etiquettes[] = ['Sans formateur', ['sans_formateur', 'formateur_id'], 'ri-user-unfollow-line'];
+        } elseif (request()->filled('formateur_id')) {
+            $etiquettes[] = ['Formateur : ' . ($tousLesFormateurs->firstWhere('id', (int) request('formateur_id'))->name ?? '—'), ['formateur_id'], 'ri-user-star-line'];
+        }
+        if (request()->filled('cours_id')) {
+            $etiquettes[] = ['Formation : ' . ($tousLesCours->firstWhere('id', (int) request('cours_id'))->titre ?? '—'), ['cours_id'], 'ri-book-open-line'];
+        }
+        if (request()->filled('categorie')) {
+            $etiquettes[] = ['Catégorie : ' . request('categorie'), ['categorie'], 'ri-price-tag-3-line'];
+        }
+        if (request()->filled('lieu')) {
+            $etiquettes[] = ['Lieu : ' . request('lieu'), ['lieu'], 'ri-map-pin-line'];
+        }
+        if (request()->filled('date_du') || request()->filled('date_au')) {
+            $du = request()->filled('date_du') ? \Carbon\Carbon::parse(request('date_du'))->format('d/m/Y') : '…';
+            $au = request()->filled('date_au') ? \Carbon\Carbon::parse(request('date_au'))->format('d/m/Y') : '…';
+            $etiquettes[] = ['Période : ' . $du . ' → ' . $au, ['date_du', 'date_au'], 'ri-calendar-line'];
+        }
+        if (request()->filled('inscrits_min') || request()->filled('inscrits_max')) {
+            $etiquettes[] = ['Inscrits : ' . (request('inscrits_min') ?: '0') . ' à ' . (request('inscrits_max') ?: '∞'), ['inscrits_min', 'inscrits_max'], 'ri-group-line'];
+        }
+        if ($groupe) {
+            $etiquettes[] = ['Regroupé par ' . mb_strtolower($libellesGroupe[$groupe]), ['groupe'], 'ri-stack-line'];
+        }
+    @endphp
+
+    <form method="GET" action="{{ route('admin.classes.index') }}" class="mb-3">
+        <div class="input-group dropdown">
+
+            {{-- Zone de recherche : étiquettes actives + saisie libre --}}
+            <div class="form-control h-auto d-flex flex-wrap align-items-center gap-1 py-1">
+                <i class="ri-search-line text-primary me-1"></i>
+
+                @foreach ($etiquettes as [$texte, $retirer, $icone])
+                    <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
+                        <i class="{{ $icone }}"></i>{{ $texte }}
+                        <a href="{{ $sans($retirer) }}" class="text-primary ms-1" title="Retirer ce filtre" aria-label="Retirer le filtre {{ $texte }}">
+                            <i class="ri-close-line"></i>
+                        </a>
+                    </span>
+                @endforeach
+
+                <input type="text" name="q" value="{{ request('q') }}"
+                       class="form-control border-0 shadow-none flex-grow-1 w-auto p-1"
+                       placeholder="Rechercher une classe, une formation, un lieu…" aria-label="Rechercher une classe">
+            </div>
+
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" data-bs-display="static"
+                    aria-expanded="false" title="Filtres et regroupements">
+                <i class="ri-equalizer-line"></i>
+            </button>
+            {{-- Sur téléphone, la touche Entrée du clavier suffit : on garde la place pour les étiquettes --}}
+            <button type="submit" class="btn btn-primary d-none d-sm-inline-block">Rechercher</button>
+
+            {{-- Menu déroulant à 3 colonnes : Filtres | Regrouper par | Plus de critères --}}
+            <div class="dropdown-menu w-100 p-3 shadow">
+                <div class="row g-4">
+
+                    {{-- Colonne 1 : filtres rapides (cocher = appliquer tout de suite) --}}
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold mb-2"><i class="ri-filter-3-line text-primary me-1"></i>Filtres</h6>
+
+                        @foreach ($libellesEtat as $valeur => $libelle)
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="checkbox" name="etat[]" value="{{ $valeur }}"
+                                       id="filtre-etat-{{ $valeur }}" @checked(in_array($valeur, $etatsChoisis, true))
+                                       onchange="this.form.submit()">
+                                <label class="form-check-label" for="filtre-etat-{{ $valeur }}">{{ $libelle }}</label>
+                            </div>
+                        @endforeach
+
+                        <hr class="my-2">
+
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="completes" value="1" id="filtre-completes"
+                                   @checked(request()->boolean('completes')) onchange="this.form.submit()">
+                            <label class="form-check-label" for="filtre-completes">Complètes</label>
+                        </div>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="sous_minimum" value="1" id="filtre-sous-minimum"
+                                   @checked(request()->boolean('sous_minimum')) onchange="this.form.submit()">
+                            <label class="form-check-label" for="filtre-sous-minimum">Sous la capacité minimale</label>
+                        </div>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="sans_formateur" value="1" id="filtre-sans-formateur"
+                                   @checked(request()->boolean('sans_formateur') || request('formateur_id') === 'aucun')
+                                   onchange="this.form.submit()">
+                            <label class="form-check-label" for="filtre-sans-formateur">Sans formateur</label>
                         </div>
                     </div>
 
-                    <div class="col-sm-6 col-lg-3">
-                        <select name="cours_id" class="form-select" aria-label="Filtrer par formation"
+                    {{-- Colonne 2 : regrouper par (un seul choix à la fois) --}}
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold mb-2"><i class="ri-stack-line text-primary me-1"></i>Regrouper par</h6>
+
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="radio" name="groupe" value="" id="groupe-aucun"
+                                   @checked(! $groupe) onchange="this.form.submit()">
+                            <label class="form-check-label" for="groupe-aucun">Aucun regroupement</label>
+                        </div>
+                        @foreach ($libellesGroupe as $valeur => $libelle)
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="radio" name="groupe" value="{{ $valeur }}"
+                                       id="groupe-{{ $valeur }}" @checked($groupe === $valeur) onchange="this.form.submit()">
+                                <label class="form-check-label" for="groupe-{{ $valeur }}">{{ $libelle }}</label>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Colonne 3 : critères précis (liste de formations, formateurs, période, nombre d'inscrits) --}}
+                    <div class="col-md-4">
+                        <h6 class="fw-semibold mb-2"><i class="ri-list-settings-line text-primary me-1"></i>Plus de critères</h6>
+
+                        <select name="cours_id" class="form-select form-select-sm mb-2" aria-label="Filtrer par formation"
                                 onchange="this.form.submit()">
                             <option value="">Toutes les formations</option>
-                            @foreach($tousLesCours as $unCours)
-                                <option value="{{ $unCours->id }}" @selected(request('cours_id') == $unCours->id)>
-                                    {{ $unCours->titre }}
-                                </option>
+                            @foreach ($tousLesCours as $unCours)
+                                <option value="{{ $unCours->id }}" @selected(request('cours_id') == $unCours->id)>{{ $unCours->titre }}</option>
                             @endforeach
                         </select>
-                    </div>
 
-                    <div class="col-sm-6 col-lg-2">
-                        <select name="etat" class="form-select" aria-label="Filtrer par statut"
-                                onchange="this.form.submit()">
-                            <option value="">Tous les statuts</option>
-                            <option value="en_cours" @selected(request('etat') === 'en_cours')>En cours</option>
-                            <option value="a_venir" @selected(request('etat') === 'a_venir')>À venir</option>
-                            <option value="terminee" @selected(request('etat') === 'terminee')>Terminée</option>
-                        </select>
-                    </div>
-
-                    {{-- ----- Filtres supplémentaires ----- --}}
-
-                    {{-- Catégorie du cours (Bureautique, Comptabilité...) --}}
-                    <div class="col-sm-6 col-lg-3">
-                        <select name="categorie" class="form-select" aria-label="Filtrer par catégorie"
-                                onchange="this.form.submit()">
-                            <option value="">Toutes les catégories</option>
-                            @foreach($toutesLesCategories as $categorie)
-                                <option value="{{ $categorie }}" @selected(request('categorie') === $categorie)>{{ $categorie }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Formateur de la classe (ou "Sans formateur") --}}
-                    <div class="col-sm-6 col-lg-3">
-                        <select name="formateur_id" class="form-select" aria-label="Filtrer par formateur"
+                        <select name="formateur_id" class="form-select form-select-sm mb-2" aria-label="Filtrer par formateur"
                                 onchange="this.form.submit()">
                             <option value="">Tous les formateurs</option>
                             <option value="aucun" @selected(request('formateur_id') === 'aucun')>— Sans formateur —</option>
-                            @foreach($tousLesFormateurs as $formateur)
-                                <option value="{{ $formateur->id }}" @selected((string) request('formateur_id') === (string) $formateur->id)>
-                                    {{ $formateur->name }}
-                                </option>
+                            @foreach ($tousLesFormateurs as $formateur)
+                                <option value="{{ $formateur->id }}" @selected((string) request('formateur_id') === (string) $formateur->id)>{{ $formateur->name }}</option>
                             @endforeach
                         </select>
-                    </div>
 
-                    {{-- Lieu --}}
-                    <div class="col-sm-6 col-lg-3">
-                        <select name="lieu" class="form-select" aria-label="Filtrer par lieu"
+                        <select name="categorie" class="form-select form-select-sm mb-2" aria-label="Filtrer par catégorie"
+                                onchange="this.form.submit()">
+                            <option value="">Toutes les catégories</option>
+                            @foreach ($toutesLesCategories as $categorie)
+                                <option value="{{ $categorie }}" @selected(request('categorie') === $categorie)>{{ $categorie }}</option>
+                            @endforeach
+                        </select>
+
+                        <select name="lieu" class="form-select form-select-sm mb-2" aria-label="Filtrer par lieu"
                                 onchange="this.form.submit()">
                             <option value="">Tous les lieux</option>
-                            @foreach($tousLesLieux as $lieu)
+                            @foreach ($tousLesLieux as $lieu)
                                 <option value="{{ $lieu }}" @selected(request('lieu') === $lieu)>{{ $lieu }}</option>
                             @endforeach
                         </select>
-                    </div>
 
-                    {{-- Nombre d'inscrits : de ... à ... (laisser vide = pas de limite) --}}
-                    <div class="col-sm-6 col-lg-3">
-                        <div class="input-group">
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text">Du</span>
+                            <input type="date" name="date_du" value="{{ request('date_du') }}" class="form-control"
+                                   aria-label="Début de la période">
+                            <span class="input-group-text">au</span>
+                            <input type="date" name="date_au" value="{{ request('date_au') }}" class="form-control"
+                                   aria-label="Fin de la période">
+                        </div>
+
+                        <div class="input-group input-group-sm mb-2">
                             <span class="input-group-text">Inscrits</span>
                             <input type="number" name="inscrits_min" min="0" value="{{ request('inscrits_min') }}"
-                                   class="form-control" placeholder="min" aria-label="Nombre d'inscrits minimum">
+                                   class="form-control" placeholder="min" aria-label="Inscrits minimum">
                             <input type="number" name="inscrits_max" min="0" value="{{ request('inscrits_max') }}"
-                                   class="form-control" placeholder="max" aria-label="Nombre d'inscrits maximum">
+                                   class="form-control" placeholder="max" aria-label="Inscrits maximum">
                         </div>
-                    </div>
 
-                    {{-- Période : garde les classes qui se déroulent (au moins un jour) dans cet intervalle --}}
-                    <div class="col-sm-6 col-lg-4">
-                        <div class="input-group">
-                            <span class="input-group-text">Du</span>
-                            <input type="date" name="date_du" value="{{ request('date_du') }}"
-                                   class="form-control" aria-label="Date de début de la période">
-                            <span class="input-group-text">au</span>
-                            <input type="date" name="date_au" value="{{ request('date_au') }}"
-                                   class="form-control" aria-label="Date de fin de la période">
-                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Appliquer</button>
                     </div>
+                </div>
 
-                    <div class="col-lg-8 d-flex gap-2 justify-content-lg-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ri-filter-3-line me-1"></i> Filtrer
-                        </button>
-                        <a href="{{ route('admin.classes.index') }}" class="btn btn-outline-secondary">
-                            <i class="ri-refresh-line me-1"></i> Réinitialiser
+                @if ($etiquettes || request()->filled('q'))
+                    <div class="text-end mt-3">
+                        <a href="{{ route('admin.classes.index') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="ri-refresh-line me-1"></i> Tout réinitialiser
                         </a>
                     </div>
-
-                </div>
-            </form>
+                @endif
+            </div>
         </div>
-    </div>
+    </form>
 
     {{-- ===== Barre d'actions groupées =====
          Cachée tant qu'aucune classe n'est cochée. Les cases du tableau sont rattachées à CE formulaire
@@ -293,7 +383,36 @@
                 </thead>
 
                 <tbody>
+                    @php
+                        // dernier groupe affiché : sert à n'écrire l'en-tête qu'au changement de groupe
+                        $groupePrecedent = null;
+                    @endphp
                     @forelse($classes as $classe)
+                        {{-- En-tête de groupe (Regrouper par) : affiché quand le groupe change --}}
+                        @if ($groupe)
+                            @php
+                                $cle = $cleGroupe($classe);
+                                $libelleGroupe = match ($groupe) {
+                                    'formation' => $classe->cours?->titre ?? 'Formation supprimée',
+                                    'formateur' => $classe->formateur?->name ?? 'Sans formateur',
+                                    'etat' => $libellesEtat[$classe->etat] ?? $classe->etat,
+                                    'categorie' => $classe->cours?->categorie ?: 'Sans catégorie',
+                                    'lieu' => $classe->lieu,
+                                };
+                            @endphp
+                            @if ($cle !== $groupePrecedent)
+                                @php
+                                    $groupePrecedent = $cle;
+                                @endphp
+                                <tr class="table-active">
+                                    <td colspan="10" class="fw-semibold">
+                                        <i class="ri-stack-line text-primary me-1"></i>{{ $libelleGroupe }}
+                                        <span class="badge bg-primary-subtle text-primary ms-1">{{ $comptesGroupes[$cle] ?? 0 }}</span>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endif
+
                         @php
                             $etat = $classe->etat;
                             $badge = match ($etat) {
@@ -363,7 +482,7 @@
                             </td>
 
                             <td>
-                                <i class="ri-map-pin-line text-danger me-1"></i>{{ $classe->lieu }}
+                                @include('partials.lieu-classe', ['classe' => $classe])
                             </td>
 
                             <td>
@@ -406,6 +525,9 @@
                             <td colspan="10" class="text-center text-muted py-5">
                                 <i class="ri-group-line display-5 d-block mb-2"></i>
                                 Aucune classe ne correspond à votre recherche.
+                                @if ($etiquettes || request()->filled('q'))
+                                    <a href="{{ route('admin.classes.index') }}" class="d-block mt-2">Réinitialiser les filtres</a>
+                                @endif
                             </td>
                         </tr>
                     @endforelse

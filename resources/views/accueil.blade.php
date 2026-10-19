@@ -11,8 +11,6 @@
 @section('content')
 @php
     $coursPopulaires->loadCount(['classes', 'chapitres']);
-    $nbClasses   = \App\Models\Classe::count();
-    $nbChapitres = \App\Models\Chapitre::count();
 @endphp
 
 <div class="nv-home">
@@ -21,7 +19,7 @@
 <nav class="navbar navbar-expand-lg sticky-top nv-navbar">
     <div class="container">
         <a class="navbar-brand" href="{{ url('/') }}">
-            <img src="{{ asset('images/logo_neovision.png') }}" alt="NEO VISION" height="40">
+            <img src="{{ asset('images/logo_neovision.png') }}" alt="NEO VISION" height="34">
         </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nvMenu"
@@ -32,19 +30,13 @@
         <div class="collapse navbar-collapse" id="nvMenu">
             <ul class="navbar-nav nav nav-pills mx-lg-4 gap-lg-1">
                 <li class="nav-item"><a class="nav-link active" href="#accueil">Accueil</a></li>
-                <li class="nav-item"><a class="nav-link" href="#formations">Formations</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('cours.catalogue') }}">Formations</a></li>
+                <li class="nav-item"><a class="nav-link" href="#calendrier">Classes</a></li>
                 <li class="nav-item"><a class="nav-link" href="#pourquoi">À propos</a></li>
             </ul>
 
-            {{-- Recherche compacte dans l'en-tête --}}
-            <form action="{{ route('cours.catalogue') }}" method="GET" class="nv-nav-search ms-lg-auto my-3 my-lg-0">
-                <i class="ri-search-line"></i>
-                <input type="search" name="search" class="form-control" placeholder="Rechercher une formation..."
-                       aria-label="Rechercher une formation">
-            </form>
-
             {{-- Connexion / inscription --}}
-            <div class="d-flex align-items-center gap-2 ms-lg-4 pb-3 pb-lg-0">
+            <div class="d-flex align-items-center gap-2 ms-lg-auto pb-3 pb-lg-0">
                 <span class="nv-user-icon"><i class="ri-user-3-fill"></i></span>
                 <div class="lh-sm">
                     <a href="{{ route('login') }}" class="fw-semibold d-block nv-user-link">Connexion</a>
@@ -55,116 +47,72 @@
     </div>
 </nav>
 
-{{-- ==================== HERO ==================== --}}
+{{-- ==================== BANNIÈRE (HERO) ==================== --}}
 <header class="nv-hero" id="accueil">
-    <div class="container">
-        <div class="row align-items-center g-4 g-lg-5">
+    {{-- Image de fond + voile bleu pour que le texte reste lisible --}}
+    <img src="{{ asset('build/images/auth-one-bg.jpg') }}" alt="" class="nv-hero-bg">
+    <div class="nv-hero-voile"></div>
 
-            <div class="col-lg-6">
-                <span class="badge rounded-pill px-3 py-2 mb-4 nv-hero-badge">
-                    <i class="ri-graduation-cap-fill me-1"></i> Centre de formation professionnelle
+    <div class="container nv-hero-contenu">
+        <h1 class="fw-bold mb-2">
+            Développez vos compétences, construisez votre avenir
+        </h1>
+        <hr class="nv-underline">
+
+        <p class="mb-3 col-lg-7 px-0">
+            NEO VISION vous accompagne dans votre montée en compétences avec des formations modernes,
+            pratiques et adaptées à vos objectifs.
+        </p>
+
+        {{-- Chiffres clés (réels), en pastilles compactes --}}
+        <div class="d-flex flex-wrap gap-2">
+            @foreach([
+                ['ri-book-open-line',   $nbCours,     'formations'],
+                ['ri-folder-open-line', $nbDomaines,  'domaines'],
+                ['ri-calendar-2-line',  $nbClasses,   'classes'],
+                ['ri-article-line',     $nbChapitres, 'chapitres'],
+            ] as [$icone, $valeur, $libelle])
+                <span class="nv-hero-stat">
+                    <i class="{{ $icone }}"></i>
+                    <strong>{{ number_format($valeur, 0, ',', ' ') }}</strong> {{ $libelle }}
                 </span>
-
-                <h1 class="fw-bold mb-3">
-                    Développez vos compétences,<br>
-                    <span class="text-primary">construisez</span> <span class="text-danger">votre avenir</span>
-                </h1>
-                <hr class="nv-underline">
-
-                <p class="fs-6 text-muted mb-4 col-xl-9 px-0">
-                    NEO VISION vous accompagne dans votre montée en compétences avec des formations modernes,
-                    pratiques et adaptées à vos objectifs.
-                </p>
-
-                <form action="{{ route('cours.catalogue') }}" method="GET" class="input-group nv-search mb-3">
-                    <span class="input-group-text"><i class="ri-search-line"></i></span>
-                    <input type="search" name="search" class="form-control" value="{{ request('search') }}"
-                           placeholder="Rechercher une formation, un cours, une compétence..."
-                           aria-label="Rechercher une formation">
-                    <button class="btn btn-primary btn-sm px-3" type="submit">Rechercher</button>
-                </form>
-
-                @if($categories->isNotEmpty())
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <small class="fw-semibold me-1">Domaines :</small>
-                        @foreach($categories->take(4) as $cat)
-                            <a href="{{ route('cours.catalogue', ['search' => $cat]) }}"
-                               class="badge rounded-pill px-3 py-2 text-decoration-none nv-domain-badge">{{ $cat }}</a>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-
-            {{-- Visuel : photo + phrase d'accroche --}}
-            <div class="col-lg-6 d-none d-lg-block">
-                <div class="nv-hero-visual text-center">
-                    <p class="nv-tagline mb-0">Votre potentiel<br>n'a pas de limite</p>
-                    <img src="{{ asset('build/images/auth-one-bg.jpg') }}"
-                    alt="NEO VISION" class="rounded-4 shadow">
-                </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </header>
 
-{{-- ==================== CHIFFRES (réels) ==================== --}}
-<section class="nv-stats">
+{{-- ==================== APERÇU DE LA PLATEFORME (tuiles-images qui chevauchent la bannière) ==================== --}}
+<section class="nv-apercu">
     <div class="container">
-        <div class="card mb-0">
-            <div class="card-body p-3 p-lg-4">
-                <div class="row g-3">
-                    @foreach([
-                        ['ri-book-open-line',   'primary', $nbCours,             'Formations disponibles',  'Des parcours adaptés à vos objectifs'],
-                        ['ri-folder-open-line', 'danger',  $categories->count(), 'Domaines de formation',   'Explorez de nouvelles opportunités'],
-                        ['ri-calendar-2-line',  'primary', $nbClasses,           'Classes programmées',     'Choisissez la session qui vous convient'],
-                        ['ri-article-line',     'danger',  $nbChapitres,         'Chapitres pédagogiques',  'Des contenus structurés pour progresser'],
-                    ] as [$icone, $couleur, $valeur, $libelle, $sous])
-                        <div class="col-6 col-lg-3 nv-stat-item">
-                            <div class="d-flex align-items-center gap-3 h-100">
-                                <span class="nv-icon-circle bg-{{ $couleur }}"><i class="{{ $icone }}"></i></span>
-                                <div>
-                                    <h4 class="mb-0 fw-bold">{{ number_format($valeur, 0, ',', ' ') }}</h4>
-                                    <div class="fw-semibold small">{{ $libelle }}</div>
-                                    <small class="text-muted d-none d-md-block">{{ $sous }}</small>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
+        <div class="row g-3">
+            @foreach(['blog/img-3.jpg', 'blog/img-5.jpg', 'blog/img-6.jpg', 'blog/img-08.jpg'] as $image)
+                <div class="col-6 col-lg-3">
+                    <div class="nv-tuile">
+                        <img src="{{ asset('build/images/' . $image) }}" alt="">
+                    </div>
                 </div>
-            </div>
+            @endforeach
         </div>
     </div>
 </section>
 
-{{-- ==================== FORMATIONS ==================== --}}
-<section class="py-5" id="formations">
+{{-- ==================== FORMATIONS LES MIEUX NOTÉES ==================== --}}
+<section class="py-4" id="formations">
     <div class="container">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
             <div>
                 <hr class="nv-bar">
-                <h2 class="fw-bold mb-1">Nos formations</h2>
-                <p class="text-muted mb-0 col-lg-8 px-0">
-                    Découvrez nos catégories de formations et trouvez celle qui correspond à vos ambitions.
-                </p>
+                <h2 class="fw-bold mb-1">Nos formations les mieux notées</h2>
+                <p class="text-muted small mb-0">Les formations préférées de nos stagiaires, d'après leurs avis.</p>
             </div>
-            <a href="{{ route('cours.catalogue') }}" class="fw-semibold text-nowrap">
+            <a href="{{ route('cours.catalogue') }}" class="fw-semibold small text-nowrap">
                 Voir toutes les formations <i class="ri-arrow-right-line ms-1"></i>
             </a>
         </div>
 
-        @if($categories->isNotEmpty())
-            <div class="d-flex flex-wrap gap-2 mb-4">
-                <a href="{{ route('cours.catalogue') }}" class="btn btn-sm btn-primary rounded-pill px-3">Toutes</a>
-                @foreach($categories->take(6) as $cat)
-                    <a href="{{ route('cours.catalogue', ['search' => $cat]) }}"
-                       class="btn btn-sm rounded-pill px-3 nv-pill">{{ $cat }}</a>
-                @endforeach
-            </div>
-        @endif
-
-        <div class="row g-4">
+        <div class="row g-3">
             @forelse($coursPopulaires as $c)
-                <div class="col-xl-4 col-md-6">
+                <div class="col-lg-4 col-md-6">
                     @php
                         $icones = ['ri-computer-line', 'ri-code-s-slash-line', 'ri-briefcase-4-line', 'ri-calculator-line', 'ri-book-open-line'];
                         $icon = $icones[$loop->index % count($icones)];
@@ -185,30 +133,29 @@
 
                     <div class="card card-animate h-100 overflow-hidden border shadow-sm mb-0">
 
+                        {{-- Bandeau fin : image du cours ou icône --}}
                         @if(!empty($c->image))
-                            <div class="ratio ratio-16x9">
+                            <div class="ratio ratio-21x9">
                                 <img src="{{ asset('storage/' . $c->image) }}" alt="{{ $c->titre }}" class="object-fit-cover">
                             </div>
                         @else
-                            <div class="ratio ratio-16x9 bg-primary-subtle">
+                            <div class="ratio ratio-21x9 bg-primary-subtle">
                                 <div class="d-flex align-items-center justify-content-center">
-                                    <span class="avatar-lg">
-                                        <span class="avatar-title rounded-3 bg-white text-primary fs-1 shadow-sm">
-                                            <i class="{{ $icon }}"></i>
-                                        </span>
+                                    <span class="avatar-title rounded-3 bg-white text-primary fs-2 shadow-sm nv-cours-icone">
+                                        <i class="{{ $icon }}"></i>
                                     </span>
                                 </div>
                             </div>
                         @endif
 
-                        <div class="card-body d-flex flex-column">
+                        <div class="card-body p-3 d-flex flex-column">
                             @if(!empty($c->categorie))
                                 <span class="badge bg-primary-subtle text-primary text-uppercase align-self-start mb-2">
                                     {{ $c->categorie }}
                                 </span>
                             @endif
 
-                            <h5 class="fw-bold mb-2">{{ $c->titre }}</h5>
+                            <h6 class="fw-bold mb-1">{{ $c->titre }}</h6>
 
                             {{-- Note moyenne des avis --}}
                             <div class="d-flex align-items-center gap-1 small mb-2">
@@ -218,22 +165,22 @@
                             </div>
 
                             <p class="text-muted small mb-0">
-                                {{ \Illuminate\Support\Str::limit($c->description ?: 'Description à venir pour cette formation.', 100) }}
+                                {{ \Illuminate\Support\Str::limit($c->description ?: 'Description à venir pour cette formation.', 80) }}
                             </p>
 
-                            <div class="d-flex gap-4 text-muted small border-top border-bottom py-2 my-3">
+                            <div class="d-flex gap-3 text-muted small border-top py-2 mt-2">
                                 <span><i class="ri-book-open-line me-1"></i>{{ $c->chapitres_count }} chapitre(s)</span>
                                 <span><i class="ri-calendar-2-line me-1"></i>{{ $c->classes_count }} classe(s)</span>
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center gap-2 mt-auto">
-                                <div>
+                                <div class="lh-sm">
                                     <small class="text-muted d-block">À partir de</small>
-                                    <span class="fs-5 fw-bold text-danger">
+                                    <span class="fw-bold text-danger">
                                         {{ number_format($c->prix_particulier, 0, ',', ' ') }} FCFA
                                     </span>
                                 </div>
-                                <a href="{{ route('cours.show', $c) }}" class="btn btn-primary fw-semibold text-nowrap">
+                                <a href="{{ route('cours.show', $c) }}" class="btn btn-primary btn-sm fw-semibold text-nowrap">
                                     Découvrir <i class="ri-arrow-right-line ms-1"></i>
                                 </a>
                             </div>
@@ -252,20 +199,46 @@
     </div>
 </section>
 
-{{-- ==================== POURQUOI CHOISIR NEO VISION ==================== --}}
-<section class="pb-5" id="pourquoi">
+{{-- ==================== CALENDRIER DES CLASSES ==================== --}}
+<section class="pb-4" id="calendrier">
     <div class="container">
-        <div class="nv-why rounded-4 p-4 p-lg-5">
+
+        <div class="text-center mb-3">
+            <hr class="nv-bar mx-auto">
+            <h2 class="fw-bold mb-1">Les prochaines classes</h2>
+            <p class="text-muted small mb-0 mx-auto nv-texte-centre">
+                Repérez en un coup d'œil les sessions de formation : chaque classe est marquée le jour où elle
+                <strong>commence</strong> et le jour où elle <strong>se termine</strong>. Cliquez sur une classe pour
+                découvrir la formation et vous inscrire.
+            </p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-xl-8 col-lg-10">
+                @include('partials.calendrier-classes', [
+                    'evenements' => $evenementsCalendrier,
+                    'titre' => 'Calendrier des classes',
+                    'legende' => [
+                        ['nv-cal-a-venir', 'Classe à venir (pas encore commencée)'],
+                        ['nv-cal-en-cours', 'Classe en cours (déjà démarrée)'],
+                    ],
+                    'aide' => 'Chaque classe apparaît deux fois : « Début » le premier jour et « Fin » le dernier. La période entre les deux est surlignée en couleur claire.',
+                ])
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- ==================== POURQUOI CHOISIR NEO VISION ==================== --}}
+<section class="pb-4" id="pourquoi">
+    <div class="container">
+        <div class="nv-why rounded-4 p-4">
             <div class="row align-items-center g-4">
 
-                <div class="col-lg-2 d-none d-lg-block">
-                    <div class="nv-why-art"><i class="ri-graduation-cap-fill"></i></div>
-                </div>
-
-                <div class="col-lg-6">
+                <div class="col-lg-8">
                     <hr class="nv-bar">
                     <h2 class="fw-bold mb-1">Pourquoi choisir <span class="text-primary">NEO VISION</span> ?</h2>
-                    <p class="text-muted mb-4">
+                    <p class="text-muted small mb-3">
                         Une plateforme pensée pour votre réussite, que vous soyez particulier ou entreprise.
                     </p>
 
@@ -288,9 +261,9 @@
                 </div>
 
                 <div class="col-lg-4">
-                    <div class="nv-cta-card rounded-4 p-4 text-white">
-                        <i class="ri-graduation-cap-fill fs-1"></i>
-                        <h4 class="fw-bold text-white mt-2">Prêt à booster votre carrière ?</h4>
+                    <div class="nv-cta-card rounded-4 p-3 p-lg-4 text-white">
+                        <i class="ri-graduation-cap-fill fs-2"></i>
+                        <h5 class="fw-bold text-white mt-2">Prêt à booster votre carrière ?</h5>
                         <p class="small opacity-75">Rejoignez NEO VISION dès aujourd'hui et accédez à des formations de qualité.</p>
                         <a href="{{ route('register') }}" class="nv-cta-btn">
                             <span>Créer un compte</span>
@@ -300,17 +273,61 @@
                 </div>
             </div>
         </div>
+
+        {{-- ===== Parcours du particulier : 4 étapes + le quiz, facultatif et répétable ===== --}}
+        <div class="nv-parcours rounded-4 p-4 mt-3">
+            <hr class="nv-bar">
+            <h2 class="fw-bold mb-1">Votre parcours <span class="text-primary">particulier</span></h2>
+            <p class="text-muted small mb-4">De la découverte du catalogue à l'accès à votre formation, en 4 étapes simples.</p>
+
+            <div class="row g-4">
+                @foreach([
+                    ['ri-search-eye-line',     'Visiter le catalogue',     'Parcourez toutes nos formations.'],
+                    ['ri-book-open-line',      'Choisir un cours',         'Comparez les contenus, les avis et les prix.'],
+                    ['ri-calendar-check-line', "S'inscrire à une classe",  'Choisissez la session qui vous convient.'],
+                    ['ri-folder-open-line',    'Accéder aux contenus',     'Chapitres et ressources de votre formation.'],
+                ] as [$icone, $titre, $texte])
+                    <div class="col-6 col-md-4 col-lg">
+                        <div class="nv-etape">
+                            <span class="nv-etape-numero">{{ $loop->iteration }}</span>
+                            <span class="nv-icon-circle bg-primary mb-2"><i class="{{ $icone }}"></i></span>
+                            <div class="fw-semibold small mb-1">{{ $titre }}</div>
+                            <small class="text-muted">{{ $texte }}</small>
+                        </div>
+                    </div>
+                @endforeach
+
+                {{-- Étape 5 : le quiz, en pointillés pour montrer qu'elle est facultative et répétable --}}
+                <div class="col-6 col-md-4 col-lg">
+                    <div class="nv-etape nv-etape-facultative">
+                        <span class="nv-etape-numero">5</span>
+                        <span class="nv-etape-boucle" title="À refaire autant de fois que vous le souhaitez">
+                            <i class="ri-repeat-2-line"></i>
+                        </span>
+                        <span class="nv-icon-circle bg-danger mb-2"><i class="ri-questionnaire-line"></i></span>
+                        <div class="fw-semibold small mb-1">Passer le quiz</div>
+                        <small class="text-muted d-block mb-2">Testez vos connaissances.</small>
+                        <span class="badge rounded-pill bg-danger-subtle text-danger">Facultatif</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="small text-muted text-center mt-3 mb-0">
+                <i class="ri-repeat-2-line text-danger me-1"></i>
+                L'étape 5 est facultative : vous pouvez la passer, la sauter ou la recommencer à tout moment de votre formation.
+            </p>
+        </div>
     </div>
 </section>
 
 {{-- ==================== PIED DE PAGE ==================== --}}
-<footer class="nv-footer py-4">
+<footer class="nv-footer py-3">
     <div class="container d-flex flex-column flex-md-row justify-content-between gap-3">
         <div>
-            <img src="{{ asset('images/logo_neovision.png') }}" alt="NEO VISION" height="34" class="mb-2 d-block">
+            <img src="{{ asset('images/logo_neovision.png') }}" alt="NEO VISION" height="28" class="mb-2 d-block">
             <small class="text-muted">&copy; {{ date('Y') }} NEO VISION. Tous droits réservés.</small>
         </div>
-        <div class="d-flex flex-wrap gap-3 align-items-center">
+        <div class="d-flex flex-wrap gap-3 align-items-center small">
             <a href="{{ route('cours.catalogue') }}">Formations</a>
             <a href="#pourquoi">À propos</a>
             <a href="{{ route('login') }}">Connexion</a>

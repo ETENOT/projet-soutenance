@@ -67,7 +67,7 @@
                         @endif
                     </p>
                     <p class="mb-1"><strong>Dates :</strong> {{ $classe->date_debut->format('d/m/Y') }} → {{ $classe->date_fin->format('d/m/Y') }}</p>
-                    <p class="mb-1"><strong>Lieu :</strong> {{ $classe->lieu }}</p>
+                    <p class="mb-1"><strong>Lieu :</strong> @include('partials.lieu-classe', ['classe' => $classe, 'image' => true])</p>
                     <p class="mb-0"><strong>Inscrits :</strong> {{ $inscrits->count() }} / {{ $classe->capacite_max }}</p>
                 </div>
             </div>

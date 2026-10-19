@@ -44,7 +44,7 @@
                                     @endif
                                 </td>
                                 <td>{{ $classe->date_debut->format('d/m/Y') }} → {{ $classe->date_fin->format('d/m/Y') }}</td>
-                                <td>{{ $classe->lieu }}</td>
+                                <td>@include('partials.lieu-classe', ['classe' => $classe])</td>
                                 {{-- payes_count vient du withCount() du contrôleur ; capacité = capacite_max --}}
                                 <td class="text-center">{{ $classe->payes_count }} / {{ $classe->capacite_max }}</td>
                                 <td class="text-end">

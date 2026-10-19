@@ -36,6 +36,12 @@ class PaiementController extends Controller
                 ->with('error', 'Vous êtes déjà inscrit à cette classe.');
         }
 
+        // Inscriptions closes : la date de début est atteinte (ou la classe est fermée).
+        if (! $classe->inscriptionsOuvertes()) {
+            return redirect()->route('cours.show', $classe->cours)
+                ->with('error', $classe->motifInscriptionsFermees());
+        }
+
         // Vérifie la capacité actuelle de la classe.
         if ($classe->inscriptions()->count() >= $classe->capacite_max) {
             return redirect()->route('cours.show', $classe->cours)
@@ -81,6 +87,11 @@ class PaiementController extends Controller
                 return null;
             }
 
+            // Inscriptions closes (revérifié sous verrou, la date a pu passer entre-temps).
+            if (! $classeVerrouillee->inscriptionsOuvertes()) {
+                return 'fermee';
+            }
+
             // Vérifie la capacité.
             if ($classeVerrouillee->inscriptions()->count()
                 >= $classeVerrouillee->capacite_max) {
@@ -113,6 +124,10 @@ class PaiementController extends Controller
                 'error',
                 'Vous êtes déjà inscrit à cette classe.'
             );
+        }
+
+        if ($inscription === 'fermee') {
+            return back()->with('error', $classe->motifInscriptionsFermees());
         }
 
         if ($inscription === false) {
@@ -198,6 +213,11 @@ class PaiementController extends Controller
                 return $existante;
             }
 
+            // Nouvelle inscription refusée si la date de début est atteinte.
+            if (! $classeVerrouillee->inscriptionsOuvertes()) {
+                return 'fermee';
+            }
+
             // Vérification de la capacité.
             if ($classeVerrouillee->inscriptions()->count()
                 >= $classeVerrouillee->capacite_max) {
@@ -211,6 +231,11 @@ class PaiementController extends Controller
                 'date_inscription' => now(),
             ]);
         });
+
+        if ($inscription === 'fermee') {
+            return redirect()->route('cours.show', $classe->cours_id)
+                ->with('error', $classe->motifInscriptionsFermees());
+        }
 
         if ($inscription === false) {
             return back()->with(

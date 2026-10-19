@@ -97,55 +97,77 @@
     </div>
 
     {{-- ===== Filtres ===== --}}
-    <div class="card border shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.users.index') }}">
-                <div class="row g-3 align-items-center">
-
-                    <div class="col-lg-4">
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent">
-                                <i class="ri-search-line text-primary"></i>
-                            </span>
-                            <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                                   placeholder="Rechercher un utilisateur..." aria-label="Rechercher un utilisateur">
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6 col-lg-2">
-                        <select name="role" class="form-select" aria-label="Filtrer par rôle"
-                                onchange="this.form.submit()">
-                            <option value="">Tous les rôles</option>
-                            @foreach($roles as $role)
-                                <option value="{{ $role->nom }}" @selected(request('role') === $role->nom)>
-                                    {{ ucfirst($role->nom) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-sm-6 col-lg-3">
-                        <select name="statut" class="form-select" aria-label="Filtrer par statut"
-                                onchange="this.form.submit()">
-                            <option value="">Tous les statuts</option>
-                            <option value="verifie" @selected(request('statut') === 'verifie')>E-mail vérifié</option>
-                            <option value="non_verifie" @selected(request('statut') === 'non_verifie')>E-mail non vérifié</option>
-                        </select>
-                    </div>
-
-                    <div class="col-lg-3 d-flex gap-2 justify-content-lg-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ri-filter-3-line me-1"></i> Filtrer
-                        </button>
-                        <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">
-                            <i class="ri-refresh-line me-1"></i> Réinitialiser
-                        </a>
-                    </div>
-
-                </div>
-            </form>
+    {{-- ===== Erreurs de filtre (période à l'envers, nombre négatif...) ===== --}}
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $erreur)
+                    <li>{{ $erreur }}</li>
+                @endforeach
+            </ul>
         </div>
-    </div>
+    @endif
+
+    {{-- ===== Recherche façon Odoo (étiquettes + menu Filtres / Regrouper par) ===== --}}
+    @php
+        $libellesRole = ['particulier' => 'Particulier', 'entreprise' => 'Entreprise', 'formateur' => 'Formateur', 'admin' => 'Administrateur'];
+        $libellesStatut = ['verifie' => 'E-mail vérifié', 'non_verifie' => 'E-mail non vérifié'];
+        $libellesGroupe = ['role' => 'Rôle', 'statut' => 'Statut de l\'e-mail', 'mois' => 'Mois d\'inscription'];
+
+        // Étiquettes des filtres actives : [texte, paramètres à retirer, icône]
+        $etiquettes = [];
+
+        if ($rolesChoisis) {
+            $etiquettes[] = ['Rôle : ' . collect($rolesChoisis)->map(fn ($r) => $libellesRole[$r])->implode(' ou '), ['role'], 'ri-user-settings-line'];
+        }
+        if ($statutsChoisis) {
+            $etiquettes[] = ['Statut : ' . collect($statutsChoisis)->map(fn ($s) => $libellesStatut[$s])->implode(' ou '), ['statut'], 'ri-mail-check-line'];
+        }
+        if (request()->boolean('avec_inscriptions')) {
+            $etiquettes[] = ['Avec inscriptions', ['avec_inscriptions'], 'ri-group-line'];
+        }
+        if (request()->boolean('sans_inscription')) {
+            $etiquettes[] = ['Sans inscription', ['sans_inscription'], 'ri-user-unfollow-line'];
+        }
+        if (request()->boolean('avec_paiement')) {
+            $etiquettes[] = ['Avec paiement', ['avec_paiement'], 'ri-bank-card-line'];
+        }
+        if (request()->filled('date_du') || request()->filled('date_au')) {
+            $du = request()->filled('date_du') ? \Carbon\Carbon::parse(request('date_du'))->format('d/m/Y') : '…';
+            $au = request()->filled('date_au') ? \Carbon\Carbon::parse(request('date_au'))->format('d/m/Y') : '…';
+            $etiquettes[] = ['Inscrit : ' . $du . ' → ' . $au, ['date_du', 'date_au'], 'ri-calendar-line'];
+        }
+        if (request()->filled('inscriptions_min') || request()->filled('inscriptions_max')) {
+            $etiquettes[] = ['Inscriptions : ' . (request('inscriptions_min') ?: '0') . ' à ' . (request('inscriptions_max') ?: '∞'), ['inscriptions_min', 'inscriptions_max'], 'ri-group-line'];
+        }
+        if ($groupe) {
+            $etiquettes[] = ['Regroupé par ' . mb_strtolower($libellesGroupe[$groupe]), ['groupe'], 'ri-stack-line'];
+        }
+
+        // Cases du menu "Filtres" (un bloc = une section séparée par un trait)
+        $filtres = [];
+        $filtres[] = collect($libellesRole)->map(fn ($libelle, $valeur) => [
+            'nom' => 'role[]', 'valeur' => $valeur, 'libelle' => $libelle, 'coche' => in_array($valeur, $rolesChoisis, true),
+        ])->values()->all();
+        $filtres[] = collect($libellesStatut)->map(fn ($libelle, $valeur) => [
+            'nom' => 'statut[]', 'valeur' => $valeur, 'libelle' => $libelle, 'coche' => in_array($valeur, $statutsChoisis, true),
+        ])->values()->all();
+        $filtres[] = [
+            ['nom' => 'avec_inscriptions', 'valeur' => '1', 'libelle' => 'Avec inscriptions', 'coche' => request()->boolean('avec_inscriptions')],
+            ['nom' => 'sans_inscription', 'valeur' => '1', 'libelle' => 'Sans inscription', 'coche' => request()->boolean('sans_inscription')],
+            ['nom' => 'avec_paiement', 'valeur' => '1', 'libelle' => 'Avec paiement', 'coche' => request()->boolean('avec_paiement')],
+        ];
+    @endphp
+
+    @include('partials.barre-recherche', [
+        'action' => route('admin.users.index'),
+        'placeholder' => 'Rechercher un utilisateur (nom ou e-mail)…',
+        'etiquettes' => $etiquettes,
+        'filtres' => $filtres,
+        'groupes' => $libellesGroupe,
+        'groupe' => $groupe,
+        'vueCriteres' => 'users.partials.criteres-recherche',
+    ])
 
     {{-- ===== Barre de suppression multiple =====
          Cachée tant qu'aucun utilisateur n'est coché. Les cases du tableau sont rattachées à CE formulaire
@@ -186,7 +208,34 @@
                 </thead>
 
                 <tbody>
+                    @php
+                        // dernier groupe affiché : sert à n'écrire l'en-tête qu'au changement de groupe
+                        $groupePrecedent = null;
+                    @endphp
                     @forelse($utilisateurs as $utilisateur)
+                        {{-- En-tête de groupe (Regrouper par) --}}
+                        @if ($groupe)
+                            @php
+                                $cle = $cleGroupe($utilisateur);
+                                $libelleGroupe = match ($groupe) {
+                                    'role' => $libellesRole[$cle] ?? 'Sans rôle',
+                                    'statut' => $libellesStatut[$cle],
+                                    'mois' => ucfirst($utilisateur->created_at->locale('fr')->isoFormat('MMMM YYYY')),
+                                };
+                            @endphp
+                            @if ($cle !== $groupePrecedent)
+                                @php
+                                    $groupePrecedent = $cle;
+                                @endphp
+                                <tr class="table-active">
+                                    <td colspan="8" class="fw-semibold">
+                                        <i class="ri-stack-line text-primary me-1"></i>{{ $libelleGroupe }}
+                                        <span class="badge bg-primary-subtle text-primary ms-1">{{ $comptesGroupes[$cle] ?? 0 }}</span>
+                                    </td>
+                                </tr>
+                            @endif
+                        @endif
+
                         @php
                             $nomRole = $utilisateur->role?->nom;
                             $badgeRole = match ($nomRole) {
@@ -274,6 +323,9 @@
                             <td colspan="8" class="text-center text-muted py-5">
                                 <i class="ri-user-search-line display-5 d-block mb-2"></i>
                                 Aucun utilisateur ne correspond à votre recherche.
+                                @if ($etiquettes || request()->filled('q'))
+                                    <a href="{{ route('admin.users.index') }}" class="d-block mt-2">Réinitialiser les filtres</a>
+                                @endif
                             </td>
                         </tr>
                     @endforelse

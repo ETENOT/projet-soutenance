@@ -1,7 +1,8 @@
 // ============================================================
 // NEO VISION : styles personnalisés (chargés après app.min.css)
 //   1. Page d'accueil (.nv-*)
-//   2. Sidebar de l'administration (bleu foncé, élément actif en rouge)
+//   2. Sidebar de l'administration (bleu foncé, page courante surlignée comme au survol)
+//   3. Calendrier des classes (FullCalendar, petit format)
 // ============================================================
 
 
@@ -25,6 +26,15 @@ $nv-border: #e3edf5;
     background: #fff;
     color: $nv-text;
     overflow-x: hidden;
+
+    // Titres plus discrets sur toute la page
+    h2 {
+        font-size: 1.45rem;
+    }
+
+    h5 {
+        font-size: 1rem;
+    }
 
     // Les ancres (#formations, #pourquoi...) ne passent pas sous la barre fixe
     [id] {
@@ -70,38 +80,6 @@ $nv-border: #e3edf5;
     }
 }
 
-// Recherche compacte de l'en-tête
-.nv-nav-search {
-    position: relative;
-    width: 100%;
-
-    @media (min-width: 992px) {
-        width: 280px;
-    }
-
-    i {
-        position: absolute;
-        top: 50%;
-        left: 1rem;
-        transform: translateY(-50%);
-        color: $nv-blue;
-        pointer-events: none;
-    }
-
-    .form-control {
-        padding-left: 2.6rem;
-        border: 1px solid $nv-border;
-        border-radius: 50rem;
-        background: #f6fbff;
-
-        &:focus {
-            border-color: $nv-blue;
-            box-shadow: 0 0 0 0.2rem rgba($nv-blue, 0.15);
-            background: #fff;
-        }
-    }
-}
-
 // Icône + liens Connexion / Inscription
 .nv-user-icon {
     display: inline-flex;
@@ -125,162 +103,103 @@ $nv-border: #e3edf5;
 
 
 // ------------------------------------------------------------
-// Héros
+// Bannière (héros) : image de fond, voile bleu, texte par-dessus
 // ------------------------------------------------------------
 
 .nv-hero {
-    padding: 3.5rem 0 6rem;
-    background: linear-gradient(135deg, #f4faff 0%, #edf8ff 100%);
+    position: relative;
+    overflow: hidden;
+    // Le bas laisse la place aux tuiles-images qui chevauchent la bannière
+    padding: 1.75rem 0 4.5rem;
+    color: #fff;
 
     @media (min-width: 992px) {
-        padding: 4.5rem 0 7rem;
-    }
-
-    h1 {
-        font-size: clamp(2rem, 4vw, 3.1rem);
-        line-height: 1.2;
-        color: $nv-text;
+        padding: 2.25rem 0 5rem;
     }
 }
 
-.nv-hero-badge {
-    background: #fff;
-    color: $nv-blue;
-    border: 1px solid rgba($nv-blue, 0.2);
-    font-weight: 600;
+.nv-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+// Voile dégradé : foncé à gauche (là où se trouve le texte), plus léger à droite
+.nv-hero-voile {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba($nv-blue-dark, 0.95) 0%, rgba($nv-blue-dark, 0.78) 55%, rgba($nv-blue, 0.35) 100%);
+}
+
+.nv-hero-contenu {
+    position: relative;
+    z-index: 1;
+
+    h1 {
+        font-size: clamp(1.4rem, 2.6vw, 2rem);
+        line-height: 1.25;
+        color: #fff;
+    }
+
+    p {
+        font-size: 0.9rem;
+        color: rgba(#fff, 0.9);
+    }
 }
 
 // Petit trait rouge sous le titre
 .nv-underline {
-    width: 72px;
+    width: 64px;
     height: 4px;
-    margin: 0 0 1.25rem;
+    margin: 0 0 0.9rem;
     border: 0;
     border-radius: 4px;
     background: $nv-red;
     opacity: 1;
 }
 
-// Grande recherche
-.nv-search {
-    max-width: 640px;
+// Pastilles de chiffres clés dans la bannière
+.nv-hero-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid rgba(#fff, 0.3);
     border-radius: 50rem;
-    background: #fff;
-    box-shadow: 0 10px 30px rgba($nv-blue, 0.15);
-    overflow: hidden;
+    background: rgba(#fff, 0.14);
+    color: #fff;
+    font-size: 0.8rem;
 
-    .input-group-text {
-        border: 0;
-        background: #fff;
-        padding-left: 1.25rem;
-        color: $nv-blue;
-        font-size: 1.1rem;
-    }
-
-    .form-control {
-        border: 0;
-        box-shadow: none;
-        padding: 0.9rem 0.5rem;
-    }
-
-    .btn {
-        border-radius: 0;
-        font-weight: 600;
+    i {
+        font-size: 1rem;
     }
 }
 
-.nv-domain-badge {
-    background: #fff;
-    color: $nv-blue;
-    border: 1px solid rgba($nv-blue, 0.25);
-    font-weight: 600;
-    transition: background-color 0.15s ease, color 0.15s ease;
+// ------------------------------------------------------------
+// Aperçu de la plateforme : tuiles-images qui chevauchent la bannière
+// ------------------------------------------------------------
 
-    &:hover {
-        background: $nv-blue;
-        color: #fff;
-    }
-}
-
-// Visuel : photo + formes bleue et rouge + phrase d'accroche
-.nv-hero-visual {
+.nv-apercu {
     position: relative;
-    padding: 1.5rem;
+    z-index: 2;
+    margin-top: -3rem;
+}
 
-    // Forme bleue derrière la photo
-    &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 72%;
-        height: 78%;
-        border-radius: 2rem;
-        background: linear-gradient(135deg, $nv-blue 0%, $nv-blue-dark 100%);
-    }
-
-    // Forme rouge en bas à droite
-    &::after {
-        content: "";
-        position: absolute;
-        right: 0.25rem;
-        bottom: 0.25rem;
-        width: 110px;
-        height: 110px;
-        border-radius: 50%;
-        background: $nv-red;
-        opacity: 0.9;
-    }
+.nv-tuile {
+    position: relative;
+    height: 96px;
+    overflow: hidden;
+    border: 3px solid #fff;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba($nv-text, 0.18);
 
     img {
-        position: relative;
-        z-index: 1;
         width: 100%;
-        height: 380px;
+        height: 100%;
         object-fit: cover;
-    }
-}
-
-.nv-tagline {
-    position: absolute;
-    left: 0;
-    bottom: 2.75rem;
-    z-index: 2;
-    padding: 0.9rem 1.4rem;
-    border-left: 5px solid $nv-red;
-    border-radius: 0.75rem;
-    background: #fff;
-    box-shadow: 0 12px 30px rgba($nv-text, 0.18);
-    color: $nv-blue-dark;
-    font-size: 1.1rem;
-    font-weight: 700;
-    line-height: 1.35;
-    text-align: left;
-}
-
-
-// ------------------------------------------------------------
-// Chiffres clés (carte qui chevauche le héros)
-// ------------------------------------------------------------
-
-.nv-stats {
-    position: relative;
-    z-index: 2;
-    margin-top: -3.5rem;
-
-    .card {
-        border: 0;
-        border-radius: 1.25rem;
-        box-shadow: 0 16px 40px rgba($nv-blue, 0.14);
-    }
-}
-
-.nv-stat-item {
-    @media (min-width: 992px) {
-        &:not(:first-child) {
-            padding-left: 1.5rem;
-            border-left: 1px solid $nv-border;
-        }
     }
 }
 
@@ -289,18 +208,29 @@ $nv-border: #e3edf5;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     color: #fff;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
 }
 
 // Variante douce (fond clair, icône colorée) : les couleurs viennent des classes bg-*-subtle / text-*
 .nv-icon-soft {
-    width: 46px;
-    height: 46px;
-    font-size: 1.35rem;
+    width: 38px;
+    height: 38px;
+    font-size: 1.1rem;
+}
+
+// Icône d'une carte de formation sans image
+.nv-cours-icone {
+    width: 48px;
+    height: 48px;
+}
+
+// Texte d'introduction centré : largeur limitée pour rester lisible
+.nv-texte-centre {
+    max-width: 640px;
 }
 
 
@@ -319,20 +249,6 @@ $nv-border: #e3edf5;
     opacity: 1;
 }
 
-// Filtres de catégories
-.nv-pill {
-    border: 1px solid $nv-border;
-    background: #fff;
-    color: $nv-text;
-    font-weight: 600;
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-
-    &:hover {
-        border-color: $nv-blue;
-        background: $nv-blue-light;
-        color: $nv-blue;
-    }
-}
 
 // Carte d'une formation
 .nv-course {
@@ -408,21 +324,6 @@ $nv-border: #e3edf5;
     background: linear-gradient(135deg, $nv-blue-light 0%, #fff 70%);
 }
 
-// Grande icône décorative
-.nv-why-art {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 140px;
-    aspect-ratio: 1;
-    border-radius: 2rem;
-    background: #fff;
-    box-shadow: 0 12px 30px rgba($nv-blue, 0.15);
-    color: $nv-blue;
-    font-size: 4.5rem;
-}
-
 .nv-why-item {
     .fw-semibold {
         color: $nv-text;
@@ -478,6 +379,77 @@ $nv-border: #e3edf5;
 
 
 // ------------------------------------------------------------
+// Parcours du particulier
+// ------------------------------------------------------------
+
+.nv-parcours {
+    border: 1px solid $nv-border;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba($nv-blue, 0.08);
+}
+
+.nv-etape {
+    position: relative;
+    height: 100%;
+    padding: 1.25rem 0.75rem 1rem;
+    border: 1px solid $nv-border;
+    border-radius: 1rem;
+    background: $nv-blue-light;
+    text-align: center;
+
+    // Petite flèche vers l'étape suivante (grands écrans)
+    @media (min-width: 992px) {
+        &:not(:last-child)::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            right: -1.05rem;
+            transform: translateY(-50%);
+            border-top: 0.45rem solid transparent;
+            border-bottom: 0.45rem solid transparent;
+            border-left: 0.6rem solid $nv-blue;
+        }
+    }
+}
+
+// Pastille du numéro d'étape
+.nv-etape-numero {
+    position: absolute;
+    top: -0.7rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: $nv-blue-dark;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+// Étape facultative : bordure en pointillés rouges
+.nv-etape-facultative {
+    border: 2px dashed $nv-red;
+    background: #fff;
+
+    .nv-etape-numero {
+        background: $nv-red;
+    }
+}
+
+// Icône « boucle » : le quiz peut être refait autant de fois qu'on le souhaite
+.nv-etape-boucle {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.6rem;
+    color: $nv-red;
+    font-size: 1.25rem;
+}
+
+// ------------------------------------------------------------
 // Pied de page
 // ------------------------------------------------------------
 
@@ -497,7 +469,7 @@ $nv-border: #e3edf5;
 
 
 // ============================================================
-// 2. SIDEBAR DE L'ADMINISTRATION : bleu foncé, élément actif en rouge
+// 2. SIDEBAR DE L'ADMINISTRATION : bleu foncé, page courante surlignée comme au survol
 // ============================================================
 
 html[data-sidebar="dark"] {
@@ -543,20 +515,12 @@ html[data-sidebar="dark"] {
             color: rgba(255, 255, 255, 0.85);
         }
 
-        &:hover {
-            color: #ffffff;
-            background-color: rgba(255, 255, 255, 0.12);
-
-            i {
-                color: #ffffff;
-            }
-        }
-
-        // Page courante : rouge
+        // Survol ET page courante : même fond translucide
+        &:hover,
         &.active {
             color: #ffffff;
-            background: linear-gradient(90deg, #f0463b 0%, #d8332b 100%);
-            box-shadow: 0 4px 12px rgba(216, 51, 43, 0.35);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: none;
 
             i {
                 color: #ffffff;
@@ -567,7 +531,7 @@ html[data-sidebar="dark"] {
             }
         }
 
-        // Menu déroulant ouvert (parent) : léger surlignage, pas de rouge
+        // Menu déroulant ouvert (parent) : même surlignage
         &[data-bs-toggle="collapse"] {
             &.active,
             &[aria-expanded="true"] {
@@ -604,5 +568,95 @@ html[data-sidebar="dark"] {
                 background-color: #ff6b63;
             }
         }
+    }
+
+}
+
+
+// ============================================================
+// 3. CALENDRIER DES CLASSES (FullCalendar, petit format)
+// ============================================================
+// Chaque classe = un point « Début » (1er jour), un point « Fin » (dernier jour)
+// et une période teintée en couleur très claire entre les deux (pas de longues barres).
+
+// Couleur de la classe selon son état : FullCalendar lit ces variables
+.nv-cal-a-venir {
+    --fc-event-bg-color: #{$nv-blue};
+    --fc-event-border-color: #{$nv-blue};
+    --fc-bg-event-color: #{$nv-blue};
+}
+
+.nv-cal-en-cours {
+    --fc-event-bg-color: #0ab39c;
+    --fc-event-border-color: #0ab39c;
+    --fc-bg-event-color: #0ab39c;
+}
+
+.nv-cal-inscrit {
+    --fc-event-bg-color: #{$nv-red};
+    --fc-event-border-color: #{$nv-red};
+    --fc-bg-event-color: #{$nv-red};
+}
+
+// Pastille de la légende (même couleur que la classe correspondante)
+.nv-cal-pastille {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+    background: var(--fc-event-bg-color);
+}
+
+.nv-calendrier {
+    // Le calendrier ne doit jamais dépasser de sa carte (colonne flex des dashboards)
+    min-width: 0;
+
+    .fc {
+        max-width: 100%;
+    }
+
+    // Vue liste (petits écrans)
+    .fc-list-event-title {
+        font-size: 0.85rem;
+    }
+
+    .fc-toolbar-title {
+        font-size: 1.05rem;
+        text-transform: capitalize;
+    }
+
+    .fc-button {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .fc-daygrid-day-number {
+        font-size: 0.8rem;
+    }
+
+    // Période de la classe : teinte très claire (pas de barre)
+    .fc-bg-event {
+        --fc-bg-event-opacity: 0.14;
+    }
+
+    // Points « Début » / « Fin » : texte lisible, sur une seule ligne
+    .fc-daygrid-dot-event {
+        font-size: 0.72rem;
+        cursor: pointer;
+
+        .fc-event-title {
+            overflow: hidden;
+            font-weight: 500;
+            text-overflow: ellipsis;
+        }
+
+        &:hover {
+            background: rgba(var(--vz-primary-rgb), 0.08);
+        }
+    }
+
+    // Jour de fin : un petit carré plein au lieu du rond, pour le distinguer du début
+    .nv-cal-fin .fc-daygrid-event-dot {
+        border-radius: 0.1rem;
     }
 }

@@ -69,7 +69,9 @@ class EvaluationFinFormationController extends Controller
 
         $regles['commentaire_formateur'] = ['nullable', 'string', 'max:1000'];
         $messages['commentaire_formateur.max'] = 'Le commentaire sur le formateur ne doit pas dépasser 1000 caractères.';
-
+        // Commentaire public sur la formation (affiché dans l'onglet « Avis » du cours)
+        $regles['commentaire_cours'] = ['nullable', 'string', 'max:1000'];
+        $messages['commentaire_cours.max'] = 'Le commentaire sur la formation ne doit pas dépasser 1000 caractères.';
         foreach (EvaluationFormation::TEXTES as $colonne => $libelle) {
             $regles[$colonne] = ['nullable', 'string', 'max:2000'];
             $messages["$colonne.max"] = 'Ce champ ne doit pas dépasser 2000 caractères.';
@@ -97,11 +99,14 @@ class EvaluationFinFormationController extends Controller
                 ))
             );
 
-            // 3. Satisfaction globale = avis public du cours (même système d'étoiles).
-            //    On ne met à jour QUE la note : un éventuel commentaire déjà écrit dans l'onglet Avis est conservé.
+            // 3. Satisfaction globale + commentaire public = avis du cours (même système d'étoiles).
+            //    Un champ laissé vide efface l'ancien commentaire (le stagiaire peut le retirer).
             Avis::updateOrCreate(
                 ['user_id' => $user->id, 'cours_id' => $classe->cours_id],
-                ['note' => $data['note_globale']]
+                [
+                    'note' => $data['note_globale'],
+                    'commentaire' => $data['commentaire_cours'] ?? null,
+                ]
             );
         });
 
