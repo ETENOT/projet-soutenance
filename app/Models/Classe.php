@@ -182,6 +182,113 @@ class Classe extends Model
         };
     }
 
+    // Filtre SQL équivalent à l'accesseur ->etat (une classe fermée est toujours "terminée") :
+   // Classe::avecEtat('en_cours'), 'a_venir' ou 'terminee'. Sert aux filtres de la liste admin.
+   public function scopeAvecEtat($query, string $etat)
+   {
+       $aujourdhui = today()->toDateString();
+
+       return match ($etat) {
+           'en_cours' => $query->whereNull('fermee_le')
+               ->whereDate('date_debut', '<=', $aujourdhui)
+               ->whereDate('date_fin', '>=', $aujourdhui),
+           'a_venir' => $query->whereNull('fermee_le')
+               ->whereDate('date_debut', '>', $aujourdhui),
+           'terminee' => $query->where(function ($q) use ($aujourdhui) {
+               $q->whereNotNull('fermee_le')->orWhereDate('date_fin', '<', $aujourdhui);
+           }),
+           default => $query,
+       };
+   }
+
+   // -----------------------------------------------------------------
+   // CALENDRIER DES CLASSES
+   // -----------------------------------------------------------------
+
+   // Classes non terminées (à venir ou en cours) : la date de fin n'est pas dépassée
+   // et la classe n'est pas fermée.
+   public function scopeNonTerminees($query)
+   {
+       return $query->whereNull('fermee_le')->whereDate('date_fin', '>=', today());
+   }
+
+   /**
+    * Transforme la classe en évènement FullCalendar (voir calendrier-classes.init.js).
+    *  - $url : page ouverte au clic (par défaut, la page du cours)
+    *  - $classesCss : classes CSS ajoutées à la couleur d'état (ex. ['nv-cal-inscrit'])
+    * La fin est exclusive pour FullCalendar : on ajoute donc un jour à date_fin.
+    */
+   public function versEvenementCalendrier(?string $url = null, array $classesCss = []): array
+   {
+       $nomCours = $this->cours?->titre ?? 'Formation';
+       $couleur = $this->etat === 'en_cours' ? 'nv-cal-en-cours' : 'nv-cal-a-venir';
+
+       return [
+           'id' => $this->id,
+           'title' => $nomCours . ' · ' . $this->nom,
+           'start' => $this->date_debut->format('Y-m-d'),
+           'end' => $this->date_fin->copy()->addDay()->format('Y-m-d'),
+           'allDay' => true,
+           'url' => $url ?? route('cours.show', $this->cours_id),
+           'classNames' => array_merge([$couleur], $classesCss),
+           'extendedProps' => [
+               'classe_id' => $this->id,
+               'infobulle' => $nomCours . ' — ' . $this->nom
+                   . "\n" . $this->date_debut->format('d/m/Y') . ' → ' . $this->date_fin->format('d/m/Y')
+                   . "\n" . $this->lieu,
+           ],
+       ];
+   }
+
+   // Évènements de toutes les classes à venir ou en cours (accueil et dashboards).
+   // $mesClassesIds : ids des classes de l'utilisateur, affichées avec la classe "nv-cal-inscrit".
+   public static function evenementsAVenir(array $mesClassesIds = []): Collection
+   {
+       return static::with('cours')
+           ->nonTerminees()
+           ->orderBy('date_debut')
+           ->get()
+           ->map(fn (Classe $classe) => $classe->versEvenementCalendrier(
+               null,
+               in_array($classe->id, $mesClassesIds) ? ['nv-cal-inscrit'] : []
+           ))
+           ->values();
+   }
+
+   // -----------------------------------------------------------------
+   // INSCRIPTIONS ET LIEU
+   // -----------------------------------------------------------------
+
+   // Les inscriptions ne sont permises que tant que la date de début n'est pas atteinte
+   // (et que la classe n'est pas fermée). Dès le jour de début, c'est fini ; la date de
+   // fin étant postérieure au début, une classe terminée est forcément déjà refermée ici.
+   public function inscriptionsOuvertes(): bool
+   {
+       return ! $this->estFermee() && today()->lt($this->date_debut);
+   }
+
+   // Message affiché à l'utilisateur quand les inscriptions sont refusées.
+   public function motifInscriptionsFermees(): string
+   {
+       return $this->etat === 'terminee'
+           ? 'Cette classe est terminée : les inscriptions sont closes.'
+           : 'Cette classe a déjà commencé : les inscriptions sont closes.';
+   }
+
+   // Lien Google Maps du lieu. Si aucun lien n'a été saisi, on génère une recherche
+   // Google Maps à partir du nom du lieu : l'utilisateur a toujours un lien utilisable.
+   public function getLieuUrlAttribute(): string
+   {
+       return $this->lieu_lien
+           ?: 'https://www.google.com/maps/search/?api=1&query=' . urlencode($this->lieu);
+   }
+
+   // URL publique de la photo du lieu (null s'il n'y en a pas)
+   public function getLieuImageUrlAttribute(): ?string
+   {
+       return $this->lieu_image ? asset('storage/' . $this->lieu_image) : null;
+   }
+
     // Les stagiaires peuvent donner leur avis sur le formateur dès le dernier jour de la
     // formation (inclus) ou dès que la classe est fermée.
     public function peutEtreEvaluee(): bool
