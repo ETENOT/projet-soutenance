@@ -99,7 +99,8 @@
                     ================================= --}}
 
                     <li class="nav-item">
-                        <a class="nav-link menu-link" href="{{ request()->route('admin.formateurs.index.*') ? 'active' : '' }}">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.formateurs.*') ? 'active' : '' }}"
+                        href="{{ route('admin.formateurs.index') }}">
                             <i class="ri-user-star-line"></i>
                             <span>Gestion des formateurs</span>
                         </a>
