@@ -1,0 +1,33 @@
+<?php
+
+// Sidebar and top bar labels (English)
+return [
+    'dashboard' => 'Dashboard',
+    'forums' => 'Forums',
+    'gallery' => 'Gallery',
+    'users' => 'User management',
+    'trainers' => 'Trainer management',
+    'trainings' => 'Course management',
+    'classes' => 'Class management',
+    'evaluations' => 'Evaluations',
+    'quizzes' => 'Quiz management',
+    'question_bank' => 'Question bank',
+    'quiz_tracking' => 'Quiz tracking',
+    'grading_settings' => 'Grading settings',
+    'enrollments' => 'Enrollments',
+    'payments' => 'Payments',
+    'trainer_space' => 'TRAINER AREA',
+    'my_classes' => 'My classes',
+    'trainee_quizzes' => 'Trainees\' quizzes',
+    'reviews_about_me' => 'Reviews about me',
+    'my_profile' => 'My profile',
+    'menu' => 'MENU',
+    'course_catalog' => 'Course catalog',
+    'notifications' => 'Notifications',
+    'see_all_notifications' => 'See all notifications',
+    'mark_all_read' => 'Mark all as read',
+    'no_notification' => 'No notifications',
+    'welcome' => 'Welcome :name!',
+    'user' => 'User',
+    'logout' => 'Log out',
+];

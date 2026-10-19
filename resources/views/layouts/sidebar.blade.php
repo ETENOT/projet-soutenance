@@ -80,22 +80,6 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('forum.*') ? 'active' : '' }}" href="{{ route('forum.index') }}">
-                            <i class="ri-chat-3-line"></i>
-                            <span>Forums</span>
-                            {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
-                            <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link menu-link" href="{{ route('forum.galerie') }}">
-                            <i class="ri-gallery-line"></i>
-                            <span>Galerie</span>
-                        </a>
-                    </li>
-
                     {{-- ================================
                          UTILISATEURS
                     ================================= --}}
@@ -115,7 +99,7 @@
                     ================================= --}}
 
                     <li class="nav-item">
-                        <a class="nav-link menu-link" href="{{ route('admin.formateurs.index') }}">
+                        <a class="nav-link menu-link" href="{{ request()->route('admin.formateurs.index.*') ? 'active' : '' }}">
                             <i class="ri-user-star-line"></i>
                             <span>Gestion des formateurs</span>
                         </a>
@@ -138,13 +122,11 @@
 
                     </li>
 
-
                     {{-- ================================
                          CLASSES
                     ================================= --}}
 
                     <li class="nav-item">
-
                         <a
                             class="nav-link menu-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}"
                             href="{{ route('admin.classes.index') }}"
@@ -152,20 +134,7 @@
                             <i class="ri-group-line"></i>
                             <span>Gestion des Classes</span>
                         </a>
-
                     </li>
-
-                    {{-- ================================
-                         ÉVALUATIONS (formateurs + formations)
-                    ================================= --}}
-
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}" href="{{ route('admin.evaluations.index') }}">
-                            <i class="ri-star-smile-line"></i>
-                            <span>Évaluations</span>
-                        </a>
-                    </li>
-
 
                     {{-- ================================
                          QUIZ
@@ -216,6 +185,30 @@
                                 </li>
                             </ul>
                         </div>
+                    </li>
+
+                    {{-- ================================
+                         ÉVALUATIONS (formateurs + formations)
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}" href="{{ route('admin.evaluations.index') }}">
+                            <i class="ri-star-smile-line"></i>
+                            <span>Évaluations</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                         FORUMS
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('forum.*') ? 'active' : '' }}" href="{{ route('forum.index') }}">
+                            <i class="ri-chat-3-line"></i>
+                            <span>Forums</span>
+                            {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
+                            <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
+                        </a>
                     </li>
 
                     {{-- ================================
@@ -296,13 +289,6 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link menu-link" href="{{ route('forum.galerie') }}">
-                            <i class="ri-gallery-line"></i>
-                            <span>Galerie</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->is('pages-profile') ? 'active' : '' }}" href="{{ route('index', ['any' => 'pages-profile']) }}">
                             <i class="ri-user-line"></i>
                             <span>Mon profil</span>
@@ -354,13 +340,6 @@
                             <span>Forums</span>
                             {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
                             <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link menu-link" href="{{ route('forum.galerie') }}">
-                            <i class="ri-gallery-line"></i>
-                            <span>Galerie</span>
                         </a>
                     </li>
 

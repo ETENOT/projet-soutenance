@@ -51,57 +51,6 @@
             'valeur' => $totalQuiz,
         ])
     </div>
-
-    {{-- Accès rapide à la gestion : 4 tuiles de même taille --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Gestion de la plateforme</h4>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-xl-3 col-sm-6">
-                            <a href="{{ route('admin.cours.index') }}" class="d-block h-100 text-decoration-none">
-                                <div class="border rounded p-3 text-center h-100">
-                                    <i data-feather="book-open" class="text-success mb-2"></i>
-                                    <p class="mb-0 fw-medium text-body">Gérer les cours</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-xl-3 col-sm-6">
-                            <a href="{{ route('admin.classes.index') }}" class="d-block h-100 text-decoration-none">
-                                <div class="border rounded p-3 text-center h-100">
-                                    <i data-feather="calendar" class="text-warning mb-2"></i>
-                                    <p class="mb-0 fw-medium text-body">Gérer les classes</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-xl-3 col-sm-6">
-                            <a href="{{ route('admin.users.index') }}" class="d-block h-100 text-decoration-none">
-                                <div class="border rounded p-3 text-center h-100">
-                                    <i data-feather="users" class="text-primary mb-2"></i>
-                                    <p class="mb-0 fw-medium text-body">Gérer les utilisateurs</p>
-                                </div>
-                            </a>
-                        </div>
-
-                        <div class="col-xl-3 col-sm-6">
-                            <a href="#" class="d-block h-100 text-decoration-none">
-                                <div class="border rounded p-3 text-center h-100">
-                                    <i data-feather="help-circle" class="text-danger mb-2"></i>
-                                    <p class="mb-1 fw-medium text-body">Gérer les quiz</p>
-                                    <span class="badge bg-secondary-subtle text-secondary">Bientôt disponible</span>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @section('script')

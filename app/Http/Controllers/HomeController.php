@@ -69,14 +69,16 @@ class HomeController extends Controller
     /*Language Translation*/
     public function lang($locale)
     {
-        if ($locale) {
-            App::setLocale($locale);
-            Session::put('lang', $locale);
+        // Liste blanche : on n'accepte que les langues réellement gérées par l'application
+        // (sinon n'importe quelle valeur de l'URL serait enregistrée en session)
+        if (in_array($locale, ['fr', 'en'], true)) {
+            App::setLocale($locale);       // langue de la requête en cours
+            Session::put('lang', $locale); // mémorisée pour les pages suivantes (middleware Localization)
             Session::save();
-            return redirect()->back()->with('locale', $locale);
-        } else {
-            return redirect()->back();
         }
+
+        // Retour à la page d'où vient l'utilisateur
+        return redirect()->back();
     }
 
     public function updateProfile(Request $request, $id)
