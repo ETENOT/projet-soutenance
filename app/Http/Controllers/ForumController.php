@@ -55,6 +55,46 @@ class ForumController extends Controller
     }
 
     /**
+     * Galerie : toutes les photos postées dans les forums auxquels l'utilisateur a accès
+     * (mêmes règles que « Mes forums » : stagiaire payé, formateur de la classe, admin).
+     *  - sans paramètre : photos de tous mes forums, de la plus récente à la plus ancienne ;
+     *  - ?classe=ID     : seulement les photos du forum de cette classe.
+     */
+    public function galerie(Request $request)
+    {
+        $user = Auth::user();
+
+        // Forums accessibles qui contiennent au moins une photo (sert aussi au filtre par classe)
+        $classes = Classe::query()
+            ->with('cours')
+            ->forumsAccessiblesPar($user)
+            ->whereHas('messagesForum', fn ($q) => $q->whereNotNull('photo'))
+            ->orderByDesc('date_debut')
+            ->get();
+
+        // Filtre : on ne l'accepte que s'il vise un forum accessible (sinon on l'ignore)
+        $filtre = $request->integer('classe');
+        $idsClasses = ($filtre && $classes->contains('id', $filtre))
+            ? [$filtre]
+            : $classes->pluck('id')->all();
+
+        // Photos paginées par 24 ; le nom de l'auteur et la classe sont chargés en une fois
+        $photos = MessageForum::query()
+            ->whereNotNull('photo')
+            ->whereIn('classe_id', $idsClasses)
+            ->with(['user', 'classe'])
+            ->orderByDesc('id')
+            ->paginate(24)
+            ->withQueryString();
+
+        return view('forum.galerie', [
+            'photos' => $photos,
+            'classes' => $classes,
+            'classeFiltre' => in_array($filtre, $idsClasses, true) ? $filtre : null,
+        ]);
+    }
+
+    /**
      * Page du forum (le contenu des messages est chargé ensuite en Ajax).
      */
     public function show(Classe $classe)
@@ -135,11 +175,18 @@ class ForumController extends Controller
 
         $data = $request->validate([
             'contenu' => ['nullable', 'string', 'max:2000'],
-            // Photos prises pendant la formation (8 Mo max ; la page les réduit avant l'envoi)
-            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+            // Photo (8 Mo max, vérifié plus bas ; la page la réduit avant l'envoi) ou vidéo (50 Mo max).
+            // "mimetypes" contrôle le vrai contenu du fichier, pas seulement son extension.
+            'photo' => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime', 'max:51200'],
             // On ne peut répondre qu'à un message de CE forum
             'parent_id' => ['nullable', 'integer', 'exists:messages_forum,id,classe_id,' . $classe->id],
         ]);
+
+        // Une photo ne doit pas dépasser 8 Mo (seules les vidéos vont jusqu'à 50 Mo)
+        $fichier = $request->file('photo');
+        if ($fichier && str_starts_with((string) $fichier->getMimeType(), 'image/') && $fichier->getSize() > 8 * 1024 * 1024) {
+            return response()->json(['message' => 'La photo dépasse 8 Mo.'], 422);
+        }
 
         $contenu = trim($data['contenu'] ?? '');
 
@@ -200,7 +247,45 @@ class ForumController extends Controller
 
         abort_unless($message->classe_id === $classe->id && $message->photo, 404);
 
-        return Storage::disk('local')->response($message->photo);
+        // response()->file() gère les requêtes « Range » : indispensable pour lire / avancer dans une vidéo
+        return response()->file(Storage::disk('local')->path($message->photo));
+    }
+
+    /**
+     * Galerie d'UN forum, en JSON (ouverte depuis le bouton « Galerie » de la page du forum).
+     * Les médias arrivent par lots de 24, du plus récent au plus ancien :
+     *  - sans paramètre : les 24 plus récents ;
+     *  - ?avant=ID      : les 24 suivants (plus anciens que ID) ; « suivant » vaut NULL à la fin.
+     */
+    public function galerieClasse(Request $request, Classe $classe): JsonResponse
+    {
+        $this->membre($classe);   // même contrôle d'accès que le forum lui-même
+
+        $parLot = 24;
+
+        $requete = $classe->messagesForum()->whereNotNull('photo')->with('user');
+
+        if ($request->filled('avant')) {
+            $requete->where('id', '<', (int) $request->query('avant'));
+        }
+
+        // On en demande un de plus que le lot : s'il existe, c'est qu'il reste des médias à charger
+        $photos = $requete->orderByDesc('id')->limit($parLot + 1)->get();
+        $resteDesPhotos = $photos->count() > $parLot;
+        $photos = $photos->take($parLot);
+
+        return response()->json([
+            // Nombre total de médias du forum (affiché en haut du panneau)
+            'total' => $classe->messagesForum()->whereNotNull('photo')->count(),
+            'medias' => $photos->map(fn ($m) => [
+                'id' => $m->id,
+                'url' => route('forum.photo', [$classe, $m]),
+                'est_video' => $m->est_video,
+                'auteur' => $m->user->name,
+                'date' => $m->created_at->format('d/m/Y H:i'),
+            ])->values(),
+            'suivant' => $resteDesPhotos ? $photos->last()->id : null,
+        ]);
     }
 
     // ------------------------------------------------------------------
@@ -242,6 +327,8 @@ class ForumController extends Controller
             'mien' => $m->user_id === $viewer->id,
             'contenu' => $m->contenu,
             'photo_url' => $m->photo ? route('forum.photo', [$classe, $m]) : null,
+            // true = le fichier joint est une vidéo (la page affiche alors un lecteur au lieu d'une image)
+            'est_video' => $m->est_video,
             // "14:32" aujourd'hui, "09/10 14:32" sinon
             'date' => $m->created_at->isToday() ? $m->created_at->format('H:i') : $m->created_at->format('d/m H:i'),
             'peut_supprimer' => $m->user_id === $viewer->id || $classe->estModerateurForum($viewer),
@@ -249,7 +336,9 @@ class ForumController extends Controller
             'parent' => $parent ? [
                 'id' => $parent->id,
                 'auteur' => $parent->user->name,
-                'extrait' => $parent->contenu ? mb_strimwidth($parent->contenu, 0, 80, '…') : '📷 Photo',
+                'extrait' => $parent->contenu
+                ? mb_strimwidth($parent->contenu, 0, 80, '…')
+                : ($parent->est_video ? '🎬 Vidéo' : '📷 Photo'),
             ] : null,
         ];
     }

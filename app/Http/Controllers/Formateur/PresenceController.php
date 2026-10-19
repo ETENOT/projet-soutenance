@@ -35,6 +35,9 @@ class PresenceController extends FormateurController
             'classe' => $classe,
             'jours' => $jours,
             'jour' => $jour,
+            // Le jour affiché est-il exclu du calcul ? (cases grisées, rien à enregistrer)
+            'jourExclu' => $jour ? $classe->estJourExclu($jour) : false,
+            'joursExclus' => $classe->datesExclues()->all(),
             'inscrits' => $inscrits,
             'presentsCeJour' => $presentsCeJour,
             // Récapitulatif : [user_id => nombre de jours de présence] et nombre total de jours
@@ -69,6 +72,11 @@ class PresenceController extends FormateurController
             return back()->with('error', 'Ce jour ne correspond pas à une séance de la classe (ou n\'a pas encore eu lieu).');
         }
 
+        // Un jour exclu du calcul n'a pas de feuille à remplir (le formateur peut le réintégrer d'abord)
+        if ($classe->estJourExclu($data['date_seance'])) {
+            return back()->with('error', 'Ce jour est exclu du calcul du taux de présence : réintégrez-le pour remplir sa feuille.');
+        }
+
         // Sécurité : on ignore tout identifiant qui n'est pas un stagiaire PAYÉ de cette classe
         $inscritsIds = $classe->inscriptions()->payees()->pluck('user_id');
         $presentsIds = collect($data['present'] ?? [])->map(fn ($id) => (int) $id)->intersect($inscritsIds);
@@ -86,5 +94,38 @@ class PresenceController extends FormateurController
         return redirect()
             ->route('presences.formateur.edit', ['classe' => $classe, 'date' => $data['date_seance']])
             ->with('success', 'Feuille de présence enregistrée.');
+    }
+
+    /**
+     * Choisit les jours à NE PAS prendre en compte dans le taux de présence.
+     * Modifiable à tout moment tant que la classe n'est pas fermée (avant, pendant, vers la fin).
+     * La liste envoyée REMPLACE la liste actuelle.
+     */
+    public function updateJoursExclus(Request $request, Classe $classe)
+    {
+        $this->classeAutorisee($classe);
+
+        if ($classe->estFermee()) {
+            return back()->with('error', 'La classe est fermée : les jours non comptabilisés ne peuvent plus être modifiés.');
+        }
+
+        $data = $request->validate([
+            'jours_exclus' => ['nullable', 'array'],
+            'jours_exclus.*' => ['date_format:Y-m-d', 'distinct'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $dates = $data['jours_exclus'] ?? [];
+
+        if ($erreur = Classe::erreurJoursExclus($dates, $classe->date_debut, $classe->date_fin)) {
+            return back()->withInput()->withErrors(['jours_exclus' => $erreur]);
+        }
+
+        $classe->synchroniserJoursExclus($dates);
+
+        // On revient sur le même jour de la feuille (le recap affiche déjà le nouveau dénominateur)
+        return redirect()
+            ->route('presences.formateur.edit', ['classe' => $classe, 'date' => $data['date'] ?? null])
+            ->with('success', 'Jours non comptabilisés enregistrés : les taux de présence sont recalculés.');
     }
 }

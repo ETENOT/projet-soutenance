@@ -41,11 +41,18 @@
                             <select name="date" id="date" class="form-select" onchange="this.form.submit()">
                                 @foreach ($jours as $j)
                                     <option value="{{ $j->toDateString() }}" @selected($j->isSameDay($jour))>
-                                        {{ $j->translatedFormat('l d/m/Y') }}
+                                        {{ $j->translatedFormat('l d/m/Y') }}@if (in_array($j->toDateString(), $joursExclus, true)) — non comptabilisé @endif
                                     </option>
                                 @endforeach
                             </select>
                         </form>
+
+                        @if ($jourExclu)
+                            <div class="alert alert-warning">
+                                Ce jour est <strong>non comptabilisé</strong> : il n'entre pas dans le taux de présence.
+                                Retirez-le de la liste « Jours non comptabilisés » pour remplir sa feuille.
+                            </div>
+                        @endif
 
                         {{-- Enregistrement : PUT vers PresenceController::update --}}
                         <form method="POST" action="{{ route('presences.formateur.update', $classe) }}">
@@ -60,7 +67,7 @@
                                            name="present[]" value="{{ $inscription->user_id }}"
                                            id="p{{ $inscription->user_id }}"
                                            @checked(in_array($inscription->user_id, $presentsCeJour))
-                                           @disabled($classe->estFermee())>
+                                           @disabled($classe->estFermee() || $jourExclu)>
                                     <label class="form-check-label" for="p{{ $inscription->user_id }}">
                                         {{ $inscription->user->name }}
                                     </label>
@@ -69,7 +76,7 @@
                                 <p class="text-muted">Aucun stagiaire payé dans cette classe.</p>
                             @endforelse
 
-                            @if (! $classe->estFermee() && $inscrits->count())
+                            @if (! $classe->estFermee() && ! $jourExclu && $inscrits->count())
                                 <button type="submit" class="btn btn-primary mt-3">
                                     <i class="ri-save-line me-1"></i>Enregistrer la feuille
                                 </button>
@@ -78,13 +85,42 @@
                     @endif
                 </div>
             </div>
+            {{-- ====== JOURS NON COMPTABILISÉS (formateur) ====== --}}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Jours non comptabilisés</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('presences.formateur.jours-exclus', $classe) }}">
+                        @csrf
+                        @method('PUT')
+                        {{-- Pour revenir sur le même jour de la feuille après l'enregistrement --}}
+                        @if ($jour)
+                            <input type="hidden" name="date" value="{{ $jour->toDateString() }}">
+                        @endif
+
+                        @include('classes.jours_exclus', [
+                            'joursExclus' => $joursExclus,
+                            'min' => $classe->date_debut->toDateString(),   // bornes fixes : la classe est déjà créée
+                            'max' => $classe->date_fin->toDateString(),
+                            'verrouille' => $classe->estFermee(),
+                        ])
+
+                        @unless ($classe->estFermee())
+                            <button type="submit" class="btn btn-outline-primary mt-3">
+                                <i class="ri-save-line me-1"></i>Enregistrer les jours
+                            </button>
+                        @endunless
+                    </form>
+                </div>
+            </div>
         </div>
 
         {{-- ====== RÉCAPITULATIF DES TAUX ====== --}}
         <div class="col-lg-6">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Récapitulatif ({{ $totalJours }} jours de formation)</h5>
+                    <h5 class="card-title mb-0">Récapitulatif ({{ $totalJours }} jours comptabilisés)</h5>
                 </div>
                 <div class="card-body">
                     <table class="table align-middle mb-0">
@@ -117,7 +153,7 @@
                         </tbody>
                     </table>
                     <p class="text-muted fs-12 mt-3 mb-0">
-                        Un jour non renseigné compte comme une absence. À la fermeture de la classe,
+                        Un jour non renseigné compte comme une absence. Un jour « non comptabilisé » ne compte pas du tout. À la fermeture de la classe,
                         un stagiaire sous {{ \App\Models\Classe::SEUIL_ATTESTATION }} % de présence ne reçoit pas d'attestation.
                     </p>
                 </div>

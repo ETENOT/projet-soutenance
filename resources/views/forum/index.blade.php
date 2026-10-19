@@ -14,6 +14,12 @@
         @endslot
     @endcomponent
 
+    {{-- Onglets : Mes forums (page actuelle) | Galerie --}}
+    <ul class="nav nav-tabs nav-tabs-custom mb-3">
+        <li class="nav-item"><a class="nav-link active" href="{{ route('forum.index') }}"><i class="ri-chat-3-line align-bottom me-1"></i>Mes forums</a></li>
+        <li class="nav-item"><a class="nav-link" href="{{ route('forum.galerie') }}"><i class="ri-gallery-line align-bottom me-1"></i>Galerie</a></li>
+    </ul>
+
     <div class="row">
         @forelse ($classes as $classe)
             <div class="col-xl-4 col-md-6">

@@ -3,6 +3,7 @@
 // app/Models/Classe.php
 
 namespace App\Models;
+use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -13,7 +14,8 @@ class Classe extends Model
     // formateur_id : le formateur affecté (affecté par l'administrateur).
     // fermee_le / fermee_par : renseignés uniquement par ClasseClotureService.
     protected $fillable = [
-        'nom', 'capacite_max', 'date_debut', 'date_fin', 'lieu', 'cours_id',
+        'nom', 'capacite_max', 'capacite_min', 'date_debut', 'date_fin', 'lieu',
+        'lieu_lien', 'lien_image', 'cours_id',
         'formateur_id', 'fermee_le', 'fermee_par',
     ];
     // Force Laravel à traiter ces colonnes comme des objets Carbon
@@ -51,6 +53,12 @@ class Classe extends Model
     public function presences()
     {
         return $this->hasMany(Presence::class);
+    }
+
+    // Les jours exclus du calcul du taux de présence (choisis par l'admin ou le formateur)
+    public function joursExclus()
+    {
+        return $this->hasMany(JourExclu::class);
     }
 
     // Les avis des stagiaires sur le formateur de cette classe
@@ -193,17 +201,17 @@ class Classe extends Model
     // -----------------------------------------------------------------
 
     /**
-     * Jours de formation de la classe = jours ouvrés (lundi→vendredi) entre
-     * date_debut et date_fin incluses. C'est le DÉNOMINATEUR du taux de présence :
-     * un jour sans ligne de présence compte comme une absence.
+     * Tous les jours ouvrés (lundi→vendredi) entre date_debut et date_fin incluses,
+     * qu'ils soient exclus du calcul ou non. Sert à afficher la feuille de présence.
      * (Un seul endroit à modifier si les séances doivent inclure le samedi.)
      */
-    public function joursDeFormation(): Collection
+    public function joursOuvres(): Collection
     {
         $jours = collect();
 
         foreach (CarbonPeriod::create($this->date_debut->copy()->startOfDay(), $this->date_fin->copy()->startOfDay()) as $jour) {
-            if ($jour->isWeekday()) {
+            // Le samedi peut être un jour de cours, pas le dimanche
+            if (! $jour->isSunday()) {
                 $jours->push($jour->copy());
             }
         }
@@ -211,12 +219,120 @@ class Classe extends Model
         return $jours;
     }
 
-    // Jours de formation pour lesquels la feuille peut être remplie (pas dans le futur).
-    public function joursRenseignables(): Collection
+    // Dates (format Y-m-d) des jours exclus du calcul. Utilise la relation chargée une seule fois.
+    public function datesExclues(): Collection
     {
-        return $this->joursDeFormation()->filter(fn ($jour) => $jour->lte(today()))->values();
+        return $this->joursExclus->map(fn ($j) => $j->date->toDateString())->values();
     }
 
+    // Ce jour est-il exclu du calcul du taux de présence ?
+    public function estJourExclu($jour): bool
+    {
+        return $this->datesExclues()->contains(Carbon::parse($jour)->toDateString());
+    }
+
+    /**
+     * Jours COMPTABILISÉS = jours ouvrés de la classe moins les jours exclus.
+     * C'est le DÉNOMINATEUR du taux de présence : un jour comptabilisé sans ligne
+     * de présence compte comme une absence ; un jour exclu ne compte pas du tout.
+     */
+    public function joursDeFormation(): Collection
+    {
+        $exclus = $this->datesExclues();
+
+        return $this->joursOuvres()
+            ->reject(fn ($jour) => $exclus->contains($jour->toDateString()))
+            ->values();
+    }
+
+    // Jours pour lesquels la feuille peut être affichée/remplie (pas dans le futur).
+    // Les jours exclus restent listés (affichés "non comptabilisé") mais ne sont pas modifiables.
+    public function joursRenseignables(): Collection
+    {
+        return $this->joursOuvres()->filter(fn ($jour) => $jour->lte(today()))->values();
+    }
+
+    /**
+     * Vérifie une liste de jours à exclure pour la période [$debut, $fin].
+     * Retourne un message d'erreur en français, ou null si tout est valide.
+     */
+    public static function erreurJoursExclus(array $dates, $debut, $fin): ?string
+    {
+        $debut = Carbon::parse($debut)->startOfDay();
+        $fin = Carbon::parse($fin)->startOfDay();
+        $dates = collect($dates)->unique();
+
+        foreach ($dates as $date) {
+            $jour = Carbon::createFromFormat('Y-m-d', $date)->startOfDay();
+
+            if ($jour->lt($debut) || $jour->gt($fin)) {
+                return "Le {$jour->format('d/m/Y')} est en dehors de la période de la classe.";
+            }
+
+            if ($jour->isSunday()) {
+                return "Le {$jour->format('d/m/Y')} tombe un dimanche : il n'est de toute façon pas compté.";
+            }
+
+            // On empêche d'exclure TOUS les jours : il n'y aurait plus de taux calculable
+            if ($dates->isNotEmpty()) {
+                $nbJoursDeCours = collect(CarbonPeriod::create($debut, $fin))->filter(fn ($j) => ! $j->isSunday())->count();
+
+                if ($dates->count() >= $nbJoursDeCours) {
+                    return 'Au moins un jour de formation doit rester comptabilisé.';
+                }
+            }
+        }
+
+        // On empêche d'exclure TOUS les jours : il n'y aurait plus de taux calculable
+        if ($dates->isNotEmpty()) {
+            $nbJoursOuvres = collect(CarbonPeriod::create($debut, $fin))->filter(fn ($j) => $j->isWeekday())->count();
+
+            if ($dates->count() >= $nbJoursOuvres) {
+                return 'Au moins un jour de formation doit rester comptabilisé.';
+            }
+        }
+
+        return null;
+    }
+
+    // Remplace la liste des jours exclus par $dates (Y-m-d) : ajoute les nouveaux, retire les autres.
+    // Les présences déjà saisies sur un jour exclu sont CONSERVÉES : si on réintègre le jour, elles reviennent.
+    public function synchroniserJoursExclus(array $dates): void
+    {
+        $dates = collect($dates)->unique()->values();
+
+        // On compare en PHP (dates 'Y-m-d') plutôt qu'en SQL : le résultat ne dépend pas
+        // de la façon dont la base (MySQL, SQLite...) stocke une colonne date.
+        $existants = $this->joursExclus()->get();
+
+        // 1) on retire les jours qui ne sont plus choisis
+        foreach ($existants as $existant) {
+            if (! $dates->contains($existant->date->toDateString())) {
+                $existant->delete();
+            }
+        }
+
+        // 2) on ajoute seulement les jours qui n'existaient pas encore
+        $dejaLa = $existants->map(fn ($j) => $j->date->toDateString());
+        foreach ($dates->diff($dejaLa) as $date) {
+            $this->joursExclus()->create(['date' => $date]);
+        }
+
+        // Force le rechargement de la relation au prochain calcul
+        $this->unsetRelation('joursExclus');
+    }
+
+    // Après un report de dates : supprime les jours exclus qui sortent de la nouvelle période
+    public function purgerJoursExclusHorsPeriode(): void
+    {
+        $this->joursExclus()
+            ->where(fn ($q) => $q
+                ->whereDate('date', '<', $this->date_debut->toDateString())
+                ->orWhereDate('date', '>', $this->date_fin->toDateString()))
+            ->delete();
+
+        $this->unsetRelation('joursExclus');
+    }
     /**
      * Taux de présence (en %) d'un stagiaire = jours présents / jours de formation * 100.
      * $nbPresences est passé en paramètre pour éviter une requête par stagiaire
@@ -233,11 +349,12 @@ class Classe extends Model
         return round($nbPresences / $totalJours * 100, 2);
     }
 
-    // Nombre de présences par stagiaire : [user_id => nombre de jours présent]
+        // NUMÉRATEUR : on ignore les présences saisies sur un jour exclu
     public function presencesParStagiaire(): Collection
     {
         return $this->presences()
             ->where('present', true)
+            ->whereNotIn('date_seance', $this->datesExclues()->all())
             ->selectRaw('user_id, COUNT(*) as total')
             ->groupBy('user_id')
             ->pluck('total', 'user_id');

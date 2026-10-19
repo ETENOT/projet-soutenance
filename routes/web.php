@@ -230,6 +230,42 @@ Route::middleware(['auth', 'role:admin'])
     ->group(function () {
 
         // ------------------------------------------------------------------
+        // FORMATEURS (CRUD + affectation aux classes + avis anonymes)
+        // ------------------------------------------------------------------
+        // /formateurs/create doit rester AVANT /formateurs/{formateur}
+        // (sinon "create" serait interprété comme un identifiant de formateur)
+
+        Route::get('/formateurs', [App\Http\Controllers\AdminFormateurController::class, 'index'])
+            ->name('formateurs.index');
+
+        Route::get('/formateurs/create', [App\Http\Controllers\AdminFormateurController::class, 'create'])
+            ->name('formateurs.create');
+
+        Route::post('/formateurs', [App\Http\Controllers\AdminFormateurController::class, 'store'])
+            ->name('formateurs.store');
+
+        // Fiche : classes affectées + avis anonymes
+        Route::get('/formateurs/{formateur}', [App\Http\Controllers\AdminFormateurController::class, 'show'])
+            ->name('formateurs.show');
+
+        Route::get('/formateurs/{formateur}/edit', [App\Http\Controllers\AdminFormateurController::class, 'edit'])
+            ->name('formateurs.edit');
+
+        Route::put('/formateurs/{formateur}', [App\Http\Controllers\AdminFormateurController::class, 'update'])
+            ->name('formateurs.update');
+
+        Route::delete('/formateurs/{formateur}', [App\Http\Controllers\AdminFormateurController::class, 'destroy'])
+            ->name('formateurs.destroy');
+
+        // Affecter une classe à ce formateur
+        Route::post('/formateurs/{formateur}/classes', [App\Http\Controllers\AdminFormateurController::class, 'affecterClasse'])
+            ->name('formateurs.classes.store');
+
+        // Retirer une classe à ce formateur
+        Route::delete('/formateurs/{formateur}/classes/{classe}', [App\Http\Controllers\AdminFormateurController::class, 'retirerClasse'])
+            ->name('formateurs.classes.destroy');
+
+        // ------------------------------------------------------------------
         // COURS
         // ------------------------------------------------------------------
 
@@ -271,7 +307,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/evaluations', [App\Http\Controllers\AdminEvaluationController::class, 'index'])
             ->name('evaluations.index');
 
-        Route::post('/evaluations/{evaluation}', [App\Http\Controllers\AdminEvaluationController::class, 'store'])
+        Route::get('/evaluations/{evaluation}', [App\Http\Controllers\AdminEvaluationController::class, 'show'])
             ->name('evaluations.show');
         
         // ------------------------------------------------------------------
@@ -380,6 +416,10 @@ Route::middleware(['auth', 'role:admin'])
                 Route::put('/{classe}', [App\Http\Controllers\ClasseController::class, 'update'])
                     ->name('update');
 
+                // Jours à ne pas compter dans le taux de présence (formulaire dédié)
+                Route::put('/{classe}/jours-exclus', [App\Http\Controllers\ClasseController::class, 'updateJoursExclus'])
+                    ->name('jours-exclus');
+
                 Route::delete('/{classe}', [App\Http\Controllers\ClasseController::class, 'destroy'])
                     ->name('destroy');
 
@@ -434,6 +474,10 @@ Route::middleware(['auth', 'role:admin'])
             Route::put('/classes/{classe}/presences', [App\Http\Controllers\Formateur\PresenceController::class, 'update'])
                 ->name('presences.formateur.update');
 
+            // Jours à ne pas compter dans le taux de présence (jour férié, séance annulée...)
+            Route::put('/classes/{classe}/presences/jours-exclus', [App\Http\Controllers\Formateur\PresenceController::class, 'updateJoursExclus'])
+                ->name('presences.formateur.jours-exclus');
+
             // Résultats au quiz des stagiaires de la classe
             Route::get('/classes/{classe}/quiz', [App\Http\Controllers\Formateur\QuizController::class, 'index'])
                 ->name('quiz.formateur.index');
@@ -472,11 +516,18 @@ Route::middleware(['auth', 'role:admin'])
             // Mes forums
             Route::get('/', [App\Http\Controllers\ForumController::class, 'index'])->name('index');
 
+            // Galerie : photos de tous mes forums.
+            // DOIT rester avant '/{classe}', sinon "galerie" serait pris pour un id de classe.
+            Route::get('/galerie', [App\Http\Controllers\ForumController::class, 'galerie'])->name('galerie');
+
             // Page du forum d'une classe
             Route::get('/{classe}', [App\Http\Controllers\ForumController::class, 'show'])->name('show');
 
             // Messages en JSON (rafraîchis automatiquement par la page)
             Route::get('/{classe}/messages', [App\Http\Controllers\ForumController::class, 'messages'])->name('messages');
+
+            // Galerie de CE forum en JSON (bouton « Galerie » de la page du forum)
+            Route::get('/{classe}/galerie', [App\Http\Controllers\ForumController::class, 'galerieClasse'])->name('galerie-classe');
 
             // Poster un message / une photo (limité à 30 envois par minute et par utilisateur)
             Route::post('/{classe}/messages', [App\Http\Controllers\ForumController::class, 'store'])

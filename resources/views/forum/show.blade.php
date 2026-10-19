@@ -67,16 +67,23 @@
                         <h5 class="card-title mb-0">{{ $classe->nom }}</h5>
                         <p class="text-muted fs-12 mb-0">{{ $classe->cours->titre ?? '' }}</p>
                     </div>
-                    @if ($estModerateur)
-                        <span class="badge bg-warning-subtle text-warning">Vous modérez ce forum</span>
-                    @endif
+                    <div class="d-flex align-items-center gap-2">
+                        @if ($estModerateur)
+                            <span class="badge bg-warning-subtle text-warning">Vous modérez ce forum</span>
+                        @endif
+                        {{-- Ouvre le panneau « Galerie » (photos de CE forum), sans quitter la conversation --}}
+                        <button type="button" class="btn btn-sm btn-soft-primary" id="boutonGalerie"
+                                data-bs-toggle="offcanvas" data-bs-target="#panneauGalerie" aria-controls="panneauGalerie">
+                            <i class="ri-gallery-line align-bottom me-1"></i>Galerie
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Zone des messages : classes du template Velzon (chat-conversation / chat-list / ctext-wrap) --}}
                 <div class="chat-conversation p-3" id="zoneMessages" style="overflow-y: auto; min-height: 340px;">
                     <ul class="list-unstyled chat-conversation-list" id="listeMessages"></ul>
                     <p class="text-center text-muted my-4" id="messageVide" style="display:none">
-                        Aucun message pour l'instant. Lancez la discussion et partagez vos photos de la formation !
+                        Aucun message pour l'instant. Lancez la discussion et partagez vos photos et vidéos de la formation !
                     </p>
                 </div>
 
@@ -96,9 +103,10 @@
                             <button type="button" class="btn-close" id="annulerReponse" aria-label="Annuler"></button>
                         </div>
 
-                        {{-- Bandeau "photo sélectionnée" --}}
+                        {{-- Bandeau "fichier sélectionné" (photo : aperçu ; vidéo : icône) --}}
                         <div class="d-none align-items-center mb-2" id="barrePhoto">
                             <img id="apercuPhoto" alt="" class="rounded me-2" style="height:48px;width:48px;object-fit:cover">
+                            <i id="iconeVideo" class="ri-movie-line fs-24 text-primary me-2 d-none"></i>
                             <span class="text-muted fs-12 me-2" id="nomPhoto"></span>
                             <button type="button" class="btn btn-sm btn-soft-danger" id="retirerPhoto">Retirer</button>
                         </div>
@@ -106,9 +114,9 @@
                         <div class="text-danger fs-12 mb-1 d-none" id="erreurForum"></div>
 
                         <div class="d-flex align-items-end gap-2">
-                            {{-- accept="image/*" : sur téléphone, propose aussi l'appareil photo --}}
-                            <input type="file" id="champPhoto" accept="image/*" class="d-none">
-                            <button type="button" class="btn btn-soft-primary" id="boutonPhoto" title="Ajouter une photo">
+                            {{-- accept="image/*,video/*" : sur téléphone, propose aussi l'appareil photo / la caméra --}}
+                            <input type="file" id="champPhoto" accept="image/*,video/*" class="d-none">
+                            <button type="button" class="btn btn-soft-primary" id="boutonPhoto" title="Ajouter une photo ou une vidéo">
                                 <i class="ri-image-add-line fs-18"></i>
                             </button>
 
@@ -122,6 +130,38 @@
                     @endif
                 </div>
             </div>
+        </div>
+    </div>
+
+    {{-- ====================== GALERIE DE CE FORUM (panneau latéral) ====================== --}}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="panneauGalerie" aria-labelledby="titreGalerie" style="width: min(520px, 100vw);">
+        <div class="offcanvas-header border-bottom">
+            <div>
+                <h5 class="offcanvas-title mb-0" id="titreGalerie">Galerie — {{ $classe->nom }}</h5>
+                <p class="text-muted fs-12 mb-0" id="galerieCompteur"></p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="text-danger fs-13 mb-2 d-none" id="galerieErreur"></div>
+
+            <p class="text-center text-muted my-4 d-none" id="galerieVide">
+                Aucune photo ni vidéo dans ce forum pour l'instant.
+            </p>
+
+            {{-- Grille de vignettes (remplie en Ajax à l'ouverture du panneau) --}}
+            <div class="row g-2" id="grilleGalerie"></div>
+
+            {{-- Lot suivant (24 médias de plus) --}}
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-soft-primary d-none" id="galeriePlus">Charger plus</button>
+            </div>
+        </div>
+        <div class="offcanvas-footer border-top p-3 text-center">
+            {{-- Mêmes médias, mais en pleine page et avec le filtre sur ce forum --}}
+            <a href="{{ route('forum.galerie', ['classe' => $classe->id]) }}" class="fs-13">
+                Ouvrir dans la page Galerie
+            </a>
         </div>
     </div>
 @endsection
@@ -208,8 +248,19 @@
                     bulle.appendChild(cit);
                 }
 
+                // Vidéo : lecteur intégré (le plein écran est fourni par le navigateur)
+                if (m.photo_url && m.est_video) {
+                    const video = el('video', 'rounded mb-1 d-block');
+                    video.src = m.photo_url;
+                    video.controls = true;
+                    video.preload = 'metadata';   // ne télécharge que la durée / la 1re image, pas toute la vidéo
+                    video.style.maxWidth = '260px';
+                    video.style.width = '100%';
+                    bulle.appendChild(video);
+                }
+
                 // Photo (cliquable pour agrandir)
-                if (m.photo_url) {
+                if (m.photo_url && !m.est_video) {
                     const lien = el('a', 'glightbox d-block mb-1');
                     lien.href = m.photo_url;
                     const img = el('img', 'rounded img-fluid');
@@ -359,7 +410,7 @@
                 window.preparerReponse = function (m) {
                     reponseA = m;
                     document.getElementById('repAuteur').textContent = m.auteur;
-                    document.getElementById('repExtrait').textContent = m.contenu ? m.contenu.slice(0, 80) : '📷 Photo';
+                    document.getElementById('repExtrait').textContent = m.contenu ? m.contenu.slice(0, 80) : (m.est_video ? '🎬 Vidéo' : '📷 Photo');
                     barreReponse.classList.remove('d-none');
                     barreReponse.classList.add('d-flex');
                     champTexte.focus();
@@ -392,8 +443,23 @@
 
                 champPhoto.addEventListener('change', async function () {
                     if (!champPhoto.files.length) return;
-                    photo = await reduire(champPhoto.files[0]);
-                    document.getElementById('apercuPhoto').src = URL.createObjectURL(photo);
+                    afficherErreur('');
+                    const choisi = champPhoto.files[0];
+                    const estVideo = choisi.type.startsWith('video/');
+
+                    // Vidéo : 50 Mo maximum (même limite que le serveur), on prévient avant d'envoyer pour rien
+                    if (estVideo && choisi.size > 50 * 1024 * 1024) {
+                        afficherErreur('La vidéo dépasse 50 Mo.');
+                        champPhoto.value = '';
+                        return;
+                    }
+
+                    // Une vidéo part telle quelle ; seule une photo est réduite
+                    photo = estVideo ? choisi : await reduire(choisi);
+                    const apercu = document.getElementById('apercuPhoto');
+                    apercu.classList.toggle('d-none', estVideo);
+                    document.getElementById('iconeVideo').classList.toggle('d-none', !estVideo);
+                    if (!estVideo) apercu.src = URL.createObjectURL(photo);
                     document.getElementById('nomPhoto').textContent = photo.name;
                     barrePhoto.classList.remove('d-none');
                     barrePhoto.classList.add('d-flex');
@@ -402,6 +468,8 @@
                 document.getElementById('retirerPhoto').addEventListener('click', function () {
                     photo = null;
                     champPhoto.value = '';
+                    document.getElementById('apercuPhoto').classList.remove('d-none');
+                    document.getElementById('iconeVideo').classList.add('d-none');
                     barrePhoto.classList.add('d-none');
                     barrePhoto.classList.remove('d-flex');
                 });
@@ -467,6 +535,121 @@
 
             charger();
             setInterval(rafraichir, cfg.intervalle);
+        })();
+    </script>
+
+    <script>
+        // ====================================================================
+        // Galerie du forum : le panneau se remplit à chaque ouverture (les photos et vidéos
+        // envoyées ou supprimées depuis la dernière fois sont donc à jour),
+        // par lots de 24 ; un clic sur une vignette l'agrandit / la lit (GLightbox).
+        // ====================================================================
+        (function () {
+            const urlGalerie = @json(route('forum.galerie-classe', $classe));
+
+            const panneau = document.getElementById('panneauGalerie');
+            const grille = document.getElementById('grilleGalerie');
+            const vide = document.getElementById('galerieVide');
+            const compteur = document.getElementById('galerieCompteur');
+            const boutonPlus = document.getElementById('galeriePlus');
+            const erreur = document.getElementById('galerieErreur');
+
+            let suivant = null;        // id à partir duquel charger le lot suivant (null = plus rien à charger)
+            let chargement = false;    // évite deux chargements en même temps
+            // Les liens de la galerie ont leur propre classe : le zoom de la conversation n'est pas touché.
+            // Avec data-gallery, on peut passer d'une photo à l'autre dans l'agrandissement.
+            const lightboxGalerie = GLightbox({ selector: '.glightbox-galerie' });
+
+            // Textes toujours posés avec textContent / setAttribute : aucun HTML venant d'un utilisateur n'est interprété
+            function ajouterVignette(m) {
+                const col = document.createElement('div');
+                col.className = 'col-4';
+
+                const lien = document.createElement('a');
+                lien.className = 'glightbox-galerie d-block';
+                lien.href = m.url;
+                lien.setAttribute('data-gallery', 'galerie-forum');
+                lien.setAttribute('data-description', m.auteur + ' · ' + m.date);
+
+                // Vidéo : GLightbox doit savoir que c'est une vidéo hébergée chez nous (l'URL n'a pas d'extension .mp4)
+                if (m.est_video) {
+                    lien.setAttribute('data-type', 'video');
+                    lien.setAttribute('data-source', 'local');
+                    lien.style.position = 'relative';
+
+                    // Vignette = 1re image de la vidéo (#t=0.1 évite l'image noire du tout début)
+                    const apercu = document.createElement('video');
+                    apercu.src = m.url + '#t=0.1';
+                    apercu.preload = 'metadata';
+                    apercu.muted = true;
+                    apercu.className = 'rounded w-100';
+                    apercu.style.aspectRatio = '1 / 1';
+                    apercu.style.objectFit = 'cover';
+                    apercu.style.pointerEvents = 'none';   // le clic va au lien, pas au lecteur
+                    lien.appendChild(apercu);
+
+                    // Pastille « lecture » pour distinguer une vidéo d'une photo
+                    const play = document.createElement('i');
+                    play.className = 'ri-play-circle-fill text-white fs-1';
+                    play.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-shadow:0 0 6px rgba(0,0,0,.6);pointer-events:none';
+                    lien.appendChild(play);
+                } else {
+                    const img = document.createElement('img');
+                    img.src = m.url;
+                    img.alt = 'Photo partagée par ' + m.auteur;
+                    img.loading = 'lazy';
+                    img.className = 'rounded w-100';
+                    img.style.aspectRatio = '1 / 1';
+                    img.style.objectFit = 'cover';
+                    lien.appendChild(img);
+                }
+
+                col.appendChild(lien);
+                grille.appendChild(col);
+            }
+
+            // Charge un lot : le premier (avant = null) ou le suivant (avant = id de la dernière photo affichée)
+            async function charger(avant) {
+                if (chargement) return;
+                chargement = true;
+                boutonPlus.disabled = true;
+                erreur.classList.add('d-none');
+
+                try {
+                    const url = avant ? urlGalerie + '?' + new URLSearchParams({ avant: avant }) : urlGalerie;
+                    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!r.ok) throw new Error('http ' + r.status);
+                    const data = await r.json();
+
+                    data.medias.forEach(ajouterVignette);
+                    lightboxGalerie.reload();   // prend en compte les nouvelles vignettes
+
+                    suivant = data.suivant;
+                    compteur.textContent = data.total + (data.total > 1 ? ' médias (photos et vidéos)' : ' média');
+                    vide.classList.toggle('d-none', data.total > 0);
+                    boutonPlus.classList.toggle('d-none', suivant === null);
+                } catch (e) {
+                    erreur.textContent = 'Impossible de charger la galerie. Réessayez.';
+                    erreur.classList.remove('d-none');
+                } finally {
+                    chargement = false;
+                    boutonPlus.disabled = false;
+                }
+            }
+
+            // À chaque ouverture : on repart de zéro avec les photos les plus récentes
+            panneau.addEventListener('show.bs.offcanvas', function () {
+                grille.replaceChildren();
+                suivant = null;
+                boutonPlus.classList.add('d-none');
+                compteur.textContent = '';
+                vide.classList.add('d-none');
+                charger(null);
+            });
+
+            boutonPlus.addEventListener('click', function () {
+                if (suivant !== null) charger(suivant);
+            });
         })();
     </script>
 @endsection

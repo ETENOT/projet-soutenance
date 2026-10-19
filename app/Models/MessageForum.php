@@ -14,6 +14,17 @@ class MessageForum extends Model
 
     protected $fillable = ['classe_id', 'user_id', 'parent_id', 'contenu', 'photo'];
 
+    // La colonne "photo" contient le chemin d'une photo OU d'une vidéo (pas de nouvelle colonne :
+    // le type se déduit de l'extension du fichier enregistré). "qt" = vidéos iPhone (.mov) renommées par Laravel.
+    public const EXTENSIONS_VIDEO = ['mp4', 'webm', 'mov', 'qt'];
+
+    // $message->est_video : true si le fichier joint est une vidéo
+    public function getEstVideoAttribute(): bool
+    {
+        return $this->photo !== null
+            && in_array(strtolower(pathinfo($this->photo, PATHINFO_EXTENSION)), self::EXTENSIONS_VIDEO, true);
+    }
+
     public function classe()
     {
         return $this->belongsTo(Classe::class);
