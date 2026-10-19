@@ -332,10 +332,22 @@ class ClasseController extends Controller
 
     public function store(Request $request, Cours $cours)
     {
-        $data = $this->donneesValidees($request);
+        $data = $request->validate($this->validationRules());
 
-        // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
-        $cours->classes()->create($data);
+        // Les jours exclus ne sont pas une colonne de "classes" : on les sépare avant la création
+        $joursExclus = $data['jours_exclus'] ?? [];
+        unset($data['jours_exclus']);
+
+        // Les jours exclus doivent être des jours ouvrés de la période (et pas tous les jours)
+        if ($erreur = Classe::erreurJoursExclus($joursExclus, $data['date_debut'], $data['date_fin'])) {
+            return back()->withInput()->withErrors(['jours_exclus' => $erreur]);
+        }
+
+        DB::transaction(function () use ($cours, $data, $joursExclus) {
+            // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
+            $classe = $cours->classes()->create($data);
+            $classe->synchroniserJoursExclus($joursExclus);
+        });
 
         return redirect()->route('admin.cours.classes.index', $cours)
             ->with('success', 'Classe créée avec succès.');
@@ -357,12 +369,52 @@ class ClasseController extends Controller
 
     public function update(Request $request, Cours $cours, Classe $classe)
     {
-        $data = $this->donneesValidees($request, $classe);
+        $data = $request->validate($this->validationRules());
+
+        // Ce formulaire n'envoie PAS les jours non comptabilisés (ils ont leur propre formulaire,
+        // voir updateJoursExclus) : on ne touche donc surtout pas à la liste enregistrée ici.
+        unset($data['jours_exclus']);
 
         $classe->update($data);
 
         return redirect()->route('admin.cours.classes.index', $cours)
             ->with('success', 'Classe modifiée avec succès.');
+    }
+
+    // Enregistre les jours à NE PAS compter dans le taux de présence (formulaire dédié de la page de la classe).
+    // La liste envoyée REMPLACE l'ancienne. Modifiable à tout moment tant que la classe n'est pas fermée.
+    public function updateJoursExclus(Request $request, Cours $cours, Classe $classe)
+    {
+        $retour = redirect()->route('admin.cours.classes.edit', [$cours, $classe]);
+
+        // Une classe fermée est figée (taux déjà calculés)
+        if ($classe->estFermee()) {
+            return $retour->with('error', 'La classe est fermée : les jours non comptabilisés ne peuvent plus être modifiés.');
+        }
+
+        $data = $request->validate([
+            'jours_exclus' => ['nullable', 'array'],
+            'jours_exclus.*' => ['date_format:Y-m-d', 'distinct'],
+        ]);
+
+        $dates = $data['jours_exclus'] ?? [];
+
+        // Jours de cours de la période (pas de dimanche, pas hors période), et pas tous les jours
+        if ($erreur = Classe::erreurJoursExclus($dates, $classe->date_debut, $classe->date_fin)) {
+            return back()->withInput()->withErrors(['jours_exclus' => $erreur]);
+        }
+
+        $classe->synchroniserJoursExclus($dates);
+
+        // On RELIT la base pour confirmer ce qui a vraiment été enregistré
+        $attendus = count(array_unique($dates));
+        $enregistres = $classe->joursExclus()->count();
+
+        if ($enregistres !== $attendus) {
+            return $retour->with('error', "Seuls {$enregistres} jour(s) non comptabilisé(s) sur {$attendus} ont été enregistrés.");
+        }
+
+        return $retour->with('success', "Jours non comptabilisés enregistrés : {$enregistres}. Les taux de présence sont recalculés.");
     }
 
     public function destroy(Cours $cours, Classe $classe)

@@ -60,7 +60,7 @@
                     <h5 class="card-title mb-0">Informations</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.cours.classes.update', [$cours, $classe]) }}" method="POST" enctype="multipart/form-data">
+                    <form action="{{ route('admin.cours.classes.update', [$cours, $classe]) }}" method="POST">
                         @csrf
                         @method('PUT')
 
@@ -69,14 +69,6 @@
                             <input type="text" name="nom" id="nom" class="form-control @error('nom') is-invalid @enderror"
                                    value="{{ old('nom', $classe->nom) }}">
                             @error('nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="capacite_min" class="form-label">Capacité minimale <span class="text-danger">*</span></label>
-                            <input type="number" name="capacite_min" id="capacite_min" min="1" max="255" required
-                                   class="form-control @error('capacite_min') is-invalid @enderror"
-                                   value="{{ old('capacite_min', $classe->capacite_min) }}">
-                            @error('capacite_min')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="mb-3">
@@ -93,30 +85,6 @@
                            class="form-control @error('lieu') is-invalid @enderror"
                            value="{{ old('lieu', $classe->lieu) }}">
                     @error('lieu')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-                <div class="mb-3">
-                    <label for="lieu_lien" class="form-label">Lien Google Maps du lieu <span class="text-muted">(facultatif)</span></label>
-                    <input type="url" name="lieu_lien" id="lieu_lien" placeholder="https://maps.app.goo.gl/..."
-                           class="form-control @error('lieu_lien') is-invalid @enderror"
-                           value="{{ old('lieu_lien', $classe->lieu_lien) }}">
-                    <div class="form-text">Sans lien, une recherche Google Maps sur le nom du lieu est utilisée.</div>
-                    @error('lieu_lien')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="mb-3">
-                    <label for="lieu_image" class="form-label">Photo du lieu <span class="text-muted">(facultative)</span></label>
-                    @if ($classe->lieu_image_url)
-                        <div class="mb-2">
-                            <img src="{{ $classe->lieu_image_url }}" alt="Photo actuelle du lieu" class="avatar-lg rounded object-fit-cover">
-                        </div>
-                    @endif
-                    <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
-                           class="form-control @error('lieu_image') is-invalid @enderror">
-                    @error('lieu_image')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
@@ -157,9 +125,7 @@
                         <button type="submit" class="btn btn-primary">Enregistrer</button>
                     </form>
                 </div>
-            </div>
-
-            
+            </div>   
         </div>
 
         <div class="col-lg-6">
@@ -227,6 +193,60 @@
                         <button type="submit" class="btn btn-sm btn-outline-primary mt-3">Ajouter les utilisateurs sélectionnés</button>
                     </form>
                 </div>
+            </div>
+        </div>
+        {{-- ====== JOURS NON COMPTABILISÉS DANS LE TAUX DE PRÉSENCE ======
+            Formulaire SÉPARÉ de « Informations », avec son propre bouton : il n'envoie que la liste des jours
+            (champs cachés jours_exclus[]) à ClasseController::updateJoursExclus(). --}}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Jours non comptabilisés</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('admin.cours.classes.jours-exclus', [$cours, $classe]) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    @include('classes.jours_exclus', [
+                        'joursExclus' => $classe->datesExclues()->all(),
+                        'min' => $classe->date_debut->toDateString(),   // bornes fixes : celles de la classe enregistrée
+                        'max' => $classe->date_fin->toDateString(),
+                        'verrouille' => $classe->estFermee(),
+                    ])
+
+                    @unless ($classe->estFermee())
+                        <button type="submit" class="btn btn-outline-primary mt-3">
+                            <i class="ri-save-line me-1"></i>Enregistrer les jours
+                        </button>
+                    @endunless
+                </form>
+            </div>
+        </div>
+        {{-- ====== JOURS NON COMPTABILISÉS DANS LE TAUX DE PRÉSENCE ======
+            Formulaire SÉPARÉ de « Informations », avec son propre bouton : il n'envoie que la liste des jours
+            (champs cachés jours_exclus[]) à ClasseController::updateJoursExclus(). --}}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Jours non comptabilisés</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ route('admin.cours.classes.jours-exclus', [$cours, $classe]) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    @include('classes.jours_exclus', [
+                        'joursExclus' => $classe->datesExclues()->all(),
+                        'min' => $classe->date_debut->toDateString(),   // bornes fixes : celles de la classe enregistrée
+                        'max' => $classe->date_fin->toDateString(),
+                        'verrouille' => $classe->estFermee(),
+                    ])
+
+                    @unless ($classe->estFermee())
+                        <button type="submit" class="btn btn-outline-primary mt-3">
+                            <i class="ri-save-line me-1"></i>Enregistrer les jours
+                        </button>
+                    @endunless
+                </form>
             </div>
         </div>
     </div>

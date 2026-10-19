@@ -118,6 +118,11 @@
                     </div>
                 </div>
 
+                {{-- Jours à ne pas compter dans le taux de présence (modifiables plus tard) --}}
+                <div class="mb-3">
+                    @include('classes.jours_exclus', ['joursExclus' => [], 'debutId' => 'date_debut', 'finId' => 'date_fin'])
+                </div>
+
                 <button type="submit" class="btn btn-primary">Créer la classe</button>
                 <a href="{{ route('admin.cours.classes.index', $cours) }}" class="btn btn-light">Annuler</a>
             </form>
