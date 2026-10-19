@@ -358,18 +358,25 @@ class ClasseController extends Controller
         // Charge les inscrits, leur utilisateur et leur paiement en une fois (3 requêtes en tout).
         // Sans ça, la vue ferait une requête par ligne pour retrouver l'utilisateur
         // et savoir si l'inscription est payée.
-        $classe->load('inscriptions.user', 'inscriptions.paiement');
+        $classe->load('inscriptions.user', 'inscriptions.paiement', 'joursExclus');
+        
+        // Utilisateurs que l'on peut encore inscrire : ni admin, ni formateur, pas déjà inscrits
+        $candidats = User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))
+            ->whereNotIn('id', $classe->inscriptions->pluck('user_id'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
 
         return view('classes.edit', [
             'cours' => $cours,
             'classe' => $classe,
             'formateurs' => $this->formateurs(),
+            'candidats' => $candidats,
         ]);
     }
 
     public function update(Request $request, Cours $cours, Classe $classe)
     {
-        $data = $request->validate($this->validationRules());
+        $data = $this->donneesValidees($request, $classe);
 
         // Ce formulaire n'envoie PAS les jours non comptabilisés (ils ont leur propre formulaire,
         // voir updateJoursExclus) : on ne touche donc surtout pas à la liste enregistrée ici.

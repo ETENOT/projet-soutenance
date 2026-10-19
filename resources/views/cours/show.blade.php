@@ -210,10 +210,6 @@
                                         <td class="text-muted"><i class="ri-bar-chart-line text-danger me-2"></i>Niveau</td>
                                         <td class="text-end fw-bold">{{ $cours->niveau ?: 'Non précisé' }}</td>
                                     </tr>
-                                    <tr>
-                                        <td class="text-muted"><i class="ri-time-line text-danger me-2"></i>Durée estimée du cours</td>
-                                        <td class="text-end fw-bold">{{ $cours->duree ?: 'Non précisée' }}</td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -235,6 +231,9 @@
                                             <i class="ri-calendar-line text-danger me-1"></i>
                                             Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
                                             au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
+                                        </div>
+                                        <div class="small mt-1">
+                                            @include('partials.lieu-classe', ['classe' => $classe])
                                         </div>
                                     </div>
                                     <span class="badge bg-success-subtle text-success flex-shrink-0">

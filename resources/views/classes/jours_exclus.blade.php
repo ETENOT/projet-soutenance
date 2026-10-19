@@ -95,18 +95,6 @@
             return true;
         }
 
-        if (saisie) {
-            document.getElementById('jour-exclu-ajouter').addEventListener('click', ajouterSaisie);
-
-            // Date choisie mais pas "ajoutée" : on l'ajoute automatiquement à l'enregistrement
-            // (sinon elle serait perdue en silence). Si elle est refusée, on bloque l'envoi.
-            if (saisie.form) {
-                saisie.form.addEventListener('submit', function (e) {
-                    if (!ajouterSaisie()) { e.preventDefault(); }
-                });
-            }
-        }
-
         // Redessine les badges + les champs cachés envoyés au serveur
         function dessiner() {
             jours.sort();
@@ -139,25 +127,15 @@
         }
 
         if (saisie) {
-            document.getElementById('jour-exclu-ajouter').addEventListener('click', function () {
-                message.textContent = '';
-                const iso = saisie.value;
-                if (!iso) { return; }
+            document.getElementById('jour-exclu-ajouter').addEventListener('click', ajouterSaisie);
 
-                const b = bornes();
-                const [a, m, j] = iso.split('-').map(Number);
-                const jourSemaine = new Date(a, m - 1, j).getDay(); // 0 = dimanche (le samedi est un jour de cours)
-
-                if (jourSemaine === 0) {
-                    message.textContent = 'Ce jour tombe un dimanche : il n\'est de toute façon pas compté.';
-                } else if ((b.min && iso < b.min) || (b.max && iso > b.max)) {
-                    message.textContent = 'Ce jour est en dehors de la période de la classe.';
-                } else if (!jours.includes(iso)) {
-                    jours.push(iso);
-                    dessiner();
-                }
-                saisie.value = '';
-            });
+            // Date choisie mais pas "ajoutée" : on l'ajoute automatiquement à l'enregistrement
+            // (sinon elle serait perdue en silence). Si elle est refusée, on bloque l'envoi.
+            if (saisie.form) {
+                saisie.form.addEventListener('submit', function (e) {
+                    if (!ajouterSaisie()) { e.preventDefault(); }
+                });
+            }
         }
 
         dessiner();

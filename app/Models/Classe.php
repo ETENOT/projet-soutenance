@@ -15,7 +15,7 @@ class Classe extends Model
     // fermee_le / fermee_par : renseignés uniquement par ClasseClotureService.
     protected $fillable = [
         'nom', 'capacite_max', 'capacite_min', 'date_debut', 'date_fin', 'lieu',
-        'lieu_lien', 'lien_image', 'cours_id',
+        'lieu_lien', 'lieu_image', 'cours_id',
         'formateur_id', 'fermee_le', 'fermee_par',
     ];
     // Force Laravel à traiter ces colonnes comme des objets Carbon
@@ -387,15 +387,6 @@ class Classe extends Model
                 if ($dates->count() >= $nbJoursDeCours) {
                     return 'Au moins un jour de formation doit rester comptabilisé.';
                 }
-            }
-        }
-
-        // On empêche d'exclure TOUS les jours : il n'y aurait plus de taux calculable
-        if ($dates->isNotEmpty()) {
-            $nbJoursOuvres = collect(CarbonPeriod::create($debut, $fin))->filter(fn ($j) => $j->isWeekday())->count();
-
-            if ($dates->count() >= $nbJoursOuvres) {
-                return 'Au moins un jour de formation doit rester comptabilisé.';
             }
         }
 

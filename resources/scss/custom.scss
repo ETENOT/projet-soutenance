@@ -660,3 +660,35 @@ html[data-sidebar="dark"] {
         border-radius: 0.1rem;
     }
 }
+
+
+// ============================================================
+// 4. GESTION D'UNE CLASSE (liste de choix des utilisateurs à inscrire)
+// ============================================================
+
+// Zone défilante : reste pratique avec beaucoup d'utilisateurs
+.nv-choix-liste {
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 0.25rem;
+    border: 1px solid var(--vz-border-color);
+    border-radius: 0.75rem;
+}
+
+// Une ligne cliquable = un utilisateur
+.nv-choix {
+    border: 1px solid var(--vz-border-color);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+        border-color: rgba(var(--vz-primary-rgb), 0.45);
+        background-color: rgba(var(--vz-primary-rgb), 0.04);
+    }
+
+    .form-check-input:checked + .nv-choix-label {
+        color: var(--vz-primary);
+        font-weight: 600;
+    }
+}
