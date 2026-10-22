@@ -2,85 +2,120 @@
 
 namespace Database\Seeders;
 
-use App\Models\Classe;
+use App\Models\Avis;
 use App\Models\Cours;
-use App\Models\Particulier;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class AvisSeeder extends Seeder
 {
+    /** Proportion du catalogue gardée sans avis pour les captures de démonstration. */
+    private const POURCENTAGE_COURS_SANS_AVIS = 10;
+
     /**
-     * Crée des particuliers de test, les inscrit (paiement validé) à une classe
-     * du premier cours et leur fait laisser un avis, pour tester la moyenne.
-     * À lancer après UserSeeder, CoursSeeder et ClasseSeeder.
+     * Génère des avis de démonstration pour les cours du catalogue.
+     *
+     * À exécuter après RoleSeeder, UserSeeder et les seeders de cours.
+     * Chaque exécution remplace les avis pour éviter les doublons.
      */
     public function run(): void
     {
-        $roleParticulier = Role::where('nom', 'particulier')->firstOrFail();
+        DB::transaction(function (): void {
+            // Remplacer l'échantillon existant rend le seeder relançable.
+            Avis::query()->delete();
 
-        $cours  = Cours::firstOrFail();
-        $classe = Classe::where('cours_id', $cours->id)->firstOrFail();
+            // La factory fournit des utilisateurs distincts pour les avis.
+            $utilisateursManquants = 15 - User::count();
+            if ($utilisateursManquants > 0) {
+                $roleParticulier = Role::where('nom', 'particulier')->firstOrFail();
+                User::factory()
+                    ->count($utilisateursManquants)
+                    ->create(['role_id' => $roleParticulier->id]);
+            }
 
-        // [nom, email, note, commentaire]
-        $jeux = [
-            ['Sasuke',  'sasuke@test.com',  5, 'Formation très complète, formateur excellent.'],
-            ['Sakura',  'sakura@test.com',  4, 'Bon contenu, rythme agréable.'],
-            ['Messi',   'messi@test.com',   5, null],
-            ['Neymar',  'neymar@test.com',  3, 'Correct, mais un peu court.'],
-            ['Mbappé',  'mbappe@test.com',  4, 'Les exercices pratiques sont utiles.'],
-            ['Kakashi', 'kakashi@test.com', 2, 'Je m\'attendais à plus de pratique.'],
-        ];
-        // Moyenne attendue : (5+4+5+3+4+2) / 6 = 3,8 (6 avis)
+            $utilisateurs = User::query()->get();
+            $commentaires = [
+                1 => 'Le contenu ne correspondait pas à mes attentes.',
+                2 => 'Quelques notions utiles, mais les explications pourraient être plus approfondies.',
+                3 => 'Formation correcte et claire, malgré un manque de pratique.',
+                4 => 'Très bonne formation, claire et bien structurée.',
+                5 => 'Excellente formation, très complète et immédiatement utile.',
+            ];
 
-        foreach ($jeux as [$nom, $email, $note, $commentaire]) {
-            $particulier = Particulier::create([
-                'telephone'         => '074123456',
-                'date_de_naissance' => '1995-06-15',
-            ]);
+            $cours = Cours::query()->get();
+            $coursSansAvis = collect();
 
-            $user = User::create([
-                'name'              => $nom,
-                'email'             => $email,
-                'password'          => Hash::make('12345678'),
-                'email_verified_at' => now(),
-                'role_id'           => $roleParticulier->id,
-                'particulier_id'    => $particulier->id,
-            ]);
+            // Une sélection globale garantit qu'une part visible du catalogue reste sans note.
+            if ($cours->isNotEmpty() && self::POURCENTAGE_COURS_SANS_AVIS > 0) {
+                $nombreCoursSansAvis = min(
+                    $cours->count(),
+                    max(1, (int) round($cours->count() * self::POURCENTAGE_COURS_SANS_AVIS / 100))
+                );
+                $coursSansAvis = $cours->random($nombreCoursSansAvis)->pluck('id');
+            }
 
-            // Inscription à une classe du cours
-            $inscriptionId = DB::table('inscriptions')->insertGetId([
-                'date_inscription' => now()->toDateString(),
-                'statut'           => 'confirmee',
-                'user_id'          => $user->id,
-                'classe_id'        => $classe->id,
-                'created_at'       => now(),
-                'updated_at'       => now(),
-            ]);
+            foreach ($cours as $cours) {
+                if ($coursSansAvis->contains($cours->id)) {
+                    continue;
+                }
 
-            // Paiement validé (condition pour pouvoir donner un avis)
-            DB::table('paiements')->insert([
-                'montant'        => $cours->prix_particulier ?? 0,
-                'mode'           => 'direct',
-                'reference'      => null,
-                'statut'         => 'valide',
-                'inscription_id' => $inscriptionId,
-                'created_at'     => now(),
-                'updated_at'     => now(),
-            ]);
+                // Chaque cours a une qualité propre; ses notes sont tirées autour de cette valeur.
+                $qualite = $this->tirerQualite();
+                $nombreAvis = random_int(3, 12);
+                $avis = [];
 
-            // L'avis
-            DB::table('avis')->insert([
-                'user_id'     => $user->id,
-                'cours_id'    => $cours->id,
-                'note'        => $note,
-                'commentaire' => $commentaire,
-                'created_at'  => now()->subDays(rand(0, 20)),
-                'updated_at'  => now(),
-            ]);
+                foreach ($utilisateurs->random($nombreAvis) as $utilisateur) {
+                    $note = $this->tirerNote($qualite);
+                    $avis[] = [
+                        'user_id' => $utilisateur->id,
+                        'cours_id' => $cours->id,
+                        'note' => $note,
+                        'commentaire' => $commentaires[$note],
+                        'created_at' => now()->subDays(random_int(0, 90)),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                Avis::query()->insert($avis);
+            }
+        });
+    }
+
+    private function tirerQualite(): float
+    {
+        // La majorité des cours sont bons, avec quelques cours moyens ou excellents.
+        $repartition = random_int(1, 100);
+
+        if ($repartition <= 15) {
+            return random_int(28, 35) / 10;
         }
+
+        if ($repartition <= 80) {
+            return random_int(36, 44) / 10;
+        }
+
+        return random_int(45, 49) / 10;
+    }
+
+    private function tirerNote(float $qualite): int
+    {
+        // Pondération en cloche : une note proche de la qualité est plus probable.
+        $poids = [];
+        foreach (range(1, 5) as $note) {
+            $ecart = $note - $qualite;
+            $poids[$note] = exp(-($ecart ** 2) / (2 * (0.85 ** 2)));
+        }
+
+        $tirage = random_int(0, 1_000_000) / 1_000_000 * array_sum($poids);
+        foreach ($poids as $note => $poidsNote) {
+            $tirage -= $poidsNote;
+            if ($tirage <= 0) {
+                return $note;
+            }
+        }
+
+        return 5;
     }
 }

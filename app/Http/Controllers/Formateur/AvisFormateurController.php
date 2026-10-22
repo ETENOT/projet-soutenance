@@ -18,6 +18,9 @@ class AvisFormateurController extends FormateurController
     public function index(Request $request)
     {
         $mesClasses = Classe::where('formateur_id', Auth::id())
+            ->whereHas('avisFormateurs')
+            ->with('cours')
+            ->withCount('avisFormateurs')
             ->orderByDesc('date_debut')
             ->get();
 
@@ -38,6 +41,9 @@ class AvisFormateurController extends FormateurController
             'classeFiltre' => $classeFiltre,
             'avis' => $avis,
             'moyennes' => AvisFormateur::moyennes($avis),
+            'nombreAvisTotal' => $classeFiltre
+                ? $classeFiltre->avisFormateurs()->count()
+                : $mesClasses->sum('avis_formateurs_count'),
         ]);
     }
 }

@@ -51,6 +51,10 @@
                         @endif
 
                         <div class="d-flex gap-2">
+                            @if($inscription->paiement)
+                                <a href="{{ route('paiements.recu', $inscription->paiement) }}" target="_blank" class="btn btn-outline-primary btn-sm">Reçu</a>
+                            @endif
+
                             <a href="{{ route('cours.show', $inscription->classe->cours) }}"
                                class="btn btn-primary btn-sm">
                                 Voir le cours

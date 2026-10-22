@@ -86,7 +86,6 @@ class ClasseScenariosSeeder extends Seeder
             Classe::updateOrCreate(
                 ['nom' => $s['nom'], 'cours_id' => $cours->id],
                 [
-                    'capacite_min' => 2,
                     'capacite_max' => 8,
                     'date_debut' => today()->addDays($s['debut']),
                     'date_fin' => today()->addDays($s['fin']),

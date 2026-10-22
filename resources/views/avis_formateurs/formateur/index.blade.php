@@ -15,27 +15,27 @@
 
 <div class="container-fluid pb-4">
 
-    {{-- ===== Filtre par classe ===== --}}
-    <div class="card border shadow-sm mb-3">
-        <div class="card-body">
-            <form action="{{ route('avis_formateurs.formateur.index') }}" method="GET" class="row g-2 align-items-end">
-                <div class="col-md-8">
-                    <label for="classe" class="form-label mb-1">Classe</label>
-                    <select id="classe" name="classe" class="form-select">
-                        <option value="">Toutes mes classes</option>
-                        @foreach ($mesClasses as $classe)
-                            <option value="{{ $classe->id }}" @selected($classeFiltre?->id === $classe->id)>
-                                {{ $classe->nom }} ({{ $classe->date_debut->format('d/m/Y') }})
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4 d-grid">
-                    <button type="submit" class="btn btn-primary">Filtrer</button>
-                </div>
-            </form>
+    <form method="GET" action="{{ route('avis_formateurs.formateur.index') }}" class="mb-3">
+        <div class="input-group">
+            <label class="input-group-text" for="filtre-classe-avis">
+                <i class="ri-filter-3-line me-1"></i>Classe
+            </label>
+            <select id="filtre-classe-avis" name="classe" class="form-select">
+                <option value="">Tous mes avis ({{ $nombreAvisTotal }})</option>
+                @foreach ($mesClasses as $classe)
+                    <option value="{{ $classe->id }}" @selected($classeFiltre?->id === $classe->id)>
+                        {{ $classe->cours->titre }} — {{ $classe->nom }} ({{ $classe->avis_formateurs_count }} avis)
+                    </option>
+                @endforeach
+            </select>
+            <button type="submit" class="btn btn-primary">
+                <i class="ri-search-line me-1"></i>Filtrer
+            </button>
+            @if ($classeFiltre)
+                <a href="{{ route('avis_formateurs.formateur.index') }}" class="btn btn-light">Effacer</a>
+            @endif
         </div>
-    </div>
+    </form>
 
     <div class="row g-4">
 
@@ -50,7 +50,9 @@
 
                         @include('cours.partials.etoiles', ['note' => $moyennes['globale'] ?? 0, 'taille' => 'fs-4'])
 
-                        <p class="text-muted mt-1 mb-3">{{ $avis->count() }} avis</p>
+                        <p class="text-muted mt-1 mb-3">
+                            {{ $avis->count() }} {{ $avis->count() === 1 ? 'avis affiché' : 'avis affichés' }}
+                        </p>
                     </div>
 
                     @if ($moyennes)

@@ -89,5 +89,97 @@ class CoursSeeder extends Seeder
             'prix_particulier' => 25000,
             'prix_entreprise' => 40000,
         ]);
+
+        // Dix formations supplémentaires pour tester la pagination du catalogue.
+        // updateOrCreate permet de relancer cette partie sans créer de doublons.
+        $formationsCatalogue = [
+            [
+                'titre' => 'Gestion du temps et productivité',
+                'categorie' => 'Développement personnel',
+                'description' => 'Organiser son travail et mieux gérer ses priorités au quotidien.',
+                'programme' => "## Organiser son activité\n- Définir ses priorités\n- Planifier sa semaine\n\n## Gagner en efficacité\n- Réduire les interruptions\n- Suivre ses objectifs",
+                'prix_particulier' => 45000,
+                'prix_entreprise' => 75000,
+            ],
+            [
+                'titre' => 'Marketing numérique',
+                'categorie' => 'Marketing',
+                'description' => 'Construire une présence en ligne et mesurer ses résultats.',
+                'programme' => "## Définir sa stratégie\n- Identifier son public\n- Choisir ses canaux\n\n## Déployer ses campagnes\n- Créer du contenu\n- Mesurer les résultats",
+                'prix_particulier' => 70000,
+                'prix_entreprise' => 120000,
+            ],
+            [
+                'titre' => 'Initiation à la cybersécurité',
+                'categorie' => 'Informatique',
+                'description' => 'Adopter les bons réflexes pour protéger ses comptes et ses données.',
+                'programme' => "## Comprendre les risques\n- Reconnaître les menaces courantes\n- Protéger ses mots de passe\n\n## Sécuriser ses usages\n- Vérifier les liens et pièces jointes\n- Sauvegarder ses données",
+                'prix_particulier' => 55000,
+                'prix_entreprise' => 90000,
+            ],
+            [
+                'titre' => 'Gestion des ressources humaines',
+                'categorie' => 'Ressources humaines',
+                'description' => 'Découvrir les pratiques essentielles de gestion des équipes.',
+                'programme' => "## Recruter et intégrer\n- Préparer un recrutement\n- Réussir l'accueil d'un collaborateur\n\n## Accompagner les équipes\n- Fixer des objectifs\n- Conduire un entretien de suivi",
+                'prix_particulier' => 85000,
+                'prix_entreprise' => 145000,
+            ],
+            [
+                'titre' => 'Entrepreneuriat et création d’entreprise',
+                'categorie' => 'Entrepreneuriat',
+                'description' => 'Structurer une idée et préparer les premières étapes d’un projet.',
+                'programme' => "## Valider son idée\n- Étudier son marché\n- Définir son offre\n\n## Lancer son activité\n- Construire un budget prévisionnel\n- Préparer un plan d'action",
+                'prix_particulier' => 65000,
+                'prix_entreprise' => 110000,
+            ],
+            [
+                'titre' => 'Communication professionnelle',
+                'categorie' => 'Communication',
+                'description' => 'Améliorer ses échanges écrits et oraux en milieu professionnel.',
+                'programme' => "## Communiquer clairement\n- Structurer un message\n- Adapter son ton à son interlocuteur\n\n## Échanger efficacement\n- Écouter et reformuler\n- Préparer une présentation courte",
+                'prix_particulier' => 50000,
+                'prix_entreprise' => 85000,
+            ],
+            [
+                'titre' => 'Service client et relation commerciale',
+                'categorie' => 'Commerce',
+                'description' => 'Accueillir les clients, comprendre leurs besoins et suivre leurs demandes.',
+                'programme' => "## Accueillir et conseiller\n- Poser les bonnes questions\n- Présenter une solution adaptée\n\n## Fidéliser ses clients\n- Traiter une réclamation\n- Assurer le suivi après-vente",
+                'prix_particulier' => 60000,
+                'prix_entreprise' => 100000,
+            ],
+            [
+                'titre' => 'Analyse de données avec Excel',
+                'categorie' => 'Bureautique',
+                'description' => 'Préparer, analyser et présenter des données avec Excel.',
+                'programme' => "## Préparer les données\n- Nettoyer un tableau\n- Utiliser les tris et filtres\n\n## Analyser et présenter\n- Créer un tableau croisé dynamique\n- Choisir un graphique adapté",
+                'prix_particulier' => 75000,
+                'prix_entreprise' => 125000,
+            ],
+            [
+                'titre' => 'Comptabilité et gestion de trésorerie',
+                'categorie' => 'Comptabilité',
+                'description' => 'Suivre les opérations courantes et anticiper les besoins de trésorerie.',
+                'programme' => "## Suivre les opérations\n- Lire les documents comptables\n- Enregistrer les mouvements courants\n\n## Piloter la trésorerie\n- Construire un plan de trésorerie\n- Repérer les écarts et agir",
+                'prix_particulier' => 80000,
+                'prix_entreprise' => 135000,
+            ],
+            [
+                'titre' => 'Design graphique avec Canva',
+                'categorie' => 'Communication visuelle',
+                'description' => 'Créer des visuels cohérents pour des supports numériques et imprimés.',
+                'programme' => "## Concevoir un visuel\n- Choisir une mise en page\n- Harmoniser couleurs et typographies\n\n## Décliner ses supports\n- Adapter un format aux réseaux sociaux\n- Exporter pour le web et l'impression",
+                'prix_particulier' => 50000,
+                'prix_entreprise' => 85000,
+            ],
+        ];
+
+        foreach ($formationsCatalogue as $formation) {
+            Cours::updateOrCreate(
+                ['titre' => $formation['titre']],
+                $formation
+            );
+        }
     }
 }

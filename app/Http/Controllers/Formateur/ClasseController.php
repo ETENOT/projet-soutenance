@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Formateur;
 use App\Models\Classe;
 use App\Services\ClasseClotureService;
 use DomainException;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ClasseController extends FormateurController
@@ -12,17 +13,36 @@ class ClasseController extends FormateurController
     /**
      * Liste des classes du formateur : état, dates, lieu, inscrits payés / capacité.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $classes = Classe::where('formateur_id', Auth::id())
+        $etats = ['a_venir', 'en_cours', 'terminee'];
+        $etatFiltre = in_array($request->query('etat'), $etats, true)
+            ? $request->query('etat')
+            : null;
+
+        $query = Classe::where('formateur_id', Auth::id())
             ->with('cours')
             // withCount avec filtre : crée l'attribut $classe->payes_count en UNE requête
             // pour toutes les classes (sinon on ferait une requête par ligne du tableau).
-            ->withCount(['inscriptions as payes_count' => fn ($q) => $q->payees()])
-            ->orderByDesc('date_debut')
-            ->get();
+            ->withCount(['inscriptions as payes_count' => fn ($q) => $q->payees()]);
 
-        return view('classes.formateur.index', ['classes' => $classes]);
+        if ($recherche = trim((string) $request->query('q'))) {
+            $query->where(function ($q) use ($recherche) {
+                $q->where('nom', 'like', "%{$recherche}%")
+                    ->orWhere('lieu', 'like', "%{$recherche}%")
+                    ->orWhereHas('cours', fn ($cours) => $cours->where('titre', 'like', "%{$recherche}%"));
+            });
+        }
+
+        if ($etatFiltre) {
+            $query->avecEtat($etatFiltre);
+        }
+
+        return view('classes.formateur.index', [
+            'classes' => $query->orderByDesc('date_debut')->get(),
+            'etatFiltre' => $etatFiltre,
+            'recherche' => $request->query('q', ''),
+        ]);
     }
 
     /**

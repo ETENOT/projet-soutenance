@@ -32,6 +32,15 @@ class AdminFormateurController extends Controller
                     ->whereDate('date_fin', '>=', today()),
             ]);
 
+        if ($request->input('situation') === 'classes_en_cours') {
+            $query->whereHas('classesAnimes', fn ($q) => $q
+                ->whereNull('fermee_le')
+                ->whereDate('date_debut', '<=', today())
+                ->whereDate('date_fin', '>=', today()));
+        } elseif ($request->input('situation') === 'sans_classe') {
+            $query->whereDoesntHave('classesAnimes');
+        }
+
         // Recherche facultative par nom ou e-mail
         if ($recherche = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($recherche) {

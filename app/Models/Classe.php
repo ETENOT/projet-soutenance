@@ -10,11 +10,14 @@ use Illuminate\Support\Collection;
 
 class Classe extends Model
 {
+    public const LIEU_PAR_DEFAUT = 'Libreville, Pleine-Orety';
+    public const IMAGE_LIEU_PAR_DEFAUT = 'images/images projets/bat-NV.jpeg';
+
     // Ces champs correspondent aux informations d'une session de formation.
     // formateur_id : le formateur affecté (affecté par l'administrateur).
     // fermee_le / fermee_par : renseignés uniquement par ClasseClotureService.
     protected $fillable = [
-        'nom', 'capacite_max', 'capacite_min', 'date_debut', 'date_fin', 'lieu',
+        'nom', 'capacite_max', 'date_debut', 'date_fin', 'lieu',
         'lieu_lien', 'lieu_image', 'cours_id',
         'formateur_id', 'fermee_le', 'fermee_par',
     ];
@@ -283,10 +286,12 @@ class Classe extends Model
            ?: 'https://www.google.com/maps/search/?api=1&query=' . urlencode($this->lieu);
    }
 
-   // URL publique de la photo du lieu (null s'il n'y en a pas)
-   public function getLieuImageUrlAttribute(): ?string
+   // URL publique de la photo du lieu, avec le bâtiment comme photo par défaut.
+   public function getLieuImageUrlAttribute(): string
    {
-       return $this->lieu_image ? asset('storage/' . $this->lieu_image) : null;
+       return $this->lieu_image
+           ? asset('storage/' . $this->lieu_image)
+           : asset(self::IMAGE_LIEU_PAR_DEFAUT);
    }
 
     // Les stagiaires peuvent donner leur avis sur le formateur dès le dernier jour de la

@@ -58,25 +58,30 @@
     </div>
 
     {{-- ===== Recherche ===== --}}
-    <div class="card border shadow-sm mb-4">
-        <div class="card-body">
-            <form method="GET" action="{{ route('admin.formateurs.index') }}" class="row g-2 align-items-center">
-                <div class="col-lg-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-transparent"><i class="ri-search-line text-primary"></i></span>
-                        <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                               placeholder="Rechercher un formateur (nom ou e-mail)..." aria-label="Rechercher un formateur">
-                    </div>
-                </div>
-                <div class="col-lg-6 d-flex gap-2 justify-content-lg-end">
-                    <button type="submit" class="btn btn-primary"><i class="ri-filter-3-line me-1"></i> Rechercher</button>
-                    <a href="{{ route('admin.formateurs.index') }}" class="btn btn-outline-secondary">
-                        <i class="ri-refresh-line me-1"></i> Réinitialiser
-                    </a>
-                </div>
-            </form>
-        </div>
-    </div>
+    @php
+        $etiquettes = [];
+        if (request('situation') === 'classes_en_cours') {
+            $etiquettes[] = ['Avec des classes en cours', ['situation'], 'ri-calendar-event-line'];
+        } elseif (request('situation') === 'sans_classe') {
+            $etiquettes[] = ['Sans classe affectée', ['situation'], 'ri-user-unfollow-line'];
+        }
+
+        $filtres = [[
+            ['nom' => 'situation', 'valeur' => 'classes_en_cours', 'type' => 'radio',
+                'libelle' => 'Avec des classes en cours', 'coche' => request('situation') === 'classes_en_cours'],
+            ['nom' => 'situation', 'valeur' => 'sans_classe', 'type' => 'radio',
+                'libelle' => 'Sans classe affectée', 'coche' => request('situation') === 'sans_classe'],
+        ]];
+    @endphp
+    @include('partials.barre-recherche', [
+        'action' => route('admin.formateurs.index'),
+        'placeholder' => 'Rechercher un formateur (nom ou e-mail)…',
+        'etiquettes' => $etiquettes,
+        'filtres' => $filtres,
+        'groupes' => [],
+        'groupe' => null,
+        'vueCriteres' => null,
+    ])
 
     {{-- ===== Tableau ===== --}}
     <div class="card border shadow-sm">

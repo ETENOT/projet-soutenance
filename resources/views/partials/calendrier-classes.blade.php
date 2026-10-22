@@ -2,7 +2,8 @@
     Petit calendrier des classes (FullCalendar), réutilisé sur l'accueil et les dashboards.
     Variables : $evenements (tableau d'évènements, une entrée par classe), $titre (facultatif),
                 $legende (facultatif) : liste de [classe CSS, libellé],
-                $aide (facultatif) : phrase d'explication sous la légende
+                $aide (facultatif) : phrase d'explication sous la légende,
+                $simple (facultatif) : true = repères de début/fin sans période teintée
     L'initialisation est dans public/build/js/pages/calendrier-classes.init.js
 --}}
 <div class="card nv-calendrier mb-0">
@@ -29,7 +30,8 @@
             </p>
         @endif
 
-        <div class="js-calendrier-classes" data-evenements="{{ json_encode($evenements ?? [], JSON_UNESCAPED_UNICODE) }}"></div>
+        <div class="js-calendrier-classes" data-evenements="{{ json_encode($evenements ?? [], JSON_UNESCAPED_UNICODE) }}"
+             @if (! empty($simple)) data-simple="1" @endif></div>
     </div>
 </div>
 

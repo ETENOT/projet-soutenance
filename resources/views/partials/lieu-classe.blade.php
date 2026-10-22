@@ -3,7 +3,8 @@
     Le nom du lieu est un lien Google Maps (localisation + itinéraire).
     Variables :
       $classe  (obligatoire)
-      $image   (bool, défaut false) : affiche la photo du lieu en miniature à la place de l'icône
+      $image   (bool, défaut false) : affiche la photo du lieu en miniature à la place de l'icône,
+                                      ou la photo du bâtiment par défaut s'il n'y en a pas de personnalisée
       $libelle (bool, défaut true)  : affiche « Lieu : » devant le nom
 --}}
 @php

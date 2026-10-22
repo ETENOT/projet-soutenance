@@ -40,16 +40,13 @@ class HomeController extends Controller
             return redirect()->route('dashboard');
         }
 
-        // Les 3 cours les mieux notés (moyenne des avis).
-        // On ne garde que les cours qui ont au moins un avis : s'il y en a moins de 3,
-        // on affiche seulement ceux-là. Départage : plus d'avis d'abord, puis le plus récent.
-        $coursPopulaires = \App\Models\Cours::has('avis')
+        // Les 4 cours les mieux notés, avec suffisamment d'avis pour être représentatifs.
+        $coursPopulaires = \App\Models\Cours::has('avis', '>=', 3)
             ->withAvg('avis', 'note')
-            ->withCount('avis')
+            ->withCount(['avis', 'chapitres', 'classes'])
             ->orderByDesc('avis_avg_note')
             ->orderByDesc('avis_count')
-            ->latest()
-            ->take(3)
+            ->take(4)
             ->get();
 
         // Chiffres clés affichés dans la bannière

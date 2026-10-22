@@ -13,11 +13,8 @@ return new class extends Migration
 
             // Informations de la session
             $table->string('nom');
-            //signifie que la capacité max peut aller jusqu'à 255 et est obligatoirement un entier positif
-            $table->unsignedTinyInteger('capacite_max');
-            // Capacité minimale : nombre d'inscrits en dessous duquel la classe n'est pas viable.
-            // Obligatoire à la création, toujours <= capacite_max (vérifié dans ClasseController).
-            $table->unsignedTinyInteger('capacite_min');
+            // Capacité maximale modifiable, avec une valeur initiale pratique.
+            $table->unsignedTinyInteger('capacite_max')->default(10);
 
             // Dates et horaires
             $table->date('date_debut');

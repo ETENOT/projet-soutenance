@@ -53,7 +53,6 @@ class FormateurSeeder extends Seeder
         // TERMINÉE (par les dates, mais pas encore fermée : on peut tester la fermeture)
         $terminee = Classe::create([
             'nom' => 'Microsoft Word - Session terminée (test formateur)',
-            'capacite_min' => 5,
             'capacite_max' => 10,
             'date_debut' => now()->subDays(20),
             'date_fin' => now()->subDays(10),
@@ -65,7 +64,6 @@ class FormateurSeeder extends Seeder
         // À VENIR
         $aVenir = Classe::create([
             'nom' => 'Microsoft Excel - Session à venir (test formateur)',
-            'capacite_min' => 4,
             'capacite_max' => 8,
             'date_debut' => now()->addDays(10),
             'date_fin' => now()->addDays(14),

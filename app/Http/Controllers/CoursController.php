@@ -6,6 +6,7 @@ use App\Models\Cours;
 use App\Models\Chapitre;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\CoursResource;
 use App\Models\Quiz;
 use App\Models\ResultatQuiz;
@@ -13,7 +14,7 @@ use App\Models\ResultatQuiz;
 class CoursController extends Controller
 {
     // Regroupements acceptés par la liste admin (tout le reste est ignoré)
-    private const GROUPES = ['categorie', 'disponibilite'];
+    private const GROUPES = ['categorie'];
 
     /**
      * Catalogue public de tous les cours.
@@ -40,7 +41,7 @@ class CoursController extends Controller
             ->orderBy('titre')
             // ordre stable si deux cours ont le même titre
             ->orderBy('id') 
-            ->paginate(9)
+            ->paginate(12)
             // conserve ?search=... en changeant de page
             ->withQueryString();
 
@@ -248,25 +249,12 @@ class CoursController extends Controller
             // Clé de groupe d'un cours : la même sert à trier, à afficher les en-têtes et à compter
             $cleGroupe = match ($groupe) {
                 'categorie' => fn (Cours $c) => (string) ($c->categorie ?? ''),
-                'disponibilite' => fn (Cours $c) => $c->classes_a_venir_count > 0
-                    ? 'a_venir'
-                    : ($c->classes_count > 0 ? 'sans_a_venir' : 'aucune'),
             };
 
             // Nombre de cours par groupe sur TOUT le résultat filtré (pas seulement la page courante)
             $comptesGroupes = (clone $query)->get()->countBy($cleGroupe);
 
-            if ($groupe === 'categorie') {
-                $query->orderByRaw('categorie is null')->orderBy('categorie');
-            } else {
-                // cours avec classes à venir, puis cours dont toutes les classes ont commencé, puis cours sans classe
-                $query->orderByRaw(
-                    'case when exists (select 1 from classes where classes.cours_id = cours.id'
-                    . ' and classes.fermee_le is null and date(classes.date_debut) > ?) then 0'
-                    . ' when exists (select 1 from classes where classes.cours_id = cours.id) then 1 else 2 end',
-                    [today()->toDateString()]
-                );
-            }
+            $query->orderByRaw('categorie is null')->orderBy('categorie');
         }
 
         $cours = $query
@@ -308,10 +296,44 @@ class CoursController extends Controller
             'titre' => ['required', 'string', 'max:255'],
             'categorie' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'programme' => ['nullable', 'string'],
             'prix_particulier' => ['required', 'numeric', 'min:0'],
             'prix_entreprise' => ['required', 'numeric', 'min:0'],
+            // image facultative (logo ou photo de la formation) : 2 Mo maximum, formats courants
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048'],
+            'supprimer_image' => ['nullable', 'boolean'],
         ];
+    }
+
+    /**
+     * Valide le formulaire et range l'image sur le disque public (dossier cours/images).
+     * À la modification : une nouvelle image remplace l'ancienne (supprimée du disque),
+     * la case « Supprimer l'image » la retire, sinon l'ancienne est conservée.
+     */
+    private function donneesValidees(Request $request, ?Cours $cours = null): array
+    {
+        $data = $request->validate($this->validationRules());
+
+        // Ces deux champs ne sont pas des colonnes : on les retire avant l'enregistrement
+        $supprimer = (bool) ($data['supprimer_image'] ?? false);
+        unset($data['image'], $data['supprimer_image']);
+
+        if ($request->hasFile('image')) {
+            $this->supprimerImage($cours);
+            $data['image'] = $request->file('image')->store('cours/images', 'public');
+        } elseif ($supprimer && $cours) {
+            $this->supprimerImage($cours);
+            $data['image'] = null;
+        }
+
+        return $data;
+    }
+
+    // Efface du disque le fichier image d'un cours (s'il en a un)
+    private function supprimerImage(?Cours $cours): void
+    {
+        if ($cours?->image) {
+            Storage::disk('public')->delete($cours->image);
+        }
     }
 
     /**
@@ -319,7 +341,7 @@ class CoursController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate($this->validationRules());
+        $data = $this->donneesValidees($request);
 
         Cours::create($data);
 
@@ -373,7 +395,7 @@ class CoursController extends Controller
      */
     public function update(Request $request, Cours $cours)
     {
-        $data = $request->validate($this->validationRules());
+        $data = $this->donneesValidees($request, $cours);
 
         $cours->update($data);
 
@@ -386,6 +408,7 @@ class CoursController extends Controller
      */
     public function destroy(Cours $cours)
     {
+        $this->supprimerImage($cours);
         $cours->delete();
 
         return redirect()->route('admin.cours.index')
@@ -423,6 +446,7 @@ class CoursController extends Controller
                 continue;
             }
 
+            $this->supprimerImage($unCours);
             $unCours->delete();
             $supprimes++;
         }
@@ -449,8 +473,8 @@ class CoursController extends Controller
         $inscriptions = Auth::user()
             ->inscriptions()
             ->payees()
-            ->with('classe.cours', 'paiement')
-            ->get();
+            ->with('classe.cours', 'paiement', 'attestations')
+            ->get()
 
         // =========================================================
         // FORMATIONS EN COURS
@@ -476,7 +500,7 @@ class CoursController extends Controller
             ->filter(fn ($inscription) => $inscription->classe->date_fin < now())
             ->sortByDesc(fn ($inscription) => $inscription->classe->date_fin);
 
-        return view('cours.mes_cours', [
+        return view('cours.mes_classes', [
             'inscriptionsEnCours' => $inscriptionsEnCours,
             'prochainesFormations' => $prochainesFormations,
             'anciensCours' => $anciensCours,

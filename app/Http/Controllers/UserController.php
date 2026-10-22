@@ -16,7 +16,7 @@ class UserController extends Controller
 {
     // Rôles et regroupements acceptés par la liste admin (tout le reste est ignoré)
     private const ROLES = ['particulier', 'entreprise', 'formateur', 'admin'];
-    private const GROUPES = ['role', 'statut', 'mois'];
+    private const GROUPES = ['role', 'mois'];
 
     /**
      * Affiche la liste des utilisateurs avec leur rôle.
@@ -62,21 +62,7 @@ class UserController extends Controller
             $query->whereHas('role', fn ($q) => $q->whereIn('nom', $roles));
         }
 
-        // --- Statut de l'e-mail (cocher les deux = pas de filtre) ---
-        $statuts = array_values(array_intersect((array) $request->input('statut', []), ['verifie', 'non_verifie']));
-        if (count($statuts) === 1) {
-            $statuts[0] === 'verifie'
-                ? $query->whereNotNull('email_verified_at')
-                : $query->whereNull('email_verified_at');
-        }
-
         // --- Filtres rapides du menu "Filtres" ---
-        if ($request->boolean('avec_inscriptions')) {
-            $query->has('inscriptions');
-        }
-        if ($request->boolean('sans_inscription')) {
-            $query->doesntHave('inscriptions');
-        }
         if ($request->boolean('avec_paiement')) {
             $query->whereHas('inscriptions', fn ($q) => $q->has('paiement'));
         }
@@ -106,7 +92,6 @@ class UserController extends Controller
             // Clé de groupe d'un utilisateur : la même sert à trier, à afficher les en-têtes et à compter
             $cleGroupe = match ($groupe) {
                 'role'   => fn (User $u) => (string) ($u->role?->nom ?? ''),
-                'statut' => fn (User $u) => $u->email_verified_at ? 'verifie' : 'non_verifie',
                 'mois'   => fn (User $u) => $u->created_at->format('Y-m'),
             };
 
@@ -115,7 +100,6 @@ class UserController extends Controller
 
             match ($groupe) {
                 'role'   => $query->orderBy(Role::select('nom')->whereColumn('roles.id', 'users.role_id')),
-                'statut' => $query->orderByRaw('email_verified_at is null'),
                 'mois'   => null,   // le tri par date (ci-dessous) suffit : les mois se suivent
             };
         }
@@ -128,7 +112,6 @@ class UserController extends Controller
             'cleGroupe' => $cleGroupe,
             'comptesGroupes' => $comptesGroupes,
             'rolesChoisis' => $roles,
-            'statutsChoisis' => $statuts,
             'roles' => Role::orderBy('nom')->get(),
             'stats' => [
                 'particuliers' => $compter('particulier'),

@@ -118,8 +118,11 @@ class ClasseController extends Controller
         if ($request->boolean('completes')) {
             $query->whereRaw('(select count(*) from inscriptions where inscriptions.classe_id = classes.id) >= classes.capacite_max');
         }
-        if ($request->boolean('sous_minimum')) {
-            $query->whereRaw('(select count(*) from inscriptions where inscriptions.classe_id = classes.id) < classes.capacite_min');
+        if ($request->boolean('incompletes')) {
+            $query->whereRaw('(select count(*) from inscriptions where inscriptions.classe_id = classes.id) < classes.capacite_max');
+        }
+        if ($request->boolean('avec_formateur')) {
+            $query->whereNotNull('formateur_id');
         }
         if ($request->boolean('sans_formateur')) {
             $query->whereNull('formateur_id');
@@ -289,8 +292,6 @@ class ClasseController extends Controller
     {
         return [
             'nom' => ['required', 'string', 'max:255'],
-            // capacité minimale obligatoire, jamais supérieure à la capacité maximale
-            'capacite_min' => ['required', 'integer', 'min:1', 'max:255', 'lte:capacite_max'],
             'capacite_max' => ['required', 'integer', 'min:1', 'max:255'],
             // le lieu de la formation (colonne "lieu" de la table classes)
             'lieu' => ['required', 'string', 'max:255'],
@@ -332,6 +333,11 @@ class ClasseController extends Controller
 
     public function store(Request $request, Cours $cours)
     {
+        $request->merge([
+            'capacite_max' => $request->input('capacite_max', 10),
+            'lieu' => $request->input('lieu', Classe::LIEU_PAR_DEFAUT),
+        ]);
+
         $data = $request->validate($this->validationRules());
 
         // Les jours exclus ne sont pas une colonne de "classes" : on les sépare avant la création
@@ -341,6 +347,12 @@ class ClasseController extends Controller
         // Les jours exclus doivent être des jours ouvrés de la période (et pas tous les jours)
         if ($erreur = Classe::erreurJoursExclus($joursExclus, $data['date_debut'], $data['date_fin'])) {
             return back()->withInput()->withErrors(['jours_exclus' => $erreur]);
+        }
+
+        if ($request->hasFile('lieu_image')) {
+            $data['lieu_image'] = $request->file('lieu_image')->store('classes/lieux', 'public');
+        } else {
+            unset($data['lieu_image']);
         }
 
         DB::transaction(function () use ($cours, $data, $joursExclus) {
@@ -479,8 +491,10 @@ class ClasseController extends Controller
     public function ajouterUtilisateur(Request $request, Cours $cours, Classe $classe)
     {
         $data = $request->validate([
-            'user_ids' => ['required', 'array', 'min:1'],
+            'user_ids' => ['bail', 'required', 'array', 'min:1'],
             'user_ids.*' => ['integer', 'distinct', 'exists:users,id'],
+        ], [
+            'user_ids.required' => "Vous n'avez pas choisi d'utilisateur à ajouter",
         ]);
 
         $inscritsIds = $classe->inscriptions()->pluck('user_id');

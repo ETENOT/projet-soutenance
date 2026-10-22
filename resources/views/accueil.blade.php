@@ -48,9 +48,10 @@
 </nav>
 
 {{-- ==================== BANNIÈRE (HERO) ==================== --}}
-<header class="nv-hero" id="accueil">
-    {{-- Image de fond + voile bleu pour que le texte reste lisible --}}
-    <img src="{{ asset('build/images/auth-one-bg.jpg') }}" alt="" class="nv-hero-bg">
+<header class="nv-hero pt-3 pb-5" id="accueil">
+    {{-- Image de fond + voile bleu pour que le texte reste lisible.
+         pt-3 / pb-5 : bannière plus basse (le bas laisse juste la place aux tuiles-images) --}}
+    <img src="{{ asset('images/images projets/bat-NV.jpeg') }}" alt="" class="nv-hero-bg">
     <div class="nv-hero-voile"></div>
 
     <div class="container nv-hero-contenu">
@@ -59,16 +60,11 @@
         </h1>
         <hr class="nv-underline">
 
-        <p class="mb-3 col-lg-7 px-0">
-            NEO VISION vous accompagne dans votre montée en compétences avec des formations modernes,
-            pratiques et adaptées à vos objectifs.
-        </p>
-
         {{-- Chiffres clés (réels), en pastilles compactes --}}
         <div class="d-flex flex-wrap gap-2">
             @foreach([
                 ['ri-book-open-line',   $nbCours,     'formations'],
-                ['ri-folder-open-line', $nbDomaines,  'domaines'],
+                ['ri-folder-open-line', $nbDomaines,  'catégories'],
                 ['ri-calendar-2-line',  $nbClasses,   'classes'],
                 ['ri-article-line',     $nbChapitres, 'chapitres'],
             ] as [$icone, $valeur, $libelle])
@@ -82,13 +78,18 @@
 </header>
 
 {{-- ==================== APERÇU DE LA PLATEFORME (tuiles-images qui chevauchent la bannière) ==================== --}}
-<section class="nv-apercu">
+<section class="nv-apercu mt-n4">
     <div class="container">
         <div class="row g-3">
-            @foreach(['blog/img-3.jpg', 'blog/img-5.jpg', 'blog/img-6.jpg', 'blog/img-08.jpg'] as $image)
+            @foreach([
+                'images/images projets/Salle-formation.png',
+                'images/images projets/shutterstock_331468268.jpg',
+                'images/images projets/shutterstock_416635366.jpg',
+                'images/images projets/shutterstock_165355784.jpg',
+            ] as $image)
                 <div class="col-6 col-lg-3">
                     <div class="nv-tuile">
-                        <img src="{{ asset('build/images/' . $image) }}" alt="">
+                        <img src="{{ asset($image) }}" alt="">
                     </div>
                 </div>
             @endforeach
@@ -96,8 +97,57 @@
     </div>
 </section>
 
+{{-- ==================== PARCOURS DU PARTICULIER (juste sous la bannière) ==================== --}}
+<section class="py-4" id="parcours">
+    <div class="container">
+        {{-- ===== Parcours du particulier : 4 étapes + le quiz, facultatif et répétable ===== --}}
+        <div class="nv-parcours rounded-4 p-3 p-lg-4">
+            <hr class="nv-bar">
+            <h2 class="fw-bold mb-1">Votre parcours <span class="text-primary">particulier</span></h2>
+            <p class="text-muted small mb-4">De la découverte du catalogue à l'accès à votre formation, en 4 étapes simples.</p>
+
+            <div class="row g-4">
+                @foreach([
+                    ['ri-search-eye-line',     'Visiter le catalogue',     'Parcourez toutes nos formations.'],
+                    ['ri-book-open-line',      'Choisir un cours',         'Comparez les contenus, les avis et les prix.'],
+                    ['ri-calendar-check-line', "S'inscrire à une classe",  'Choisissez la session qui vous convient.'],
+                    ['ri-folder-open-line',    'Accéder aux contenus',     'Chapitres et ressources de votre formation.'],
+                ] as [$icone, $titre, $texte])
+                    <div class="col-6 col-md-4 col-lg">
+                        <div class="nv-etape">
+                            <span class="nv-etape-numero">{{ $loop->iteration }}</span>
+                            <span class="nv-icon-circle bg-primary mb-2"><i class="{{ $icone }}"></i></span>
+                            <div class="fw-semibold small mb-1">{{ $titre }}</div>
+                            <small class="text-muted">{{ $texte }}</small>
+                        </div>
+                    </div>
+                @endforeach
+
+                {{-- Étape 5 : le quiz, en pointillés pour montrer qu'elle est facultative et répétable --}}
+                <div class="col-6 col-md-4 col-lg">
+                    <div class="nv-etape nv-etape-facultative">
+                        <span class="nv-etape-numero">5</span>
+                        <span class="nv-etape-boucle" title="À refaire autant de fois que vous le souhaitez">
+                            <i class="ri-repeat-2-line"></i>
+                        </span>
+                        <span class="nv-icon-circle bg-danger mb-2"><i class="ri-questionnaire-line"></i></span>
+                        <div class="fw-semibold small mb-1">Passer le quiz</div>
+                        <small class="text-muted d-block mb-2">Testez vos connaissances.</small>
+                        <span class="badge rounded-pill bg-danger-subtle text-danger">Facultatif</span>
+                    </div>
+                </div>
+            </div>
+
+            <p class="small text-muted text-center mt-3 mb-0">
+                <i class="ri-repeat-2-line text-danger me-1"></i>
+                L'étape 5 est facultative : vous pouvez la passer, la sauter ou la recommencer à tout moment de votre formation.
+            </p>
+        </div>
+    </div>
+</section>
+
 {{-- ==================== FORMATIONS LES MIEUX NOTÉES ==================== --}}
-<section class="py-4" id="formations">
+<section class="pb-4" id="formations">
     <div class="container">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
             <div>
@@ -112,80 +162,9 @@
 
         <div class="row g-3">
             @forelse($coursPopulaires as $c)
-                <div class="col-lg-4 col-md-6">
-                    @php
-                        $icones = ['ri-computer-line', 'ri-code-s-slash-line', 'ri-briefcase-4-line', 'ri-calculator-line', 'ri-book-open-line'];
-                        $icon = $icones[$loop->index % count($icones)];
-                        $categorie = strtolower((string) $c->categorie);
-
-                        if (str_contains($categorie, 'excel')) {
-                            $icon = 'ri-file-excel-2-line';
-                        } elseif (str_contains($categorie, 'word')) {
-                            $icon = 'ri-file-word-2-line';
-                        } elseif (str_contains($categorie, 'powerpoint')) {
-                            $icon = 'ri-file-ppt-2-line';
-                        } elseif (str_contains($categorie, 'web') || str_contains($categorie, 'développement') || str_contains($categorie, 'informatique')) {
-                            $icon = 'ri-code-s-slash-line';
-                        } elseif (str_contains($categorie, 'gestion')) {
-                            $icon = 'ri-briefcase-4-line';
-                        }
-                    @endphp
-
-                    <div class="card card-animate h-100 overflow-hidden border shadow-sm mb-0">
-
-                        {{-- Bandeau fin : image du cours ou icône --}}
-                        @if(!empty($c->image))
-                            <div class="ratio ratio-21x9">
-                                <img src="{{ asset('storage/' . $c->image) }}" alt="{{ $c->titre }}" class="object-fit-cover">
-                            </div>
-                        @else
-                            <div class="ratio ratio-21x9 bg-primary-subtle">
-                                <div class="d-flex align-items-center justify-content-center">
-                                    <span class="avatar-title rounded-3 bg-white text-primary fs-2 shadow-sm nv-cours-icone">
-                                        <i class="{{ $icon }}"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        @endif
-
-                        <div class="card-body p-3 d-flex flex-column">
-                            @if(!empty($c->categorie))
-                                <span class="badge bg-primary-subtle text-primary text-uppercase align-self-start mb-2">
-                                    {{ $c->categorie }}
-                                </span>
-                            @endif
-
-                            <h6 class="fw-bold mb-1">{{ $c->titre }}</h6>
-
-                            {{-- Note moyenne des avis --}}
-                            <div class="d-flex align-items-center gap-1 small mb-2">
-                                @include('cours.partials.etoiles', ['note' => $c->avis_avg_note])
-                                <span class="fw-semibold">{{ number_format($c->avis_avg_note, 1, ',', '') }}</span>
-                                <span class="text-muted">({{ $c->avis_count }} avis)</span>
-                            </div>
-
-                            <p class="text-muted small mb-0">
-                                {{ \Illuminate\Support\Str::limit($c->description ?: 'Description à venir pour cette formation.', 80) }}
-                            </p>
-
-                            <div class="d-flex gap-3 text-muted small border-top py-2 mt-2">
-                                <span><i class="ri-book-open-line me-1"></i>{{ $c->chapitres_count }} chapitre(s)</span>
-                                <span><i class="ri-calendar-2-line me-1"></i>{{ $c->classes_count }} classe(s)</span>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center gap-2 mt-auto">
-                                <div class="lh-sm">
-                                    <small class="text-muted d-block">À partir de</small>
-                                    <span class="fw-bold text-danger">
-                                        {{ number_format($c->prix_particulier, 0, ',', ' ') }} FCFA
-                                    </span>
-                                </div>
-                                <a href="{{ route('cours.show', $c) }}" class="btn btn-primary btn-sm fw-semibold text-nowrap">
-                                    Découvrir <i class="ri-arrow-right-line ms-1"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-xl-3 col-lg-4 col-md-6">
+                    {{-- Même carte que le catalogue : exactement la même taille --}}
+                    @include('cours.partials.carte', ['unCours' => $c, 'index' => $loop->index])
                 </div>
             @empty
                 <div class="col-12">
@@ -203,26 +182,24 @@
 <section class="pb-4" id="calendrier">
     <div class="container">
 
-        <div class="text-center mb-3">
-            <hr class="nv-bar mx-auto">
+        <div class="mb-3">
+            <hr class="nv-bar">
             <h2 class="fw-bold mb-1">Les prochaines classes</h2>
-            <p class="text-muted small mb-0 mx-auto nv-texte-centre">
-                Repérez en un coup d'œil les sessions de formation : chaque classe est marquée le jour où elle
-                <strong>commence</strong> et le jour où elle <strong>se termine</strong>. Cliquez sur une classe pour
-                découvrir la formation et vous inscrire.
-            </p>
+            <p class="text-muted small mb-0">Cliquez sur une classe pour découvrir la formation et vous inscrire.</p>
         </div>
 
-        <div class="row justify-content-center">
-            <div class="col-xl-8 col-lg-10">
+        <div class="row">
+            <div class="col-12">
+                {{-- En mode simple, deux repères maximum sont visibles par jour ; « +N » donne accès aux autres. --}}
                 @include('partials.calendrier-classes', [
                     'evenements' => $evenementsCalendrier,
                     'titre' => 'Calendrier des classes',
+                    'simple' => true,
                     'legende' => [
-                        ['nv-cal-a-venir', 'Classe à venir (pas encore commencée)'],
-                        ['nv-cal-en-cours', 'Classe en cours (déjà démarrée)'],
+                        ['nv-cal-a-venir', 'À venir : pas encore commencée, inscriptions possibles jusqu\'au jour de début'],
+                        ['nv-cal-en-cours', 'En cours : déjà commencée, inscriptions closes'],
                     ],
-                    'aide' => 'Chaque classe apparaît deux fois : « Début » le premier jour et « Fin » le dernier. La période entre les deux est surlignée en couleur claire.',
+                    'aide' => 'Comment lire ce calendrier : chaque classe a deux repères. « Début » (barre pleine) marque son premier jour, « Fin » (texte coloré, sans fond) son dernier jour, dans la couleur de son état. Passez la souris sur une barre pour voir les dates et le lieu, ou cliquez pour ouvrir la formation.',
                 ])
             </div>
         </div>
@@ -272,50 +249,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        {{-- ===== Parcours du particulier : 4 étapes + le quiz, facultatif et répétable ===== --}}
-        <div class="nv-parcours rounded-4 p-4 mt-3">
-            <hr class="nv-bar">
-            <h2 class="fw-bold mb-1">Votre parcours <span class="text-primary">particulier</span></h2>
-            <p class="text-muted small mb-4">De la découverte du catalogue à l'accès à votre formation, en 4 étapes simples.</p>
-
-            <div class="row g-4">
-                @foreach([
-                    ['ri-search-eye-line',     'Visiter le catalogue',     'Parcourez toutes nos formations.'],
-                    ['ri-book-open-line',      'Choisir un cours',         'Comparez les contenus, les avis et les prix.'],
-                    ['ri-calendar-check-line', "S'inscrire à une classe",  'Choisissez la session qui vous convient.'],
-                    ['ri-folder-open-line',    'Accéder aux contenus',     'Chapitres et ressources de votre formation.'],
-                ] as [$icone, $titre, $texte])
-                    <div class="col-6 col-md-4 col-lg">
-                        <div class="nv-etape">
-                            <span class="nv-etape-numero">{{ $loop->iteration }}</span>
-                            <span class="nv-icon-circle bg-primary mb-2"><i class="{{ $icone }}"></i></span>
-                            <div class="fw-semibold small mb-1">{{ $titre }}</div>
-                            <small class="text-muted">{{ $texte }}</small>
-                        </div>
-                    </div>
-                @endforeach
-
-                {{-- Étape 5 : le quiz, en pointillés pour montrer qu'elle est facultative et répétable --}}
-                <div class="col-6 col-md-4 col-lg">
-                    <div class="nv-etape nv-etape-facultative">
-                        <span class="nv-etape-numero">5</span>
-                        <span class="nv-etape-boucle" title="À refaire autant de fois que vous le souhaitez">
-                            <i class="ri-repeat-2-line"></i>
-                        </span>
-                        <span class="nv-icon-circle bg-danger mb-2"><i class="ri-questionnaire-line"></i></span>
-                        <div class="fw-semibold small mb-1">Passer le quiz</div>
-                        <small class="text-muted d-block mb-2">Testez vos connaissances.</small>
-                        <span class="badge rounded-pill bg-danger-subtle text-danger">Facultatif</span>
-                    </div>
-                </div>
-            </div>
-
-            <p class="small text-muted text-center mt-3 mb-0">
-                <i class="ri-repeat-2-line text-danger me-1"></i>
-                L'étape 5 est facultative : vous pouvez la passer, la sauter ou la recommencer à tout moment de votre formation.
-            </p>
         </div>
     </div>
 </section>

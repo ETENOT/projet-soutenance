@@ -45,7 +45,7 @@
     {{-- ==========================================
          FORMULAIRE
     =========================================== --}}
-    <form action="{{ route('admin.cours.store') }}" method="POST">
+    <form action="{{ route('admin.cours.store') }}" method="POST" enctype="multipart/form-data">
 
         @csrf
 
@@ -165,104 +165,6 @@
 
                             <div class="form-text">
                                 Cette description pourra être affichée sur le catalogue des formations.
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                {{-- ==========================================
-                     PROGRAMME
-                =========================================== --}}
-                <div class="card">
-
-                    <div class="card-header">
-
-                        <div class="d-flex align-items-center">
-
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="avatar-sm rounded bg-success-subtle d-flex align-items-center justify-content-center"
-                                >
-                                    <i class="ri-list-check-2 fs-20 text-success"></i>
-                                </div>
-                            </div>
-
-                            <div class="ms-3">
-                                <h5 class="card-title mb-1">
-                                    Programme de la formation
-                                </h5>
-
-                                <p class="text-muted mb-0">
-                                    Définissez les modules et les notions abordées.
-                                </p>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="card-body">
-
-                        <label for="programme" class="form-label">
-                            Programme détaillé
-                            <span class="text-danger">*</span>
-                        </label>
-
-                        <textarea
-                            name="programme"
-                            id="programme"
-                            rows="14"
-                            class="form-control font-monospace @error('programme') is-invalid @enderror"
-                            placeholder="## Module 1 - Découverte de l'interface&#10;- Présentation des outils&#10;- Navigation dans le logiciel&#10;&#10;## Module 2 - Mise en forme&#10;- Styles de texte&#10;- Mise en page"
-                        >{{ old('programme') }}</textarea>
-
-                        @error('programme')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @enderror
-
-
-                        {{-- AIDE PROGRAMME --}}
-                        <div class="alert alert-light border mt-3 mb-0">
-
-                            <div class="d-flex">
-
-                                <div class="flex-shrink-0">
-                                    <i class="ri-information-line text-primary fs-18"></i>
-                                </div>
-
-                                <div class="ms-2">
-
-                                    <h6 class="mb-2">
-                                        Format du programme
-                                    </h6>
-
-                                    <p class="text-muted mb-2">
-                                        Utilisez les balises suivantes pour organiser votre programme :
-                                    </p>
-
-                                    <div class="mb-1">
-                                        <code>## Module 1 - Introduction</code>
-                                        <span class="text-muted ms-2">
-                                            → titre du module
-                                        </span>
-                                    </div>
-
-                                    <div>
-                                        <code>- Présentation des outils</code>
-                                        <span class="text-muted ms-2">
-                                            → élément du module
-                                        </span>
-                                    </div>
-
-                                </div>
-
                             </div>
 
                         </div>
@@ -443,6 +345,9 @@
             =========================================== --}}
             <div class="col-xl-4">
 
+                {{-- IMAGE DE LA FORMATION --}}
+                @include('cours.partials.champ-image')
+
                 {{-- RÉSUMÉ --}}
                 <div class="card">
 
@@ -571,7 +476,7 @@
 
                             <div class="ms-2">
                                 <p class="text-muted mb-0">
-                                    Organisez le programme par modules.
+                                    Les chapitres détaillés se créent après l'enregistrement de la formation.
                                 </p>
                             </div>
 

@@ -130,46 +130,25 @@
         @endif
 
         {{-- ===== Filtres ===== --}}
-        <div class="card border shadow-sm mb-4">
-            <div class="card-body">
-                <form method="GET" action="{{ route('admin.questions.index') }}">
-                    <div class="row g-3 align-items-center">
-
-                        <div class="col-lg-4">
-                            <select name="cours_id" class="form-select" aria-label="Filtrer par cours"
-                                    onchange="this.form.submit()">
-                                <option value="">Tous les cours</option>
-                                @foreach ($cours as $c)
-                                    <option value="{{ $c->id }}" @selected((string) request('cours_id') === (string) $c->id)>
-                                        {{ $c->titre }} ({{ $c->questions_count }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-lg-5">
-                            <div class="input-group">
-                                <span class="input-group-text bg-transparent">
-                                    <i class="ri-search-line text-primary"></i>
-                                </span>
-                                <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                                       placeholder="Rechercher dans les énoncés…" aria-label="Rechercher dans les énoncés">
-                            </div>
-                        </div>
-
-                        <div class="col-lg-3 d-flex gap-2 justify-content-lg-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="ri-filter-3-line me-1"></i> Filtrer
-                            </button>
-                            <a href="{{ route('admin.questions.index') }}" class="btn btn-outline-secondary">
-                                <i class="ri-refresh-line me-1"></i> Réinitialiser
-                            </a>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-        </div>
+        @php
+            $etiquettes = [];
+            if (request()->filled('cours_id')) {
+                $etiquettes[] = ['Cours : ' . ($cours->firstWhere('id', (int) request('cours_id'))->titre ?? '—'),
+                    ['cours_id'], 'ri-book-open-line'];
+            }
+            if (request()->filled('q')) {
+                $etiquettes[] = ['Énoncé : ' . request('q'), ['q'], 'ri-search-line'];
+            }
+        @endphp
+        @include('partials.barre-recherche', [
+            'action' => route('admin.questions.index'),
+            'placeholder' => 'Rechercher dans les énoncés…',
+            'etiquettes' => $etiquettes,
+            'filtres' => [],
+            'groupes' => [],
+            'groupe' => null,
+            'vueCriteres' => 'questions.partials.criteres-recherche',
+        ])
 
         {{-- ===== Barre d'actions groupées =====
              Cachée tant qu'aucune question n'est cochée. Les cases du tableau sont rattachées à CE formulaire

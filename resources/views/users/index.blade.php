@@ -111,23 +111,13 @@
     {{-- ===== Recherche façon Odoo (étiquettes + menu Filtres / Regrouper par) ===== --}}
     @php
         $libellesRole = ['particulier' => 'Particulier', 'entreprise' => 'Entreprise', 'formateur' => 'Formateur', 'admin' => 'Administrateur'];
-        $libellesStatut = ['verifie' => 'E-mail vérifié', 'non_verifie' => 'E-mail non vérifié'];
-        $libellesGroupe = ['role' => 'Rôle', 'statut' => 'Statut de l\'e-mail', 'mois' => 'Mois d\'inscription'];
+        $libellesGroupe = ['role' => 'Rôle', 'mois' => 'Mois d\'inscription'];
 
         // Étiquettes des filtres actives : [texte, paramètres à retirer, icône]
         $etiquettes = [];
 
         if ($rolesChoisis) {
             $etiquettes[] = ['Rôle : ' . collect($rolesChoisis)->map(fn ($r) => $libellesRole[$r])->implode(' ou '), ['role'], 'ri-user-settings-line'];
-        }
-        if ($statutsChoisis) {
-            $etiquettes[] = ['Statut : ' . collect($statutsChoisis)->map(fn ($s) => $libellesStatut[$s])->implode(' ou '), ['statut'], 'ri-mail-check-line'];
-        }
-        if (request()->boolean('avec_inscriptions')) {
-            $etiquettes[] = ['Avec inscriptions', ['avec_inscriptions'], 'ri-group-line'];
-        }
-        if (request()->boolean('sans_inscription')) {
-            $etiquettes[] = ['Sans inscription', ['sans_inscription'], 'ri-user-unfollow-line'];
         }
         if (request()->boolean('avec_paiement')) {
             $etiquettes[] = ['Avec paiement', ['avec_paiement'], 'ri-bank-card-line'];
@@ -149,12 +139,7 @@
         $filtres[] = collect($libellesRole)->map(fn ($libelle, $valeur) => [
             'nom' => 'role[]', 'valeur' => $valeur, 'libelle' => $libelle, 'coche' => in_array($valeur, $rolesChoisis, true),
         ])->values()->all();
-        $filtres[] = collect($libellesStatut)->map(fn ($libelle, $valeur) => [
-            'nom' => 'statut[]', 'valeur' => $valeur, 'libelle' => $libelle, 'coche' => in_array($valeur, $statutsChoisis, true),
-        ])->values()->all();
         $filtres[] = [
-            ['nom' => 'avec_inscriptions', 'valeur' => '1', 'libelle' => 'Avec inscriptions', 'coche' => request()->boolean('avec_inscriptions')],
-            ['nom' => 'sans_inscription', 'valeur' => '1', 'libelle' => 'Sans inscription', 'coche' => request()->boolean('sans_inscription')],
             ['nom' => 'avec_paiement', 'valeur' => '1', 'libelle' => 'Avec paiement', 'coche' => request()->boolean('avec_paiement')],
         ];
     @endphp
@@ -219,7 +204,6 @@
                                 $cle = $cleGroupe($utilisateur);
                                 $libelleGroupe = match ($groupe) {
                                     'role' => $libellesRole[$cle] ?? 'Sans rôle',
-                                    'statut' => $libellesStatut[$cle],
                                     'mois' => ucfirst($utilisateur->created_at->locale('fr')->isoFormat('MMMM YYYY')),
                                 };
                             @endphp

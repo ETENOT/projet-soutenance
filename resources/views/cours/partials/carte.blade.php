@@ -34,32 +34,30 @@
 
 <div class="card card-animate h-100 overflow-hidden border shadow-sm mb-0">
 
-    {{-- Image du cours ou image de secours --}}
+    {{-- Bandeau d'image : image du cours ou icône de secours --}}
     @if(!empty($unCours->image))
-        <div class="ratio ratio-16x9">
-            <img src="{{ asset('storage/' . $unCours->image) }}"
-                 alt="{{ $unCours->titre }}" class="object-fit-cover">
+        <div class="ratio ratio-16x9 bg-primary-subtle">
+            <img src="{{ asset('storage/' . $unCours->image) }}" alt="{{ $unCours->titre }}" class="w-100 h-100 object-fit-cover">
         </div>
     @else
         <div class="ratio ratio-16x9 bg-primary-subtle">
             <div class="d-flex align-items-center justify-content-center">
-                <span class="avatar-lg">
-                    <span class="avatar-title rounded-3 bg-white text-primary fs-1 shadow-sm">
-                        <i class="{{ $icon }}"></i>
-                    </span>
+                <span class="avatar-title rounded-3 bg-white text-primary fs-2 shadow-sm nv-cours-icone">
+                    <i class="{{ $icon }}"></i>
                 </span>
             </div>
         </div>
     @endif
 
-    <div class="card-body d-flex flex-column">
+    <div class="card-body p-3 d-flex flex-column">
         @if(!empty($unCours->categorie))
             <span class="badge bg-primary-subtle text-primary text-uppercase align-self-start mb-2">
                 {{ $unCours->categorie }}
             </span>
         @endif
 
-        <h5 class="fw-bold mb-2">{{ $unCours->titre }}</h5>
+        {{-- Titre et description sur une seule ligne : toutes les cartes ont exactement la même taille --}}
+        <h6 class="fw-bold mb-1 text-truncate" title="{{ $unCours->titre }}">{{ $unCours->titre }}</h6>
 
         {{-- Note moyenne des avis --}}
         <div class="d-flex align-items-center gap-1 small mb-2">
@@ -68,29 +66,31 @@
                 <span class="fw-semibold">{{ number_format($unCours->avis_avg_note, 1, ',', '') }}</span>
                 <span class="text-muted">({{ $unCours->avis_count }} avis)</span>
             @else
+                {{-- Étoiles vides : la ligne garde la même hauteur qu'une carte déjà notée --}}
+                @include('cours.partials.etoiles', ['note' => 0])
                 <span class="text-muted">Pas encore noté</span>
             @endif
         </div>
 
-        <p class="text-muted small mb-0">
-            {{ \Illuminate\Support\Str::limit($unCours->description ?: 'Description à venir pour cette formation.', 100) }}
+        <p class="text-muted small mb-0 text-truncate">
+            {{ $unCours->description ?: 'Description à venir pour cette formation.' }}
         </p>
 
         {{-- Informations --}}
-        <div class="d-flex gap-4 text-muted small border-top border-bottom py-2 my-3">
+        <div class="d-flex gap-3 text-muted small border-top py-2 mt-2">
             <span><i class="ri-book-open-line me-1"></i>{{ $unCours->chapitres_count }} chapitre(s)</span>
             <span><i class="ri-calendar-2-line me-1"></i>{{ $unCours->classes_count }} classe(s)</span>
         </div>
 
         {{-- Prix + bouton --}}
         <div class="d-flex justify-content-between align-items-center gap-2 mt-auto">
-            <div>
+            <div class="lh-sm">
                 <small class="text-muted d-block">À partir de</small>
-                <span class="fs-5 fw-bold text-danger">
+                <span class="fw-bold text-danger">
                     {{ number_format($role === 'entreprise' ? $unCours->prix_entreprise : $unCours->prix_particulier, 0, ',', ' ') }} FCFA
                 </span>
             </div>
-            <a href="{{ route('cours.show', $unCours) }}" class="btn btn-primary fw-semibold text-nowrap">
+            <a href="{{ route('cours.show', $unCours) }}" class="btn btn-primary btn-sm fw-semibold text-nowrap">
                 Découvrir <i class="ri-arrow-right-line ms-1"></i>
             </a>
         </div>

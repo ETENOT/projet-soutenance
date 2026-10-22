@@ -29,21 +29,10 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="capacite_min" class="form-label">Capacité minimale <span class="text-danger">*</span></label>
-                    <input type="number" name="capacite_min" id="capacite_min" min="1" max="255" required
-                           class="form-control @error('capacite_min') is-invalid @enderror"
-                           value="{{ old('capacite_min') }}">
-                    <div class="form-text">Nombre minimal d'inscrits pour que la classe soit maintenue.</div>
-                    @error('capacite_min')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
-                </div>
-
-                <div class="mb-3">
                     <label for="capacite_max" class="form-label">Capacité maximale</label>
                     <input type="number" name="capacite_max" id="capacite_max" min="1" max="255"
                            class="form-control @error('capacite_max') is-invalid @enderror"
-                           value="{{ old('capacite_max') }}">
+                           value="{{ old('capacite_max', 10) }}">
                     @error('capacite_max')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -53,7 +42,7 @@
                     <label for="lieu" class="form-label">Lieu</label>
                     <input type="text" name="lieu" id="lieu"
                            class="form-control @error('lieu') is-invalid @enderror"
-                           value="{{ old('lieu') }}">
+                           value="{{ old('lieu', \App\Models\Classe::LIEU_PAR_DEFAUT) }}">
                     @error('lieu')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -72,6 +61,11 @@
 
                 <div class="mb-3">
                     <label for="lieu_image" class="form-label">Photo du lieu <span class="text-muted">(facultative)</span></label>
+                    <div class="mb-2">
+                        <img src="{{ asset(\App\Models\Classe::IMAGE_LIEU_PAR_DEFAUT) }}"
+                             alt="Bâtiment du lieu par défaut" class="rounded object-fit-cover" width="120" height="80">
+                        <small class="text-muted ms-2">Photo du bâtiment par défaut, remplaçable par une autre image.</small>
+                    </div>
                     <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
                            class="form-control @error('lieu_image') is-invalid @enderror">
                     @error('lieu_image')

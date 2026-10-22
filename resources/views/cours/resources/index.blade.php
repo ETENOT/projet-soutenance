@@ -1,6 +1,6 @@
 @extends('layouts.master')
 
-@section('title', 'Ressources du chapitre')
+@section('title', 'Ressources de la formation')
 
 @section('content')
 
@@ -456,11 +456,11 @@
             </div>
 
             <h1 class="page-title">
-                Ressources du chapitre
+                Ressources de la formation
             </h1>
 
             <p class="page-subtitle">
-                Gérez les documents, vidéos et liens associés à ce chapitre.
+                Gérez les documents, vidéos et liens pédagogiques de cette formation.
             </p>
 
         </div>
@@ -807,7 +807,7 @@
                 </h3>
 
                 <p class="empty-text">
-                    Ce chapitre ne contient encore aucune ressource pédagogique.
+                    Cette formation ne contient encore aucune ressource pédagogique.
                     Vous pouvez ajouter un document, une vidéo ou un lien externe.
                 </p>
 

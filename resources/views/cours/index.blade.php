@@ -93,12 +93,7 @@
 
     {{-- ===== Recherche façon Odoo (étiquettes + menu Filtres / Regrouper par) ===== --}}
     @php
-        $libellesGroupe = ['categorie' => 'Catégorie', 'disponibilite' => 'Disponibilité'];
-        $libellesDispo = [
-            'a_venir' => 'Classes à venir',
-            'sans_a_venir' => 'Aucune classe à venir',
-            'aucune' => 'Aucune classe',
-        ];
+        $libellesGroupe = ['categorie' => 'Catégorie'];
 
         // Étiquettes des filtres actifs : [texte, paramètres à retirer, icône]
         $etiquettes = [];
@@ -199,9 +194,7 @@
                         @if ($groupe)
                             @php
                                 $cle = $cleGroupe($unCours);
-                                $libelleGroupe = $groupe === 'categorie'
-                                    ? ($unCours->categorie ?: 'Sans catégorie')
-                                    : $libellesDispo[$cle];
+                                $libelleGroupe = $unCours->categorie ?: 'Sans catégorie';
                             @endphp
                             @if ($cle !== $groupePrecedent)
                                 @php

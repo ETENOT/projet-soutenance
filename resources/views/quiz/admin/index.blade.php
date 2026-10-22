@@ -48,28 +48,38 @@
         </div>
 
         <div class="card-body">
-            <form method="GET" class="row g-2 mb-3">
-                <div class="col-md-3">
-                    <select name="cours_id" class="form-select" onchange="this.form.submit()">
-                        <option value="">Tous les cours</option>
-                        @foreach ($cours as $c)
-                            <option value="{{ $c->id }}" @selected((string) request('cours_id') === (string) $c->id)>{{ $c->titre }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select name="statut" class="form-select" onchange="this.form.submit()">
-                        <option value="">Tous les statuts</option>
-                        <option value="termine" @selected(request('statut') === 'termine')>Terminés</option>
-                        <option value="en_cours" @selected(request('statut') === 'en_cours')>En cours</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <input type="text" name="q" value="{{ request('q') }}" class="form-control" placeholder="Nom ou e-mail du participant">
-                </div>
-                <div class="col-md-3 d-flex gap-2">
-                    <button type="submit" class="btn btn-soft-primary">Filtrer</button>
-                    <a href="{{ route('admin.quiz.index') }}" class="btn btn-light">Réinitialiser</a>
+            <form method="GET" action="{{ route('admin.quiz.index') }}" class="mb-3">
+                <div class="row g-2">
+                    <div class="col-lg">
+                        <input type="search" name="q" value="{{ request('q') }}" class="form-control"
+                               placeholder="Rechercher un participant (nom ou e-mail)…"
+                               aria-label="Rechercher un participant">
+                    </div>
+                    <div class="col-sm-6 col-lg-3">
+                        <select name="cours_id" class="form-select" aria-label="Filtrer par cours">
+                            <option value="">Tous les cours</option>
+                            @foreach ($cours as $c)
+                                <option value="{{ $c->id }}" @selected((string) request('cours_id') === (string) $c->id)>
+                                    {{ $c->titre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-lg-2">
+                        <select name="statut" class="form-select" aria-label="Filtrer par statut">
+                            <option value="">Tous les statuts</option>
+                            <option value="termine" @selected(request('statut') === 'termine')>Terminés</option>
+                            <option value="en_cours" @selected(request('statut') === 'en_cours')>En cours</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-auto d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" aria-label="Rechercher">
+                            <i class="ri-search-line me-1"></i>Rechercher
+                        </button>
+                        @if (request()->filled('q') || request()->filled('cours_id') || request()->filled('statut'))
+                            <a href="{{ route('admin.quiz.index') }}" class="btn btn-light">Effacer</a>
+                        @endif
+                    </div>
                 </div>
             </form>
 

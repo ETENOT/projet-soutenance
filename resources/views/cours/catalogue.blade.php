@@ -40,13 +40,13 @@ Catalogue des cours
     {{-- ===== Bannière compacte : titre + recherche sur une seule ligne ===== --}}
     <div class="bg-primary bg-gradient text-white rounded-3 px-4 py-3 mb-4">
         <div class="row align-items-center g-3">
-            <div class="col-md-6">
+            <div class="col-md-7">
                 <h4 class="fw-bold text-white mb-0">Découvrez nos formations</h4>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <form method="GET" action="{{ route('cours.catalogue') }}">
-                    <div class="input-group input-group-sm bg-white rounded-3 shadow-sm p-1">
+                    <div class="input-group input-group-sm bg-white rounded-3 shadow-sm">
                         <span class="input-group-text bg-transparent border-0 text-primary">
                             <i class="ri-search-line"></i>
                         </span>
@@ -54,7 +54,7 @@ Catalogue des cours
                                class="form-control border-0 shadow-none"
                                placeholder="Rechercher une formation..."
                                aria-label="Rechercher une formation">
-                        <button type="submit" class="btn btn-danger px-3 fw-semibold rounded-2">Rechercher</button>
+                        <button type="submit" class="btn btn-danger px-2 fw-semibold rounded-2">Rechercher</button>
                     </div>
                 </form>
             </div>
@@ -84,7 +84,7 @@ Catalogue des cours
     {{-- ===== Liste des cours ===== --}}
     <div class="row g-4">
         @forelse($cours as $unCours)
-            <div class="col-xl-4 col-md-6">
+            <div class="col-xl-3 col-lg-4 col-md-6">
                 @include('cours.partials.carte', [
                     'unCours' => $unCours,
                     'index'   => $cours->firstItem() + $loop->index - 1,

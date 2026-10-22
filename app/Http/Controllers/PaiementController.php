@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\Paiement;
 use App\Notifications\InscriptionEnregistree;
 use App\Notifications\PaiementConfirme;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -509,6 +510,33 @@ class PaiementController extends Controller
             'success',
             'Paiement enregistré : l’inscription est maintenant payée.'
         );
+    }
+
+    // Reçu à l'écran (imprimable)
+    public function recu(Paiement $paiement)
+    {
+        $this->autoriserRecu($paiement);
+        $paiement->load('inscription.user', 'inscription.classe.cours');
+        return view('paiements.recu', ['paiement' => $paiement, 'pdf' => false]);
+    }
+
+    // Reçu en PDF (téléchargement)
+    public function telechargerRecu(Paiement $paiement)
+    {
+        $this->autoriserRecu($paiement);
+        $paiement->load('inscription.user', 'inscription.classe.cours');
+        return Pdf::loadView('paiements.recu', ['paiement' => $paiement, 'pdf' => true])
+            ->setPaper('a4', 'portrait')
+            ->download('recu-' . $paiement->numero_recu . '.pdf');
+    }
+
+    // Seuls le stagiaire concerné et l'admin peuvent voir un reçu
+    private function autoriserRecu(Paiement $paiement): void
+    {
+        $user = Auth::user();
+        $estAdmin = $user->role?->nom === 'admin';
+        abort_unless($estAdmin || $paiement->inscription->user_id === $user->id, 403);
+        abort_unless($paiement->statut === 'valide', 404);
     }
 
     /**

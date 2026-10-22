@@ -24,11 +24,13 @@ class DatabaseSeeder extends Seeder
             // Création des chapitres à partir des programmes des cours
             ChapitreSeeder::class,
 
-            // Ressources liées aux chapitres
+            // Ressources pédagogiques rattachées aux formations
             CoursResourceSeeder::class,
 
             // Sessions de formation
             ClasseSeeder::class,
+            // Plusieurs classes aux mêmes dates pour tester le lien « +N » du calendrier
+            CalendrierClassesDemoSeeder::class,
 
             //Utilisateurs + avis de test (moyenne des avis)
             AvisSeeder::class,

@@ -290,11 +290,6 @@
                             @endforeach
                         </div>
 
-                    @elseif($cours->programme)
-                        <div class="text-muted">
-                            {!! nl2br(e($cours->programme)) !!}
-                        </div>
-
                     @else
                         <div class="text-center text-muted py-5">
                             <i class="ri-file-warning-line fs-1 d-block mb-2"></i>
@@ -329,7 +324,6 @@
                                     <div class="text-muted small mb-1">
                                         <i class="ri-group-line me-1"></i>
                                         {{ $classe->inscriptions_count ?? 0 }} / {{ $classe->capacite_max }} inscrits
-                                        <span class="ms-1">(minimum {{ $classe->capacite_min }})</span>
                                     </div>
 
                                     {{-- Lieu : lien Google Maps (localisation et itinéraire) avec la photo du lieu --}}

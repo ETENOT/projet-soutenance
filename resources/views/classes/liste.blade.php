@@ -143,8 +143,11 @@
         if (request()->boolean('completes')) {
             $etiquettes[] = ['Complètes', ['completes'], 'ri-group-line'];
         }
-        if (request()->boolean('sous_minimum')) {
-            $etiquettes[] = ['Sous la capacité minimale', ['sous_minimum'], 'ri-alert-line'];
+        if (request()->boolean('incompletes')) {
+            $etiquettes[] = ['Incomplètes', ['incompletes'], 'ri-group-line'];
+        }
+        if (request()->boolean('avec_formateur')) {
+            $etiquettes[] = ['Avec formateur', ['avec_formateur'], 'ri-user-star-line'];
         }
         if (request()->boolean('sans_formateur') || request('formateur_id') === 'aucun') {
             $etiquettes[] = ['Sans formateur', ['sans_formateur', 'formateur_id'], 'ri-user-unfollow-line'];
@@ -227,9 +230,14 @@
                             <label class="form-check-label" for="filtre-completes">Complètes</label>
                         </div>
                         <div class="form-check mb-1">
-                            <input class="form-check-input" type="checkbox" name="sous_minimum" value="1" id="filtre-sous-minimum"
-                                   @checked(request()->boolean('sous_minimum')) onchange="this.form.submit()">
-                            <label class="form-check-label" for="filtre-sous-minimum">Sous la capacité minimale</label>
+                            <input class="form-check-input" type="checkbox" name="incompletes" value="1" id="filtre-incompletes"
+                                   @checked(request()->boolean('incompletes')) onchange="this.form.submit()">
+                            <label class="form-check-label" for="filtre-incompletes">Incomplètes</label>
+                        </div>
+                        <div class="form-check mb-1">
+                            <input class="form-check-input" type="checkbox" name="avec_formateur" value="1" id="filtre-avec-formateur"
+                                   @checked(request()->boolean('avec_formateur')) onchange="this.form.submit()">
+                            <label class="form-check-label" for="filtre-avec-formateur">Avec formateur</label>
                         </div>
                         <div class="form-check mb-1">
                             <input class="form-check-input" type="checkbox" name="sans_formateur" value="1" id="filtre-sans-formateur"
@@ -291,6 +299,14 @@
                             <option value="">Tous les lieux</option>
                             @foreach ($tousLesLieux as $lieu)
                                 <option value="{{ $lieu }}" @selected(request('lieu') === $lieu)>{{ $lieu }}</option>
+                            @endforeach
+                        </select>
+
+                        <label for="filtre-etats-details" class="form-label small mb-1">Statuts</label>
+                        <select name="etat[]" id="filtre-etats-details" class="form-select form-select-sm mb-2"
+                                aria-label="Filtrer par statut" multiple size="3">
+                            @foreach ($libellesEtat as $valeur => $libelle)
+                                <option value="{{ $valeur }}" @selected(in_array($valeur, $etatsChoisis, true))>{{ $libelle }}</option>
                             @endforeach
                         </select>
 
