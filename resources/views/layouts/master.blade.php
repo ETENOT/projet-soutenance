@@ -24,11 +24,11 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid">
-                    {{-- Messages de session (succès / erreur) : UN SEUL affichage pour toute l'application.
-                         Les pages ne doivent plus avoir leur propre bloc @if(session('success')).
+                    {{-- Messages de session et erreurs de validation : UN SEUL affichage pour toute l'application.
+                         Les pages ne doivent plus avoir leur propre bloc d'affichage des erreurs.
                          Ce sont de petites notifications flottantes, fixées sous la barre du haut
                          (top: 70px), qui ne décalent pas le contenu et se ferment toutes seules. --}}
-                    @if(session('success') || session('error'))
+                    @if(session('success') || session('error') || $errors->any())
                         <div class="toast-container position-fixed end-0 p-3" style="top: 70px; z-index: 1100;">
                             @if(session('success'))
                                 <div class="toast flash-toast show align-items-center text-bg-success border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
@@ -41,11 +41,20 @@
                                 </div>
                             @endif
 
-                            @if(session('error'))
+                            @if(session('error') || $errors->any())
                                 <div class="toast flash-toast show align-items-center text-bg-danger border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
                                     <div class="d-flex">
                                         <div class="toast-body">
-                                            <i class="ri-error-warning-line me-1"></i>{{ session('error') }}
+                                            <i class="ri-error-warning-line me-1"></i>
+                                            @if(session('error'))
+                                                {{ session('error') }}
+                                            @endif
+
+                                            @if($errors->any())
+                                                    @foreach($errors->all() as $erreur)
+                                                        {{ $erreur }}
+                                                    @endforeach
+                                            @endif
                                         </div>
                                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
                                     </div>

@@ -21,40 +21,6 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Cours concerné</h5>
-                </div>
-                <div class="card-body">
-                    <h5>{{ $cours->titre }}</h5>
-                    <p class="text-muted mb-2">
-                        {{ $cours->categorie }}@if ($cours->niveau) · {{ $cours->niveau }}@endif
-                    </p>
-
-                    @if ($cours->description)
-                        <p>{{ $cours->description }}</p>
-                    @endif
-
-                    {{-- Plan du cours (modules / sous-points), via Cours::getPlanSectionsAttribute() --}}
-                    @forelse ($cours->plan_sections as $section)
-                        <div class="mb-2">
-                            <div class="fw-medium">{{ $section['titre'] }}</div>
-                            @if (count($section['points']))
-                                <ul class="mb-0 text-muted">
-                                    @foreach ($section['points'] as $point)
-                                        <li>{{ $point }}</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                        </div>
-                    @empty
-                        @if ($cours->programme)
-                            <p class="text-muted" style="white-space: pre-line">{{ $cours->programme }}</p>
-                        @endif
-                    @endforelse
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header">
                     <h5 class="card-title mb-0">Informations de la classe</h5>
                 </div>
                 <div class="card-body">

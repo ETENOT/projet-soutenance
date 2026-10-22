@@ -97,6 +97,12 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(AvisFormateur::class);
     }
 
+    // Attestations de formation reçues par ce stagiaire
+    public function attestations()
+    {
+        return $this->hasMany(Attestation::class);
+    }
+
     // Les évaluations de formation que CE stagiaire a remplies (une par classe)
     public function evaluationsFormation()
     {

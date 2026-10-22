@@ -26,6 +26,21 @@ class Inscription extends Model
         });
     }
 
+    /**
+     * Inscription payée = un paiement au statut "valide" existe (même définition que scopePayees).
+     * Sert à afficher "Payé" / "En attente" dans la liste et à protéger les suppressions.
+     */
+    public function estPayee(): bool
+    {
+        return $this->paiement?->statut === 'valide';
+    }
+
+    // Une inscription éligible donne lieu à UNE attestation (créée à la fermeture de la classe)
+    public function attestation()
+    {
+        return $this->hasOne(Attestation::class);
+    }
+
     // La table "inscriptions" a user_id -> belongsTo
     public function user()
     {

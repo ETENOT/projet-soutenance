@@ -68,6 +68,12 @@ Route::middleware('auth')->group(function () {
     Route::get('statut-paiement', [App\Http\Controllers\CoursController::class, 'statutPaiement'])
         ->name('paiements.statut_paiement');
 
+    Route::get('/paiements/{paiement}/recu', [App\Http\Controllers\PaiementController::class, 'recu'])
+        ->name('paiements.recu');
+
+    Route::get('/paiements/{paiement}/recu/telecharger', [App\Http\Controllers\PaiementController::class, 'telechargerRecu'])
+        ->name('paiements.recu.telecharger');
+
     // Retours SingPay
     Route::get('/paiement/success', [App\Http\Controllers\PaiementController::class, 'success'])
         ->name('paiements.success');
@@ -106,6 +112,15 @@ Route::post('/notifications/actions', [App\Http\Controllers\NotificationControll
     ->middleware('auth')
     ->name('notifications.action');
 
+// Visualisation d'une attestation dans le navigateur (propriétaire ou administrateur)
+Route::get('/attestations/{attestation}/voir', [App\Http\Controllers\AttestationController::class, 'voir'])
+    ->middleware('auth')
+    ->name('attestations.voir');
+
+// Téléchargement d'une attestation de formation (propriétaire ou administrateur)
+Route::get('/attestations/{attestation}/telecharger', [App\Http\Controllers\AttestationController::class, 'telecharger'])
+    ->middleware('auth')
+    ->name('attestations.telecharger');
 
 // ==========================================================================
 // COURS PUBLICS
@@ -228,6 +243,12 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+
+        // ------------------------------------------------------------------
+        // ATTESTATIONS délivrées (liste, du plus récent au plus ancien)
+        // ------------------------------------------------------------------
+        Route::get('/attestations', [App\Http\Controllers\AdminAttestationController::class, 'index'])
+            ->name('attestations.index');   // nom complet : admin.attestations.index
 
         // ------------------------------------------------------------------
         // FORMATEURS (CRUD + affectation aux classes + avis anonymes)
@@ -359,6 +380,37 @@ Route::middleware(['auth', 'role:admin'])
         // Suivi des quiz (tentatives des particuliers et des visiteurs) : détail, suppression
         Route::get('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'show'])->name('quiz.show');
         Route::delete('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'destroy'])->name('quiz.destroy');
+
+        // ------------------------------------------------------------------
+        // INSCRIPTIONS (liste filtrable, création, fiche, modification, suppression)
+        // ------------------------------------------------------------------
+        // /inscriptions/create et /suppression-multiple doivent rester AVANT
+        // /inscriptions/{inscription} (sinon "create" serait pris pour l'identifiant d'une inscription)
+
+        Route::get('/inscriptions', [App\Http\Controllers\AdminInscriptionController::class, 'index'])
+            ->name('inscriptions.index');
+
+        Route::get('/inscriptions/create', [App\Http\Controllers\AdminInscriptionController::class, 'create'])
+            ->name('inscriptions.create');
+
+        Route::post('/inscriptions', [App\Http\Controllers\AdminInscriptionController::class, 'store'])
+            ->name('inscriptions.store');
+
+        // Suppression multiple des inscriptions cochées dans la liste
+        Route::post('/inscriptions/suppression-multiple', [App\Http\Controllers\AdminInscriptionController::class, 'destroyMultiple'])
+            ->name('inscriptions.destroy-multiple');
+
+        Route::get('/inscriptions/{inscription}', [App\Http\Controllers\AdminInscriptionController::class, 'show'])
+            ->name('inscriptions.show');
+
+        Route::get('/inscriptions/{inscription}/edit', [App\Http\Controllers\AdminInscriptionController::class, 'edit'])
+            ->name('inscriptions.edit');
+
+        Route::put('/inscriptions/{inscription}', [App\Http\Controllers\AdminInscriptionController::class, 'update'])
+            ->name('inscriptions.update');
+
+        Route::delete('/inscriptions/{inscription}', [App\Http\Controllers\AdminInscriptionController::class, 'destroy'])
+            ->name('inscriptions.destroy');
 
         // ------------------------------------------------------------------
         // UTILISATEURS

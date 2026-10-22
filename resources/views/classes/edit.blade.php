@@ -20,16 +20,6 @@
             ->reject(fn ($messages, $cle) => str_starts_with($cle, 'jours_exclus'))
             ->flatten();
     @endphp
-    @if ($erreursFormulaire->isNotEmpty())
-        <div class="alert alert-danger" role="alert">
-            <strong>Enregistrement impossible :</strong>
-            <ul class="mb-0 mt-2">
-                @foreach ($erreursFormulaire as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
 
     {{-- En-tête : état de la classe + fermeture (admin ou formateur) --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">

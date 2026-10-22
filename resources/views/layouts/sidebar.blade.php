@@ -7,17 +7,17 @@
         <a href="{{ route('dashboard') }}" class="logo logo-dark">
             <span class="logo-sm">
                 <img
-                    src="{{ ('images/logo_neovision_white.JPG') }}"
+                    src="{{ asset('images/logo-nv-transparent.png') }}"
                     alt="NEO VISION"
-                    height="22"
+                    height="26"
                 >
             </span>
 
             <span class="logo-lg">
                 <img
-                    src="{{ ('images/logo_neovision_white.JPG') }}"
+                    src="{{ asset('images/logo-nv-transparent.png') }}"
                     alt="NEO VISION"
-                    height="30"
+                    height="42"
                 >
             </span>
         </a>
@@ -25,17 +25,17 @@
         <a href="{{ route('dashboard') }}" class="logo logo-light">
             <span class="logo-sm">
                 <img
-                    src="{{ ('build/images/logo_neovision_white.JPG') }}"
+                    src="{{ asset('images/logo-nv-transparent.png') }}"
                     alt="NEO VISION"
-                    height="22"
+                    height="26"
                 >
             </span>
 
             <span class="logo-lg">
                 <img
-                    src="{{ ('images/logo_neovision_white.JPG') }}"
+                    src="{{ asset('images/logo-nv-transparent.png') }}"
                     alt="NEO VISION"
-                    height="30"
+                    height="42"
                 >
             </span>
         </a>
@@ -95,7 +95,7 @@
                     </li>
 
                      {{-- ================================
-                         FORMATIONS (CRUD, affectations, avis anonymes)
+                         FORMATEURS (CRUD, affectations, avis anonymes)
                     ================================= --}}
 
                     <li class="nav-item">
@@ -134,6 +134,31 @@
                         >
                             <i class="ri-group-line"></i>
                             <span>Gestion des Classes</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                        INSCRIPTIONS
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a
+                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
+                            href="{{ route('admin.inscriptions.index') }}"
+                        >
+                            <i class="ri-user-add-line"></i>
+                            <span>Gestion des inscriptions</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
+                    ================================= --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
+                        href="{{ route('admin.attestations.index') }}">
+                            <i class="ri-award-line"></i>
+                            <span>Attestations</span>
                         </a>
                     </li>
 
@@ -210,36 +235,6 @@
                             {{-- Badge rouge : caché quand il n'y a rien de nouveau ; mis à jour par le script en bas --}}
                             <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
                         </a>
-                    </li>
-
-                    {{-- ================================
-                         FINANCES
-                    ================================= --}}
-
-                    <li class="nav-item">
-
-                        <a
-                            class="nav-link menu-link"
-                            href="#"
-                            style="pointer-events: none; opacity: 0.6;"
-                        >
-                            <i class="ri-file-list-3-line"></i>
-                            <span>Inscriptions</span>
-                        </a>
-
-                    </li>
-
-                    <li class="nav-item">
-
-                        <a
-                            class="nav-link menu-link"
-                            href="#"
-                            style="pointer-events: none; opacity: 0.6;"
-                        >
-                            <i class="ri-bank-card-line"></i>
-                            <span>Paiements</span>
-                        </a>
-
                     </li>
 
                 @elseif (Auth::user()?->role?->nom === 'formateur')
@@ -367,18 +362,20 @@
 </div>
 
 {{-- Met à jour le badge "Forums" toutes les 30 secondes, sans recharger la page --}}
-@auth
+@if(auth()->check() && auth()->user()->role === 'formateur')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const badges = document.querySelectorAll('.js-forum-badge');
         if (!badges.length) return;
 
+        let timer = null;
+
         async function majBadge() {
             try {
                 const r = await fetch(@json(route('forum.non-lus')), { headers: { 'Accept': 'application/json' } });
+                if (r.status === 403 || r.status === 401) { clearInterval(timer); return; }
                 if (!r.ok) return;
                 const { nombre } = await r.json();
-                // On affiche le nombre, et on cache le badge quand il vaut 0
                 badges.forEach(b => {
                     b.textContent = nombre;
                     b.classList.toggle('d-none', nombre === 0);
@@ -386,10 +383,10 @@
             } catch (e) { /* réseau coupé : on réessaiera au prochain tour */ }
         }
 
-        setInterval(majBadge, 30000);
+        timer = setInterval(majBadge, 30000);
     });
 </script>
-@endauth
+@endif
 
 <!-- Vertical Overlay -->
 <div class="vertical-overlay"></div>

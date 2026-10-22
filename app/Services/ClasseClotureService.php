@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Throwable;
 use App\Models\Classe;
 use App\Models\User;
 use DomainException;
@@ -19,10 +20,16 @@ class ClasseClotureService
      *
      * @throws DomainException si la classe est déjà fermée ou n'a pas encore commencé
      */
+
+    // AttestationService est injecté automatiquement par Laravel (type-hint du constructeur)
+    public function __construct(private AttestationService $attestations)
+    {
+    }
+
     public function fermer(Classe $classe, User $par): Classe
     {
         // Transaction : soit TOUT est enregistré (inscriptions + fermeture), soit rien.
-        return DB::transaction(function () use ($classe, $par) {
+        $classeFermee = DB::transaction(function () use ($classe, $par) {
 
             // lockForUpdate() verrouille la ligne : si formateur ET admin cliquent
             // en même temps, le 2e attend puis constate que la classe est déjà fermée.
@@ -60,5 +67,15 @@ class ClasseClotureService
 
             return $classe;
         });
+        // Une fois la fermeture VALIDÉE en base, on génère les PDF et on envoie les e-mails.
+        // Volontairement hors transaction : un souci d'envoi (serveur mail en panne...) ne doit
+        // jamais annuler la fermeture. En cas d'échec, `php artisan attestations:generer` rattrape.
+        try {
+            $this->attestations->genererPourClasse($classeFermee);
+        } catch (Throwable $e) {
+            report($e);
+        }
+
+        return $classeFermee;
     }
 }

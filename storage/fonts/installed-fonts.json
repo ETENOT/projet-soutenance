@@ -1,0 +1,15 @@
+{
+    "poppins": {
+        "normal": "C:\\laragon\\www\\projet-soutenance\\storage\\fonts\/poppins_normal_b785c8995bbcb6e5b8051bb42d51c97e",
+        "bold": "poppins_bold_e601976da8bb6cc18e798aa5da876ee7"
+    },
+    "calibri": {
+        "bold": "calibri_bold_299facfbc0bd0a06fa692eceab38407f"
+    },
+    "poppinsmedium": {
+        "bold": "poppinsmedium_bold_2ab9d4858e4595c408a154e6d68bec5f"
+    },
+    "bauhaus93": {
+        "normal": "bauhaus93_normal_e9e771bfae24eeba64156da69a8551ee"
+    }
+}

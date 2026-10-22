@@ -185,13 +185,38 @@
                             </div>
 
                             <div class="d-flex flex-md-column align-items-md-end gap-2">
-                                <span class="badge bg-secondary-subtle text-secondary px-3 py-2">
-                                    <i class="ri-archive-line me-1"></i>Formation terminée
-                                </span>
+                                
                                 <a href="{{ route('cours.show', $inscription->classe->cours) }}"
                                    class="btn btn-outline-primary btn-sm text-nowrap">
                                     Revoir le cours <i class="ri-arrow-right-line ms-1"></i>
                                 </a>
+
+                                {{-- Attestation de formation : téléchargeable si éligible, sinon explication --}}
+                                @if ($inscription->attestation)
+                                {{-- Œil (voir dans un nouvel onglet) + bouton de téléchargement, côte à côte --}}
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="{{ route('attestations.voir', $inscription->attestation) }}"
+                                    target="_blank" rel="noopener"
+                                    class="btn btn-sm btn-soft-primary"
+                                    title="Voir mon attestation" aria-label="Voir mon attestation">
+                                        <i class="ri-eye-line"></i>
+                                    </a>
+                                    <a href="{{ route('attestations.telecharger', $inscription->attestation) }}"
+                                    class="btn btn-success btn-sm text-nowrap">
+                                        <i class="ri-download-2-line me-1"></i>Télécharger mon attestation
+                                    </a>
+                                </div>
+                                @elseif ($inscription->attestation_eligible === false)
+                                    <span class="badge bg-warning-subtle text-warning px-3 py-2"
+                                        title="Un taux de présence d'au moins {{ \App\Models\Classe::SEUIL_ATTESTATION }} % est requis">
+                                        <i class="ri-close-circle-line me-1"></i>Attestation non délivrée
+                                        ({{ rtrim(rtrim(number_format($inscription->taux_presence, 2, ',', ''), '0'), ',') }} % de présence)
+                                    </span>
+                                @else
+                                    <span class="badge bg-info-subtle text-info px-3 py-2">
+                                        <i class="ri-time-line me-1"></i>Attestation après clôture de la classe
+                                    </span>
+                                @endif
 
                                 {{-- Évaluation de fin de formation : remplir, puis modifier si déjà envoyée --}}
                                 @if (in_array($inscription->classe_id, $classesEvaluees))
