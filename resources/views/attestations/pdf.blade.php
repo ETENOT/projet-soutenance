@@ -16,6 +16,18 @@
     // Le modèle utilise 36 pt ; les noms très longs réduisent la taille pour tenir sur une ligne
     $n = mb_strlen($attestation->beneficiaire);
     $tailleNom = $n > 34 ? 22 : ($n > 26 ? 29 : 36);
+    // ---- Nom du formateur : retour à la ligne avant la signature ----
+    // Bord gauche de l'image de la signature (pt). Même valeur que « left » de la balise <img> plus bas.
+    $signatureGauche = 297;
+    // Centre horizontal du bloc « Formateur » (left 59,5 pt + largeur 273,6 pt / 2)
+    $centreFormateur = 59.5 + 273.6 / 2;
+    // Limite droite du nom (pt). L'encre de la signature commence à x = 302,8 pt à hauteur de la
+    // 1re ligne du nom (351 pt pour la 2e) : on s'arrête à 297 pt, 6 pt avant. Le nom est centré,
+    // donc largeur = 2 x (limite - centre). Plus long, il passe à la ligne : les derniers mots
+    // descendent et chaque ligne reste centrée.
+    $limiteNomDroite = 297;
+    $largeurNomFormateur = round(2 * ($limiteNomDroite - $centreFormateur), 1);
+    
 @endphp
 <!DOCTYPE html>
 <html lang="fr">
@@ -86,11 +98,11 @@
     @if ($attestation->formateur)
         <div class="abs formateur">
             <div class="lib">Formateur :</div>
-            <div class="nom-formateur">{{ mb_strtoupper($attestation->formateur) }}</div>
+            <div class="nom-formateur" style="width: {{ $largeurNomFormateur }}pt; margin-left: auto; margin-right: auto;">{{ mb_strtoupper($attestation->formateur) }}</div>
         </div>
     @endif
 
-    <img style="position:absolute; left:277pt; top:479.8pt; width:235.9pt;" src="{{ $img['signature'] }}">
+    <img style="position:absolute; left:{{ $signatureGauche }}pt; top:479.8pt; width:235.9pt;" src="{{ $img['signature'] }}">
 
 <div class="abs centre numero">
         Attestation n° {{ $attestation->numero }} — délivrée le {{ ($attestation->created_at ?? now())->format('d/m/Y') }}

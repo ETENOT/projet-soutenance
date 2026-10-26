@@ -177,7 +177,7 @@ class AttestationService
                 'fond' => $this->imageEnBase64('fond.png'),
                 'logo' => $this->imageEnBase64('logo.png'),
                 'medaille' => $this->imageEnBase64('medaille.png'),
-                'signature' => $this->imageEnBase64('signature.jpg'),
+                'signature' => $this->imageEnBase64('signature2.jpg'),
             ],
         ])->setPaper('a4', 'landscape')
         // Les polices sont intégrées au PDF : le « subsetting » n'y garde que les lettres utilisées
