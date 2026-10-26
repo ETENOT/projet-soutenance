@@ -36,7 +36,7 @@
         body { font-family: 'Poppins', DejaVu Sans, sans-serif; color: #000; }
 
         /* 841 x 594 pt (1 pt de moins que la page pour éviter une 2e page blanche) */
-        .page { position: absolute; left: 0; top: 0; width: 841pt; height: 594pt; overflow: hidden; }
+        .page { position: absolute; left: 0; top: 0; width: 842pt; height: 596pt; overflow: hidden; }
         .abs  { position: absolute; }
         .centre { left: 0; width: 841pt; text-align: center; white-space: nowrap; }
 
@@ -56,13 +56,13 @@
         .formateur { left: 59.5pt; top: 488.9pt; width: 273.6pt; text-align: center; }
         .formateur .lib { font-weight: bold; font-size: 15pt; line-height: 21pt; }
         .formateur .nom-formateur { margin-top: -4.2pt; font-family: 'Calibri', 'Poppins', sans-serif; font-weight: bold; font-size: 16pt; line-height: 19.06pt; }
-        .numero  { top: 574pt; font-size: 8pt; color: #666; }
+        .numero  { left: 0; top: 583pt; width: 842pt; font-size: 7.5pt; color: #666; line-height: 9pt; }
     </style>
 </head>
 <body>
 <div class="page">
 
-    <img class="abs" src="{{ $img['fond'] }}" style="left:0; top:0; width:841pt; height:594pt;">
+    <img class="abs" src="{{ $img['fond'] }}" style="left:0; top:0; width:842pt; height:596pt;">
     <img class="abs" src="{{ $img['logo'] }}" style="left:32.5pt; top:43.8pt; width:195.4pt;">
     <img class="abs" src="{{ $img['medaille'] }}" style="left:658.8pt; top:141.4pt; width:102.9pt;">
 
@@ -90,9 +90,9 @@
         </div>
     @endif
 
-    <img class="abs" src="{{ $img['signature'] }}" style="left:316.9pt; top:466.8pt; width:146pt;">
+    <img style="position:absolute; left:277pt; top:479.8pt; width:235.9pt;" src="{{ $img['signature'] }}">
 
-    <div class="abs centre numero">
+<div class="abs centre numero">
         Attestation n° {{ $attestation->numero }} — délivrée le {{ ($attestation->created_at ?? now())->format('d/m/Y') }}
     </div>
 </div>

@@ -179,7 +179,11 @@ class AttestationService
                 'medaille' => $this->imageEnBase64('medaille.png'),
                 'signature' => $this->imageEnBase64('signature.jpg'),
             ],
-        ])->setPaper('a4', 'landscape')->output();
+        ])->setPaper('a4', 'landscape')
+        // Les polices sont intégrées au PDF : le « subsetting » n'y garde que les lettres utilisées
+        // (PDF de ~100 Ko au lieu de ~2 Mo, important puisqu'il part en pièce jointe d'un e-mail)
+        ->setOption(['enable_font_subsetting' => true])
+        ->output();
     }
 
     // Les images sont intégrées au PDF en base64 : aucune requête réseau, aucun souci de chemin

@@ -466,15 +466,15 @@ class CoursController extends Controller
     /**
      * Affiche les cours de l'utilisateur particulier.
      */
-    public function mesCours()
+    public function mesClasses()
     {
         //Seulement les inscriptions dont le paiement est validé (sinon pas d'accès aux contenus)
         //(même règle que l'évaluation de fin de formation et l'accès aux cours)
         $inscriptions = Auth::user()
             ->inscriptions()
             ->payees()
-            ->with('classe.cours', 'paiement', 'attestations')
-            ->get()
+            ->with('classe.cours', 'paiement', 'attestation')
+            ->get();
 
         // =========================================================
         // FORMATIONS EN COURS

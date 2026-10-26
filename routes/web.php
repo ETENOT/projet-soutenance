@@ -177,7 +177,7 @@ Route::middleware('quiz.acces')->group(function () {
 Route::middleware(['auth', 'role:particulier'])->group(function () {
 
     // Parcours des formations de l'utilisateur
-    Route::get('/mes-classes', [CoursController::class, 'mesCours'])
+    Route::get('/mes-classes', [CoursController::class, 'mesClasses'])
         ->name('cours.mes');
 
     // Résultat d'un quiz
