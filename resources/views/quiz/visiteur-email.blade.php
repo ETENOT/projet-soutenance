@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-<div class="container py-5" style="max-width: 520px;">
+<div class="container py-5 nv-quiz-container-520">
     <a href="{{ route('cours.show', $cours) }}" class="text-black-50 text-decoration-none fw-medium">
         <i class="ri-arrow-left-line align-middle me-1"></i>Retour au cours
     </a>

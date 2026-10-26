@@ -119,7 +119,7 @@
                             </div>
                         @empty
                             <div class="text-center text-muted py-5">
-                                <i class="ri-notification-off-line" style="font-size: 40px;"></i>
+                                <i class="ri-notification-off-line fs-1"></i>
                                 <p class="mt-2 mb-0">
                                     {{ $onglet === 'archivees' ? 'Aucune notification archivée' : 'Aucune notification pour le moment' }}
                                 </p>

@@ -130,6 +130,10 @@ Route::get('/attestations/{attestation}/telecharger', [App\Http\Controllers\Atte
 Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'catalogue'])
     ->name('cours.catalogue');
 
+// Télécharger le programme public d'un cours au format PDF
+Route::get('/cours/{cours}/programme.pdf', [App\Http\Controllers\CoursController::class, 'programmePdf'])
+    ->name('cours.programme.pdf');
+
 // Détail d'un cours — côté utilisateur
 Route::get('/cours/{cours}', [App\Http\Controllers\CoursController::class, 'show'])
     ->name('cours.show');
@@ -452,6 +456,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::prefix('cours/{cours}/classes')
             ->name('cours.classes.')
             ->group(function () {
+
+                Route::post('/actions', [App\Http\Controllers\ClasseController::class, 'actionsGroupees'])
+                    ->name('actions');
 
                 Route::get('/', [App\Http\Controllers\ClasseController::class, 'index'])
                     ->name('index');

@@ -8,6 +8,7 @@ use App\Models\Inscription;
 use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\InscriptionEnregistree;
+use App\Services\PaiementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\DB;
  * Statut de paiement d'une inscription (même définition que Inscription::scopePayees) :
  *  - "payé"       : un paiement au statut "valide" existe ;
  *  - "en attente" : aucun paiement valide.
- * Le paiement lui-même (comptoir) reste enregistré par PaiementController::store (route paiements.store).
+ * Les inscriptions saisies par l'administration sont réglées au comptoir.
  */
 class AdminInscriptionController extends Controller
 {
@@ -117,9 +118,9 @@ class AdminInscriptionController extends Controller
     /**
      * Enregistre l'inscription (mêmes règles que l'inscription faite par l'utilisateur :
      * pas de doublon, classe ouverte aux inscriptions, capacité respectée).
-     * L'inscription est créée "en attente" : le paiement s'encaisse ensuite depuis la liste.
+     * L'inscription est créée comme payée au comptoir.
      */
-    public function store(Request $request)
+    public function store(Request $request, PaiementService $paiementService)
     {
         $data = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
@@ -141,7 +142,7 @@ class AdminInscriptionController extends Controller
         }
 
         // Transaction + verrou sur la classe : deux inscriptions simultanées ne dépassent pas la capacité
-        $resultat = DB::transaction(function () use ($data, $user) {
+        $resultat = DB::transaction(function () use ($data, $user, $paiementService) {
             $classe = Classe::with('cours')->whereKey($data['classe_id'])->lockForUpdate()->firstOrFail();
 
             if ($erreur = $this->erreurPlace($classe, $user)) {
@@ -154,19 +155,27 @@ class AdminInscriptionController extends Controller
                 'date_inscription' => $data['date_inscription'],
             ]);
 
-            // Notification de la cloche de l'utilisateur
-            Notification::create([
-                'user_id' => $user->id,
-                'message' => 'Inscription enregistrée : « ' . $classe->cours->titre . ' », début le '
-                    . $classe->date_debut->format('d/m/Y') . '. Paiement en attente de confirmation.',
-            ]);
+            $paiement = $paiementService->creerAuComptoir($inscription);
 
-            return $inscription;
+            return [$inscription, $paiement];
         });
 
         if (is_string($resultat)) {
             return back()->withInput()->withErrors(['classe_id' => $resultat]);
         }
+
+        $paiement = $resultat[1] ?? null;
+        $resultat = $resultat[0];
+        if ($paiement) {
+            $paiementService->envoyerEmail($paiement);
+        }
+
+        $resultat->loadMissing('classe.cours');
+        Notification::create([
+            'user_id' => $user->id,
+            'message' => 'Inscription enregistrée : « ' . $resultat->classe->cours->titre . ' », début le '
+                . $resultat->classe->date_debut->format('d/m/Y') . '. Paiement confirmé au comptoir.',
+        ]);
 
         // Email hors transaction : un échec d'envoi n'annule pas l'inscription
         try {

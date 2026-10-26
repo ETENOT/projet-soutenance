@@ -6,48 +6,14 @@
 
 <div class="container-fluid">
 
-
-{{-- =========================================================
-     BREADCRUMB
-========================================================== --}}
-<div class="mb-4">
-
-    <div class="d-flex align-items-center gap-2 small text-muted">
-
-        <a
-            href="{{ route('admin.cours.index') }}"
-            class="breadcrumb-link"
-        >
-            Cours
-        </a>
-
-        <i class="ri-arrow-right-s-line"></i>
-
-        <a
-            href="{{ route('admin.cours.show', $cours) }}"
-            class="breadcrumb-link"
-        >
-            {{ $cours->titre }}
-        </a>
-
-        <i class="ri-arrow-right-s-line"></i>
-
-        <a
-            href="{{ route('admin.cours.contenus', $cours) }}"
-            class="breadcrumb-link"
-        >
-            Contenus pédagogiques
-        </a>
-
-        <i class="ri-arrow-right-s-line"></i>
-
-        <span>
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('admin.cours.contenus', $cours) }}">{{ $cours->titre }}</a>
+        @endslot
+        @slot('title')
             Ajouter un chapitre
-        </span>
-
-    </div>
-
-</div>
+        @endslot
+    @endcomponent
 
 
 {{-- =========================================================

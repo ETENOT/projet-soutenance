@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-<div class="container py-5" style="max-width: 560px;">
+<div class="container py-5 nv-quiz-container-560">
     <div class="card">
                 <div class="card-body p-4 text-center">
             <h4 class="mb-3">Votre quiz est terminé 🎉</h4>

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Inscription;
 use App\Models\Role;
 use App\Services\ClasseClotureService;
+use App\Services\PaiementService;
 use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -189,11 +190,16 @@ class ClasseController extends Controller
      * Chaque classe est traitée séparément : celles qui ne peuvent pas l'être sont ignorées
      * et expliquées dans le message, les autres sont traitées normalement.
      */
-    public function actionsGroupees(Request $request, ClasseClotureService $service)
+    public function actionsGroupees(Request $request, ClasseClotureService $service, ?Cours $cours = null)
     {
         $data = $request->validate([
             'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', 'exists:classes,id'],
+            'ids.*' => [
+                'integer',
+                $cours
+                    ? Rule::exists('classes', 'id')->where('cours_id', $cours->id)
+                    : 'exists:classes,id',
+            ],
             'action' => ['required', Rule::in(['affecter_formateur', 'retirer_formateur', 'fermer', 'supprimer'])],
             // Le formateur est obligatoire seulement pour "affecter", et doit avoir le rôle formateur
             'formateur_id' => [
@@ -210,7 +216,12 @@ class ClasseController extends Controller
         $reussies = 0;
         $ignorees = [];   // explications pour les classes non traitées
 
-        foreach (Classe::whereIn('id', $data['ids'])->get() as $classe) {
+        $classes = Classe::whereIn('id', $data['ids']);
+        if ($cours) {
+            $classes->where('cours_id', $cours->id);
+        }
+
+        foreach ($classes->get() as $classe) {
             switch ($data['action']) {
 
                 case 'affecter_formateur':
@@ -270,9 +281,73 @@ class ClasseController extends Controller
 
     public function index(Cours $cours)
     {
-        $classes = $cours->classes()->orderBy('date_debut')->get();
+        $request = request();
+        $request->validate([
+            'q' => ['nullable', 'string', 'max:255'],
+            'etat' => ['nullable', 'array'],
+            'etat.*' => [Rule::in(['a_venir', 'en_cours', 'terminee', 'fermee'])],
+            'completes' => ['nullable', 'boolean'],
+            'incompletes' => ['nullable', 'boolean'],
+            'inscrits_min' => ['nullable', 'integer', 'min:0'],
+            'inscrits_max' => array_filter([
+                'nullable',
+                'integer',
+                'min:0',
+                $request->filled('inscrits_min') ? 'gte:inscrits_min' : null,
+            ]),
+        ]);
 
-        return view('classes.index', ['cours' => $cours, 'classes' => $classes]);
+        $classes = $cours->classes()
+            ->with('formateur')
+            ->withCount('inscriptions');
+
+        if ($recherche = trim((string) $request->input('q'))) {
+            $classes->where(function ($query) use ($recherche) {
+                $query->where('nom', 'like', "%{$recherche}%")
+                    ->orWhere('lieu', 'like', "%{$recherche}%")
+                    ->orWhereHas('formateur', fn ($formateur) => $formateur->where('name', 'like', "%{$recherche}%"));
+            });
+        }
+
+        $etats = array_values(array_unique((array) $request->input('etat', [])));
+        if ($etats) {
+            $classes->where(function ($query) use ($etats) {
+                foreach ($etats as $etat) {
+                    $query->orWhere(function ($sousRequete) use ($etat) {
+                        if ($etat === 'fermee') {
+                            $sousRequete->whereNotNull('fermee_le');
+                        } elseif ($etat === 'terminee') {
+                            $sousRequete->avecEtat('terminee')->whereNull('fermee_le');
+                        } else {
+                            $sousRequete->avecEtat($etat);
+                        }
+                    });
+                }
+            });
+        }
+
+        if ($request->boolean('completes')) {
+            $classes->whereRaw(
+                '(select count(*) from inscriptions where inscriptions.classe_id = classes.id) >= classes.capacite_max'
+            );
+        }
+        if ($request->boolean('incompletes')) {
+            $classes->whereRaw(
+                '(select count(*) from inscriptions where inscriptions.classe_id = classes.id) < classes.capacite_max'
+            );
+        }
+        if ($request->filled('inscrits_min')) {
+            $classes->has('inscriptions', '>=', (int) $request->input('inscrits_min'));
+        }
+        if ($request->filled('inscrits_max')) {
+            $classes->has('inscriptions', '<=', (int) $request->input('inscrits_max'));
+        }
+
+        return view('classes.index', [
+            'cours' => $cours,
+            'classes' => $classes->orderBy('date_debut')->paginate(10)->withQueryString(),
+            'etatsChoisis' => $etats,
+        ]);
     }
 
     public function create(Cours $cours)
@@ -485,10 +560,9 @@ class ClasseController extends Controller
 
     /**
      * Ajout manuel d'un utilisateur (hors flux d'inscription/paiement classique).
-     * Contrairement à InscriptionController::store(), cette action ne crée ni notification
-     * ni email : l'utilisateur ajouté n'est pas prévenu, et l'inscription reste "impayée".
+     * L'inscription est immédiatement réglée au comptoir et l'utilisateur en est informé.
      */
-    public function ajouterUtilisateur(Request $request, Cours $cours, Classe $classe)
+    public function ajouterUtilisateur(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService)
     {
         $data = $request->validate([
             'user_ids' => ['bail', 'required', 'array', 'min:1'],
@@ -507,10 +581,18 @@ class ClasseController extends Controller
         }
 
         foreach ($nouveauxIds as $userId) {
-            Inscription::firstOrCreate(
-                ['user_id' => $userId, 'classe_id' => $classe->id],
-                ['date_inscription' => now()]
-            );
+            [$inscription, $paiement] = DB::transaction(function () use ($userId, $classe, $paiementService) {
+                $inscription = Inscription::firstOrCreate(
+                    ['user_id' => $userId, 'classe_id' => $classe->id],
+                    ['date_inscription' => now()]
+                );
+
+                return [$inscription, $paiementService->creerAuComptoir($inscription)];
+            });
+
+            if ($paiement) {
+                $paiementService->envoyerEmail($paiement);
+            }
         }
 
         // Retourne sur la page de gestion pour conserver le contexte de la classe.

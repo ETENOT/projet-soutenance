@@ -4,744 +4,17 @@
 
 @section('content')
 
-<style>
-    .contenus-page {
-        padding: 28px;
-        background: #f6f8fb;
-        min-height: calc(100vh - 80px);
-    }
-
-    .breadcrumb-custom {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 24px;
-        font-size: 13px;
-        color: #8a94a3;
-    }
-
-    .breadcrumb-custom a {
-        color: #0f47ad;
-        text-decoration: none;
-        font-weight: 600;
-    }
-
-    .breadcrumb-custom i {
-        font-size: 10px;
-    }
-
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-    }
-
-    .page-title {
-        margin: 0;
-        color: #1f2937;
-        font-size: 25px;
-        font-weight: 700;
-    }
-
-    .page-subtitle {
-        margin: 6px 0 0;
-        color: #8a94a3;
-        font-size: 13px;
-    }
-
-    .btn-primary-custom {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 11px 17px;
-        border: 0;
-        border-radius: 9px;
-        background: #0f47ad;
-        color: #fff;
-        text-decoration: none;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .btn-primary-custom:hover {
-        background: #0c3b91;
-        color: #fff;
-    }
-
-    .contenus-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 350px;
-        gap: 22px;
-        align-items: start;
-    }
-
-    .card-custom {
-        background: #fff;
-        border: 1px solid #e9edf3;
-        border-radius: 14px;
-        box-shadow: 0 3px 15px rgba(31, 41, 55, 0.04);
-    }
-
-    /* =========================
-       COLONNE PRINCIPALE
-       ========================= */
-
-    .chapitres-card {
-        overflow: hidden;
-    }
-
-    .card-header-custom {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 20px;
-        border-bottom: 1px solid #edf0f4;
-    }
-
-    .card-header-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #1f2937;
-        font-size: 15px;
-        font-weight: 700;
-    }
-
-    .header-icon {
-        width: 34px;
-        height: 34px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        background: rgba(15, 71, 173, 0.10);
-        color: #0f47ad;
-    }
-
-    .chapitres-list {
-        padding: 10px;
-    }
-
-    .chapitre-item {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 13px 14px;
-        margin-bottom: 5px;
-        border: 0;
-        border-radius: 10px;
-        background: transparent;
-        text-decoration: none;
-        transition: all .2s ease;
-        cursor: pointer;
-        text-align: left;
-    }
-
-    .chapitre-item:hover {
-        background: #f5f7fb;
-    }
-
-    .chapitre-item.active {
-        background: #eef3ff;
-    }
-
-    .chapitre-number {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        background: #f0f2f5;
-        color: #697586;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .chapitre-item.active .chapitre-number {
-        background: #0f47ad;
-        color: #fff;
-    }
-
-    .chapitre-info {
-        min-width: 0;
-        flex: 1;
-    }
-
-    .chapitre-name {
-        color: #374151;
-        font-size: 13px;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .chapitre-item.active .chapitre-name {
-        color: #0f47ad;
-    }
-
-    .chapitre-meta {
-        margin-top: 3px;
-        color: #9aa3af;
-        font-size: 11px;
-    }
-
-    .chapitre-arrow {
-        color: #b2bac5;
-        font-size: 11px;
-    }
-
-    /* =========================
-       ÉDITION DU CHAPITRE
-       ========================= */
-
-    .editor-card {
-        margin-top: 20px;
-        padding: 22px;
-    }
-
-    .editor-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 22px;
-    }
-
-    .editor-title {
-        margin: 0;
-        color: #1f2937;
-        font-size: 17px;
-        font-weight: 700;
-    }
-
-    .editor-subtitle {
-        margin-top: 5px;
-        color: #8a94a3;
-        font-size: 12px;
-    }
-
-    .form-group-custom {
-        margin-bottom: 18px;
-    }
-
-    .form-label-custom {
-        display: block;
-        margin-bottom: 7px;
-        color: #374151;
-        font-size: 12px;
-        font-weight: 600;
-    }
-
-    .form-control-custom {
-        width: 100%;
-        padding: 11px 13px;
-        border: 1px solid #dfe4ea;
-        border-radius: 8px;
-        outline: none;
-        color: #374151;
-        background: #fff;
-        font-size: 13px;
-        transition: border-color .2s, box-shadow .2s;
-    }
-
-    .form-control-custom:focus {
-        border-color: #0f47ad;
-        box-shadow: 0 0 0 3px rgba(15, 71, 173, .08);
-    }
-
-    textarea.form-control-custom {
-        min-height: 130px;
-        resize: vertical;
-    }
-
-    .editor-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 5px;
-    }
-
-    .btn-save {
-        border: 0;
-        border-radius: 8px;
-        padding: 10px 17px;
-        background: #0f47ad;
-        color: #fff;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .btn-save:hover {
-        background: #0c3b91;
-    }
-
-    .btn-delete {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 10px 14px;
-        border: 1px solid #f1caca;
-        border-radius: 8px;
-        background: #fff;
-        color: #d64545;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .btn-delete:hover {
-        background: #fff5f5;
-    }
-
-    /* =========================
-       COLONNE DROITE
-       ========================= */
-
-    .resource-side {
-        position: sticky;
-        top: 20px;
-    }
-
-    .side-card {
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-
-    .side-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
-        color: #1f2937;
-        font-size: 15px;
-        font-weight: 700;
-    }
-
-    .side-icon {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        background: rgba(15, 71, 173, 0.10);
-        color: #0f47ad;
-    }
-
-    .chapter-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 10px;
-        background: #f8f9fb;
-    }
-
-    .chapter-number-side {
-        width: 38px;
-        height: 38px;
-        min-width: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        background: #0f47ad;
-        color: #fff;
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    .chapter-details {
-        min-width: 0;
-    }
-
-    .chapter-name-side {
-        color: #1f2937;
-        font-size: 13px;
-        font-weight: 600;
-        word-break: break-word;
-    }
-
-    .chapter-label {
-        margin-top: 3px;
-        color: #8a94a3;
-        font-size: 11px;
-    }
-
-    /* =========================
-       RESSOURCES
-       ========================= */
-
-    .resources-list {
-        display: flex;
-        flex-direction: column;
-        gap: 9px;
-
-        /*
-        |--------------------------------------------------------------------------
-        | Limite la hauteur de la liste
-        |--------------------------------------------------------------------------
-        */
-
-        max-height: 390px;
-        overflow-y: auto;
-        overflow-x: hidden;
-        padding-right: 5px;
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Barre de défilement des ressources
-    |--------------------------------------------------------------------------
-    */
-
-    .resources-list::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    .resources-list::-webkit-scrollbar-track {
-        background: #f4f6f8;
-        border-radius: 10px;
-    }
-
-    .resources-list::-webkit-scrollbar-thumb {
-        background: #cbd2dc;
-        border-radius: 10px;
-    }
-
-    .resources-list::-webkit-scrollbar-thumb:hover {
-        background: #aeb7c4;
-    }
-
-    .resource-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 11px;
-        border: 1px solid #edf0f4;
-        border-radius: 10px;
-        background: #fff;
-        flex-shrink: 0;
-    }
-
-    .resource-icon {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        font-size: 15px;
-    }
-
-    .resource-document {
-        background: #eef3ff;
-        color: #0f47ad;
-    }
-
-    .resource-video {
-        background: #f1ecff;
-        color: #6842c2;
-    }
-
-    .resource-link {
-        background: #eaf8f1;
-        color: #21895a;
-    }
-
-    .resource-info {
-        min-width: 0;
-        flex: 1;
-    }
-
-    .resource-name {
-        color: #374151;
-        font-size: 12px;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .resource-type-label {
-        margin-top: 3px;
-        color: #9aa3af;
-        font-size: 10px;
-    }
-
-    .resource-actions {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        flex-shrink: 0;
-    }
-
-    .resource-action {
-        width: 29px;
-        height: 29px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 0;
-        border-radius: 7px;
-        background: #f5f6f8;
-        color: #697586;
-        text-decoration: none;
-        cursor: pointer;
-        transition: all .2s;
-    }
-
-    .resource-action:hover {
-        background: #eef3ff;
-        color: #0f47ad;
-    }
-
-    .resource-action.delete:hover {
-        background: #fff0f0;
-        color: #d64545;
-    }
-
-    .empty-resources {
-        padding: 20px 10px;
-        text-align: center;
-        border: 1px dashed #dfe4ea;
-        border-radius: 10px;
-        color: #9aa3af;
-        font-size: 12px;
-    }
-
-    .empty-resources i {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 20px;
-        color: #c4cad2;
-    }
-
-    /* =========================
-       TYPES DISPONIBLES
-       ========================= */
-
-    .resource-types {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .resource-type {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .type-icon {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        font-size: 16px;
-    }
-
-    .document-icon {
-        background: #eef3ff;
-        color: #0f47ad;
-    }
-
-    .video-icon {
-        background: #f1ecff;
-        color: #6842c2;
-    }
-
-    .link-icon {
-        background: #eaf8f1;
-        color: #21895a;
-    }
-
-    .resource-type strong {
-        display: block;
-        color: #374151;
-        font-size: 13px;
-    }
-
-    .resource-type small {
-        display: block;
-        margin-top: 2px;
-        color: #9aa3af;
-        font-size: 10px;
-    }
-
-    /* =========================
-       AJOUT RESSOURCE
-       ========================= */
-
-    .add-resource-form {
-        margin-top: 18px;
-        padding-top: 18px;
-        border-top: 1px solid #edf0f4;
-    }
-
-    .resource-input {
-        width: 100%;
-        padding: 10px 11px;
-        border: 1px solid #dfe4ea;
-        border-radius: 8px;
-        outline: none;
-        color: #374151;
-        font-size: 12px;
-    }
-
-    .resource-input:focus {
-        border-color: #0f47ad;
-        box-shadow: 0 0 0 3px rgba(15, 71, 173, .08);
-    }
-
-    .resource-select {
-        width: 100%;
-        padding: 10px 11px;
-        border: 1px solid #dfe4ea;
-        border-radius: 8px;
-        outline: none;
-        background: #fff;
-        color: #374151;
-        font-size: 12px;
-    }
-
-    .resource-field {
-        margin-bottom: 12px;
-    }
-
-    .resource-field label {
-        display: block;
-        margin-bottom: 6px;
-        color: #374151;
-        font-size: 11px;
-        font-weight: 600;
-    }
-
-    .resource-submit {
-        width: 100%;
-        padding: 10px 14px;
-        border: 0;
-        border-radius: 8px;
-        background: #0f47ad;
-        color: #fff;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .resource-submit:hover {
-        background: #0c3b91;
-    }
-
-    .file-field,
-    .url-field {
-        display: none;
-    }
-
-    .alert-custom {
-        padding: 12px 14px;
-        margin-bottom: 18px;
-        border-radius: 9px;
-        font-size: 12px;
-    }
-
-    .alert-success-custom {
-        background: #eaf8f1;
-        color: #21895a;
-    }
-
-    .alert-error-custom {
-        background: #fff0f0;
-        color: #c03939;
-    }
-
-    .alert-error-custom ul {
-        margin: 5px 0 0;
-        padding-left: 18px;
-    }
-
-    .chapter-panel {
-        display: none;
-    }
-
-    .chapter-panel.active {
-        display: block;
-    }
-
-    @media (max-width: 1100px) {
-
-        .contenus-layout {
-            grid-template-columns: 1fr;
-        }
-
-        .resource-side {
-            position: static;
-        }
-
-        .resources-list {
-            max-height: 450px;
-        }
-    }
-
-    @media (max-width: 700px) {
-
-        .contenus-page {
-            padding: 16px;
-        }
-
-        .page-header {
-            align-items: flex-start;
-            gap: 15px;
-            flex-direction: column;
-        }
-
-        .resource-actions {
-            gap: 3px;
-        }
-
-        .resource-action {
-            width: 27px;
-            height: 27px;
-        }
-    }
-</style>
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('admin.cours.show', $cours) }}">{{ $cours->titre }}</a>
+        @endslot
+        @slot('title')
+            Contenus pédagogiques
+        @endslot
+    @endcomponent
 
 
 <div class="contenus-page">
-
-    {{-- =========================
-         BREADCRUMB
-         ========================= --}}
-
-    <div class="breadcrumb-custom">
-
-        <a href="{{ route('admin.cours.index') }}">
-            Cours
-        </a>
-
-        <i class="fas fa-chevron-right"></i>
-
-        <a href="{{ route('admin.cours.show', $cours) }}">
-            {{ $cours->titre }}
-        </a>
-
-        <i class="fas fa-chevron-right"></i>
-
-        <span>Contenus pédagogiques</span>
-
-    </div>
-
 
     {{-- =========================
          EN-TÊTE
@@ -847,7 +120,7 @@
                     </div>
 
 
-                    <span style="font-size:11px;color:#9aa3af;">
+                    <span class="nv-fs-11">
 
                         {{ $chapitres->count() }} chapitre(s)
 
@@ -894,10 +167,10 @@
 
                     @empty
 
-                        <div style="padding:30px;text-align:center;color:#9aa3af;font-size:13px;">
+                        <div class="nv-empty-chapters">
 
-                            <i class="fas fa-layer-group"
-                               style="display:block;font-size:25px;margin-bottom:10px;color:#c7ccd4;"></i>
+                            <i class="fas fa-layer-group nv-empty-chapters-icon"
+                              ></i>
 
                             Aucun chapitre n'a encore été créé.
 
@@ -993,7 +266,7 @@
                             </form>
 
 
-                            <div style="margin-top:20px;padding-top:18px;border-top:1px solid #edf0f4;">
+                            <div class="nv-chapter-delete-wrapper">
 
                                 <form method="POST"
                                       action="{{ route('admin.cours.chapitres.destroy', [$cours, $item]) }}"
@@ -1025,17 +298,17 @@
 
             @else
 
-                <div class="card-custom"
-                     style="margin-top:20px;padding:45px;text-align:center;">
+                <div class="card-custom nv-empty-chapters-state"
+                    >
 
-                    <i class="fas fa-hand-pointer"
-                       style="font-size:28px;color:#c5cbd4;margin-bottom:14px;"></i>
+                    <i class="fas fa-hand-pointer nv-empty-state-icon"
+                      ></i>
 
-                    <h3 style="margin:0;color:#374151;font-size:15px;">
+                    <h3 class="nv-empty-state-title">
                         Aucun chapitre
                     </h3>
 
-                    <p style="margin:7px 0 0;color:#9aa3af;font-size:12px;">
+                    <p class="nv-empty-state-description">
                         Créez un chapitre pour commencer à organiser le contenu de cette formation.
                     </p>
 
@@ -1101,7 +374,7 @@
 
                 @else
 
-                    <div style="padding:15px;border-radius:10px;background:#f8f9fb;color:#9aa3af;font-size:12px;text-align:center;">
+                    <div class="nv-no-chapter-selected">
 
                         Aucun chapitre sélectionné.
 
@@ -1372,7 +645,7 @@
 
                 <div class="add-resource-form">
 
-                    <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:14px;">
+                    <div class="nv-add-resource-heading">
 
                         Ajouter une ressource
 
@@ -1445,7 +718,7 @@
                              CHAMP FICHIER
                              ========================= --}}
 
-                        <div class="resource-field file-field"
+                        <div class="resource-field file-field d-none"
                              id="fileField">
 
                             <label id="fileLabel">
@@ -1459,8 +732,8 @@
                                    class="resource-input">
 
 
-                            <small id="fileHelp"
-                                   style="display:block;margin-top:5px;color:#9aa3af;font-size:10px;">
+                            <small class="nv-file-help" id="fileHelp"
+                                  >
 
                                 PDF, DOC, DOCX, PPT, PPTX, XLS ou XLSX
 
@@ -1473,7 +746,7 @@
                              CHAMP URL
                              ========================= --}}
 
-                        <div class="resource-field url-field"
+                        <div class="resource-field url-field d-none"
                              id="urlField">
 
                             <label>
@@ -1524,17 +797,17 @@
 
     <div class="modal-dialog modal-dialog-centered">
 
-        <div class="modal-content"
-             style="border:0;border-radius:14px;overflow:hidden;">
+        <div class="modal-content nv-chapters-modal-content"
+            >
 
-            <div class="modal-header"
-                 style="border-bottom:1px solid #edf0f4;padding:18px 20px;">
+            <div class="modal-header nv-chapters-modal-header"
+                >
 
-                <h5 class="modal-title"
-                    style="font-size:16px;font-weight:700;color:#1f2937;">
+                <h5 class="modal-title nv-chapters-modal-title"
+                   >
 
-                    <i class="fas fa-plus-circle me-2"
-                       style="color:#0f47ad;"></i>
+                    <i class="fas fa-plus-circle me-2 text-primary"
+                      ></i>
 
                     Ajouter un chapitre
 
@@ -1556,8 +829,8 @@
                 @csrf
 
 
-                <div class="modal-body"
-                     style="padding:20px;">
+                <div class="modal-body nv-chapters-modal-body"
+                    >
 
                     <div class="form-group-custom">
 
@@ -1575,8 +848,8 @@
                     </div>
 
 
-                    <div class="form-group-custom"
-                         style="margin-bottom:0;">
+                    <div class="form-group-custom mb-0"
+                        >
 
                         <label class="form-label-custom">
                             Contenu / description
@@ -1592,8 +865,8 @@
                 </div>
 
 
-                <div class="modal-footer"
-                     style="border-top:1px solid #edf0f4;padding:15px 20px;">
+                <div class="modal-footer nv-chapters-modal-footer"
+                    >
 
                     <button type="button"
                             class="btn btn-light"
@@ -1779,14 +1052,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (fileField) {
 
-            fileField.style.display = 'none';
+            fileField.classList.add('d-none');
 
         }
 
 
         if (urlField) {
 
-            urlField.style.display = 'none';
+            urlField.classList.add('d-none');
 
         }
 
@@ -1815,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (fileField) {
 
-                fileField.style.display = 'block';
+                fileField.classList.remove('d-none');
 
             }
 
@@ -1858,7 +1131,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (fileField) {
 
-                fileField.style.display = 'block';
+                fileField.classList.remove('d-none');
 
             }
 
@@ -1901,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (urlField) {
 
-                urlField.style.display = 'block';
+                urlField.classList.remove('d-none');
 
             }
 

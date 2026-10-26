@@ -6,34 +6,14 @@
 
 <div class="resource-create-page">
 
-    {{-- Fil d'Ariane --}}
-    <div class="mb-4">
-        <div class="breadcrumb-custom">
-
-            <a href="{{ route('admin.cours.index') }}">
-                Cours
-            </a>
-
-            <span>/</span>
-
-            <a href="{{ route('admin.cours.show', $cours) }}">
-                {{ $cours->titre }}
-            </a>
-
-            <span>/</span>
-
-            <a href="{{ route('admin.cours.contenus', [$cours, $chapitre]) }}">
-                Contenus pédagogiques
-            </a>
-
-            <span>/</span>
-
-            <span class="current">
-                Ajouter une ressource
-            </span>
-
-        </div>
-    </div>
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('admin.cours.contenus', [$cours, $chapitre]) }}">{{ $cours->titre }}</a>
+        @endslot
+        @slot('title')
+            Ajouter une ressource
+        @endslot
+    @endcomponent
 
 
     {{-- En-tête --}}
@@ -193,9 +173,8 @@
                         ================================= --}}
 
                         <div
-                            class="resource-field"
+                            class="resource-field d-none"
                             id="fichierField"
-                            style="display: none;"
                         >
 
                             <label for="fichier">
@@ -248,9 +227,8 @@
                         ================================= --}}
 
                         <div
-                            class="resource-field"
+                            class="resource-field d-none"
                             id="videoSourceField"
-                            style="display: none;"
                         >
 
                             <label>
@@ -340,9 +318,8 @@
                         ================================= --}}
 
                         <div
-                            class="resource-field"
+                            class="resource-field d-none"
                             id="videoFileField"
-                            style="display: none;"
                         >
 
                             <label for="videoFile">
@@ -396,9 +373,8 @@
                         ================================= --}}
 
                         <div
-                            class="resource-field"
+                            class="resource-field d-none"
                             id="urlField"
-                            style="display: none;"
                         >
 
                             <label for="url">
@@ -607,677 +583,7 @@
 </div>
 
 
-<style>
 
-    /*
-    |--------------------------------------------------------------------------
-    | PAGE
-    |--------------------------------------------------------------------------
-    */
-
-    .resource-create-page {
-        width: 100%;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 10px 24px 40px;
-        box-sizing: border-box;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | BREADCRUMB
-    |--------------------------------------------------------------------------
-    */
-
-    .breadcrumb-custom {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 8px;
-        font-size: 13px;
-        color: #8a94a3;
-    }
-
-    .breadcrumb-custom a {
-        color: #6b7280;
-        text-decoration: none;
-    }
-
-    .breadcrumb-custom a:hover {
-        color: #0f47ad;
-    }
-
-    .breadcrumb-custom .current {
-        color: #374151;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | HEADER
-    |--------------------------------------------------------------------------
-    */
-
-    .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .page-title {
-        margin: 0;
-        color: #1f2937;
-        font-size: 28px;
-        font-weight: 700;
-    }
-
-    .page-subtitle {
-        margin: 6px 0 0;
-        color: #6b7280;
-        font-size: 14px;
-    }
-
-    .btn-back {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        padding: 10px 16px;
-        border: 1px solid #dfe4ea;
-        border-radius: 9px;
-        background: #ffffff;
-        color: #4b5563;
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .btn-back:hover {
-        background: #f7f8fa;
-        color: #0f47ad;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | LAYOUT
-    |--------------------------------------------------------------------------
-    */
-
-    .resource-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) 310px;
-        gap: 24px;
-        align-items: start;
-    }
-
-    .resource-main,
-    .resource-side {
-        min-width: 0;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | CARTES
-    |--------------------------------------------------------------------------
-    */
-
-    .resource-card,
-    .side-card {
-        background: #ffffff;
-        border: 1px solid #e9edf2;
-        border-radius: 16px;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
-    }
-
-    .resource-card-header {
-        padding: 24px 26px 18px;
-        border-bottom: 1px solid #edf0f3;
-    }
-
-    .resource-card-header h5 {
-        margin: 0;
-        color: #1f2937;
-        font-size: 18px;
-        font-weight: 700;
-    }
-
-    .resource-card-header p {
-        margin: 5px 0 0;
-        color: #6b7280;
-        font-size: 13px;
-    }
-
-    .resource-card-header strong {
-        color: #374151;
-    }
-
-    .resource-card-body {
-        padding: 26px;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | FORMULAIRE
-    |--------------------------------------------------------------------------
-    */
-
-    .form-group,
-    .resource-field {
-        margin-bottom: 24px;
-    }
-
-    .form-group > label,
-    .resource-field > label {
-        display: block;
-        margin-bottom: 8px;
-        color: #374151;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .required {
-        color: #dc3545;
-    }
-
-    .form-control-custom {
-        display: block;
-        width: 100%;
-        min-width: 0;
-        padding: 12px 14px;
-        border: 1px solid #dfe4ea;
-        border-radius: 10px;
-        background: #ffffff;
-        color: #1f2937;
-        font-size: 14px;
-        outline: none;
-        box-sizing: border-box;
-        transition: all 0.2s ease;
-    }
-
-    .form-control-custom:focus {
-        border-color: #0f47ad;
-        box-shadow: 0 0 0 3px rgba(15, 71, 173, 0.10);
-    }
-
-    select.form-control-custom {
-        cursor: pointer;
-    }
-
-    .input-error {
-        border-color: #dc3545;
-    }
-
-    .error-message {
-        margin-top: 6px;
-        color: #dc3545;
-        font-size: 12px;
-    }
-
-    .help-text {
-        margin-top: 7px;
-        color: #8a94a3;
-        font-size: 12px;
-        line-height: 1.5;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | CHOIX SOURCE VIDEO
-    |--------------------------------------------------------------------------
-    */
-
-    .video-source-options {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-
-    .video-source-option {
-        display: block;
-        padding: 15px;
-        border: 1px solid #dfe4ea;
-        border-radius: 12px;
-        background: #ffffff;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .video-source-option:hover {
-        border-color: #b8c8e4;
-        background: #fafcff;
-    }
-
-    .video-source-option:has(input:checked) {
-        border-color: #0f47ad;
-        background: #f5f8ff;
-        box-shadow: 0 0 0 2px rgba(15, 71, 173, 0.08);
-    }
-
-    .video-source-option > input {
-        position: absolute;
-        opacity: 0;
-        pointer-events: none;
-    }
-
-    .video-option-content {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .video-option-icon {
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        background: #eef3ff;
-        color: #0f47ad;
-        font-size: 18px;
-    }
-
-    .video-option-content strong {
-        display: block;
-        color: #374151;
-        font-size: 13px;
-    }
-
-    .video-option-content small {
-        display: block;
-        margin-top: 3px;
-        color: #8a94a3;
-        font-size: 11px;
-        line-height: 1.4;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPLOAD
-    |--------------------------------------------------------------------------
-    */
-
-    .file-upload-box {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 18px;
-        border: 1px dashed #cbd3df;
-        border-radius: 12px;
-        background: #fafbfc;
-    }
-
-    .file-icon {
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        background: rgba(15, 71, 173, 0.10);
-        color: #0f47ad;
-        font-size: 22px;
-    }
-
-    .video-file-icon {
-        background: #f1ecff;
-        color: #6842c2;
-    }
-
-    .file-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .file-title {
-        color: #1f2937;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .file-description {
-        margin-top: 3px;
-        color: #8a94a3;
-        font-size: 12px;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | ACTIONS
-    |--------------------------------------------------------------------------
-    */
-
-    .form-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 10px;
-        padding-top: 22px;
-        border-top: 1px solid #edf0f3;
-    }
-
-    .btn-cancel,
-    .btn-save {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        min-height: 42px;
-        padding: 0 18px;
-        border-radius: 9px;
-        text-decoration: none;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .btn-cancel {
-        border: 1px solid #e5e7eb;
-        background: #f4f5f7;
-        color: #4b5563;
-    }
-
-    .btn-save {
-        border: none;
-        background: #0f47ad;
-        color: #ffffff;
-    }
-
-    .btn-save:hover {
-        background: #0c3b91;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | COLONNE DROITE
-    |--------------------------------------------------------------------------
-    */
-
-    .side-card {
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-
-    .side-card:last-child {
-        margin-bottom: 0;
-    }
-
-    .side-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 16px;
-        color: #1f2937;
-        font-size: 15px;
-        font-weight: 700;
-    }
-
-    .side-icon {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        background: rgba(15, 71, 173, 0.10);
-        color: #0f47ad;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | CHAPITRE
-    |--------------------------------------------------------------------------
-    */
-
-    .chapter-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px;
-        border-radius: 10px;
-        background: #f8f9fb;
-    }
-
-    .chapter-number {
-        width: 38px;
-        height: 38px;
-        min-width: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        background: #0f47ad;
-        color: #ffffff;
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    .chapter-details {
-        min-width: 0;
-    }
-
-    .chapter-name {
-        color: #1f2937;
-        font-size: 13px;
-        font-weight: 600;
-        word-break: break-word;
-    }
-
-    .chapter-label {
-        margin-top: 3px;
-        color: #8a94a3;
-        font-size: 11px;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | TYPES
-    |--------------------------------------------------------------------------
-    */
-
-    .resource-types {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
-
-    .resource-type {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .type-icon {
-        width: 36px;
-        height: 36px;
-        min-width: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 9px;
-        font-size: 16px;
-    }
-
-    .document-icon {
-        background: #eef3ff;
-        color: #0f47ad;
-    }
-
-    .video-icon {
-        background: #f1ecff;
-        color: #6842c2;
-    }
-
-    .link-icon {
-        background: #eaf8f1;
-        color: #21895a;
-    }
-
-    .resource-type strong {
-        display: block;
-        color: #374151;
-        font-size: 13px;
-    }
-
-    .resource-type small {
-        display: block;
-        margin-top: 2px;
-        color: #8a94a3;
-        font-size: 11px;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | INFO
-    |--------------------------------------------------------------------------
-    */
-
-    .info-card {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 15px;
-        border: 1px solid #e4ebf8;
-        border-radius: 12px;
-        background: #f5f8fe;
-        color: #0f47ad;
-    }
-
-    .info-card > i {
-        margin-top: 2px;
-        font-size: 17px;
-    }
-
-    .info-card strong {
-        display: block;
-        margin-bottom: 4px;
-        color: #1f2937;
-        font-size: 13px;
-    }
-
-    .info-card p {
-        margin: 0;
-        color: #6b7280;
-        font-size: 12px;
-        line-height: 1.5;
-    }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESPONSIVE
-    |--------------------------------------------------------------------------
-    */
-
-    @media (max-width: 1100px) {
-
-        .resource-layout {
-            grid-template-columns: minmax(0, 1fr) 270px;
-            gap: 18px;
-        }
-
-        .resource-create-page {
-            padding-left: 18px;
-            padding-right: 18px;
-        }
-
-    }
-
-
-    @media (max-width: 900px) {
-
-        .resource-layout {
-            grid-template-columns: 1fr;
-        }
-
-        .resource-side {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 18px;
-        }
-
-        .side-card {
-            margin-bottom: 0;
-        }
-
-        .info-card {
-            grid-column: 1 / -1;
-        }
-
-    }
-
-
-    @media (max-width: 700px) {
-
-        .video-source-options {
-            grid-template-columns: 1fr;
-        }
-
-    }
-
-
-    @media (max-width: 650px) {
-
-        .resource-create-page {
-            padding: 10px 14px 30px;
-        }
-
-        .page-header {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-
-        .page-title {
-            font-size: 23px;
-        }
-
-        .resource-card-header,
-        .resource-card-body {
-            padding: 18px;
-        }
-
-        .resource-side {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .side-card {
-            margin-bottom: 0;
-        }
-
-        .form-actions {
-            flex-direction: column-reverse;
-            align-items: stretch;
-        }
-
-        .btn-cancel,
-        .btn-save {
-            width: 100%;
-        }
-
-        .file-upload-box {
-            align-items: flex-start;
-            flex-direction: column;
-        }
-
-    }
-
-</style>
 
 
 <script>
@@ -1323,10 +629,10 @@ document.addEventListener('DOMContentLoaded', function () {
     |--------------------------------------------------------------------------
     */
 
-    fichierField.style.display = 'none';
-    videoSourceField.style.display = 'none';
-    videoFileField.style.display = 'none';
-    urlField.style.display = 'none';
+    fichierField.classList.add('d-none');
+    videoSourceField.classList.add('d-none');
+    videoFileField.classList.add('d-none');
+    urlField.classList.add('d-none');
 
 
     /*
@@ -1359,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (type === 'fichier') {
 
-        fichierField.style.display = 'block';
+        fichierField.classList.remove('d-none');
 
         fichierInput.disabled = false;
         fichierInput.setAttribute('required', 'required');
@@ -1375,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (type === 'video') {
 
-        videoSourceField.style.display = 'block';
+        videoSourceField.classList.remove('d-none');
 
         updateVideoSource();
 
@@ -1390,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (type === 'lien') {
 
-        urlField.style.display = 'block';
+        urlField.classList.remove('d-none');
 
         urlInput.disabled = false;
         urlInput.setAttribute('required', 'required');
@@ -1438,8 +744,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (videoUploadRadio.checked) {
 
-            videoFileField.style.display = 'block';
-            urlField.style.display = 'none';
+            videoFileField.classList.remove('d-none');
+            urlField.classList.add('d-none');
 
             videoFileInput.disabled = false;
             videoFileInput.setAttribute('required', 'required');
@@ -1453,8 +759,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (videoUrlRadio.checked) {
 
-        videoFileField.style.display = 'none';
-        urlField.style.display = 'block';
+        videoFileField.classList.add('d-none');
+        urlField.classList.remove('d-none');
 
         urlInput.disabled = false;
         urlInput.setAttribute('required', 'required');

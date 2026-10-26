@@ -28,7 +28,7 @@
                     <h6 class="card-title mb-0">Membres ({{ $stagiaires->count() + ($classe->formateur ? 1 : 0) }})</h6>
                     <p class="text-muted fs-12 mb-0">Les stagiaires dont l'inscription est payée sont ajoutés automatiquement.</p>
                 </div>
-                <div class="card-body" style="max-height: 420px; overflow-y: auto;">
+                <div class="card-body nv-forum-members-list">
                     {{-- Le formateur en premier : c'est lui qui anime et modère le forum --}}
                     @if ($classe->formateur)
                         <div class="d-flex align-items-center mb-3">
@@ -80,9 +80,9 @@
                 </div>
 
                 {{-- Zone des messages : classes du template Velzon (chat-conversation / chat-list / ctext-wrap) --}}
-                <div class="chat-conversation p-3" id="zoneMessages" style="overflow-y: auto; min-height: 340px;">
+                <div class="chat-conversation p-3 nv-forum-chat-window" id="zoneMessages">
                     <ul class="list-unstyled chat-conversation-list" id="listeMessages"></ul>
-                    <p class="text-center text-muted my-4" id="messageVide" style="display:none">
+                    <p class="text-center text-muted my-4 d-none" id="messageVide">
                         Aucun message pour l'instant. Lancez la discussion et partagez vos photos et vidéos de la formation !
                     </p>
                 </div>
@@ -105,7 +105,7 @@
 
                         {{-- Bandeau "fichier sélectionné" (photo : aperçu ; vidéo : icône) --}}
                         <div class="d-none align-items-center mb-2" id="barrePhoto">
-                            <img id="apercuPhoto" alt="" class="rounded me-2" style="height:48px;width:48px;object-fit:cover">
+                            <img id="apercuPhoto" alt="" class="rounded me-2 nv-forum-preview-image">
                             <i id="iconeVideo" class="ri-movie-line fs-24 text-primary me-2 d-none"></i>
                             <span class="text-muted fs-12 me-2" id="nomPhoto"></span>
                             <button type="button" class="btn btn-sm btn-soft-danger" id="retirerPhoto">Retirer</button>
@@ -134,7 +134,7 @@
     </div>
 
     {{-- ====================== GALERIE DE CE FORUM (panneau latéral) ====================== --}}
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="panneauGalerie" aria-labelledby="titreGalerie" style="width: min(520px, 100vw);">
+    <div class="offcanvas offcanvas-end nv-forum-gallery-panel" tabindex="-1" id="panneauGalerie" aria-labelledby="titreGalerie">
         <div class="offcanvas-header border-bottom">
             <div>
                 <h5 class="offcanvas-title mb-0" id="titreGalerie">Galerie — {{ $classe->nom }}</h5>
@@ -237,8 +237,7 @@
 
                 // Citation du message auquel on répond
                 if (m.parent) {
-                    const cit = el('div', 'rounded p-2 mb-2 bg-light text-body fs-12');
-                    cit.style.cursor = 'pointer';
+                    const cit = el('div', 'rounded p-2 mb-2 bg-light text-body fs-12 nv-forum-quoted-message');
                     cit.appendChild(el('strong', '', m.parent.auteur));
                     cit.appendChild(el('div', 'text-muted', m.parent.extrait));
                     cit.addEventListener('click', function () {
@@ -250,12 +249,10 @@
 
                 // Vidéo : lecteur intégré (le plein écran est fourni par le navigateur)
                 if (m.photo_url && m.est_video) {
-                    const video = el('video', 'rounded mb-1 d-block');
+                    const video = el('video', 'rounded mb-1 d-block nv-chat-media');
                     video.src = m.photo_url;
                     video.controls = true;
                     video.preload = 'metadata';   // ne télécharge que la durée / la 1re image, pas toute la vidéo
-                    video.style.maxWidth = '260px';
-                    video.style.width = '100%';
                     bulle.appendChild(video);
                 }
 
@@ -263,19 +260,16 @@
                 if (m.photo_url && !m.est_video) {
                     const lien = el('a', 'glightbox d-block mb-1');
                     lien.href = m.photo_url;
-                    const img = el('img', 'rounded img-fluid');
+                    const img = el('img', 'rounded img-fluid nv-chat-image');
                     img.src = m.photo_url;
                     img.alt = 'Photo partagée par ' + m.auteur;
                     img.loading = 'lazy';
-                    img.style.maxWidth = '260px';
                     lien.appendChild(img);
                     bulle.appendChild(lien);
                 }
 
                 if (m.contenu) {
-                    const p = el('p', 'mb-0 ctext-content', m.contenu);
-                    p.style.whiteSpace = 'pre-wrap';   // respecte les retours à la ligne
-                    p.style.wordBreak = 'break-word';
+                    const p = el('p', 'mb-0 ctext-content nv-chat-message-text', m.contenu);
                     bulle.appendChild(p);
                 }
 
@@ -332,7 +326,7 @@
                 const etaitEnBas = zone.scrollHeight - zone.scrollTop - zone.clientHeight < 80;
 
                 liste.appendChild(construire(m));
-                vide.style.display = 'none';
+                vide.classList.add('d-none');
                 if (!premierId || m.id < premierId) premierId = m.id;
                 if (m.id > dernierId) dernierId = m.id;
                 lightbox.reload();
@@ -348,7 +342,7 @@
                 if (!r.ok) return;
                 const data = await r.json();
                 data.messages.forEach(m => ajouter(m, true));
-                if (!data.messages.length) vide.style.display = 'block';
+                if (!data.messages.length) vide.classList.remove('d-none');
             }
 
             async function rafraichir() {
@@ -367,7 +361,7 @@
                             const id = Number(li.dataset.id);
                             if (id >= premierId && !existants.has(id)) li.remove();
                         });
-                        if (!liste.children.length) vide.style.display = 'block';
+                        if (!liste.children.length) vide.classList.remove('d-none');
                     }
                 } catch (e) { /* réseau coupé : on réessaiera au prochain tour */ }
             }
@@ -384,7 +378,7 @@
                 if (r.ok) {
                     const li = liste.querySelector('li[data-id="' + id + '"]');
                     if (li) li.remove();
-                    if (!liste.children.length) vide.style.display = 'block';
+                    if (!liste.children.length) vide.classList.remove('d-none');
                 } else {
                     alert('Suppression impossible.');
                 }
@@ -575,32 +569,26 @@
                 if (m.est_video) {
                     lien.setAttribute('data-type', 'video');
                     lien.setAttribute('data-source', 'local');
-                    lien.style.position = 'relative';
+                    lien.classList.add('position-relative');
 
                     // Vignette = 1re image de la vidéo (#t=0.1 évite l'image noire du tout début)
                     const apercu = document.createElement('video');
                     apercu.src = m.url + '#t=0.1';
                     apercu.preload = 'metadata';
                     apercu.muted = true;
-                    apercu.className = 'rounded w-100';
-                    apercu.style.aspectRatio = '1 / 1';
-                    apercu.style.objectFit = 'cover';
-                    apercu.style.pointerEvents = 'none';   // le clic va au lien, pas au lecteur
+                    apercu.className = 'rounded w-100 nv-gallery-square pe-none';
                     lien.appendChild(apercu);
 
                     // Pastille « lecture » pour distinguer une vidéo d'une photo
                     const play = document.createElement('i');
-                    play.className = 'ri-play-circle-fill text-white fs-1';
-                    play.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-shadow:0 0 6px rgba(0,0,0,.6);pointer-events:none';
+                    play.className = 'ri-play-circle-fill text-white fs-1 position-absolute top-50 start-50 translate-middle nv-text-shadow pe-none';
                     lien.appendChild(play);
                 } else {
                     const img = document.createElement('img');
                     img.src = m.url;
                     img.alt = 'Photo partagée par ' + m.auteur;
                     img.loading = 'lazy';
-                    img.className = 'rounded w-100';
-                    img.style.aspectRatio = '1 / 1';
-                    img.style.objectFit = 'cover';
+                    img.className = 'rounded w-100 nv-gallery-square';
                     lien.appendChild(img);
                 }
 

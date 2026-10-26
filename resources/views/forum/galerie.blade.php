@@ -50,14 +50,14 @@
                             {{-- Vidéo : 1re image comme vignette + pastille « lecture » --}}
                             <div class="position-relative">
                                 <video src="{{ $urlPhoto }}#t=0.1" preload="metadata" muted
-                                       class="card-img-top" style="aspect-ratio: 1 / 1; object-fit: cover; pointer-events: none;"></video>
-                                <i class="ri-play-circle-fill text-white fs-1 position-absolute top-50 start-50 translate-middle"
-                                   style="text-shadow: 0 0 6px rgba(0,0,0,.6);"></i>
+                                       class="card-img-top nv-gallery-square pe-none"></video>
+                                <i class="ri-play-circle-fill text-white fs-1 position-absolute top-50 start-50 translate-middle nv-text-shadow"
+                                  ></i>
                             </div>
                         @else
                             <img src="{{ $urlPhoto }}" loading="lazy"
                                  alt="Photo du forum {{ $message->classe->nom }}"
-                                 class="card-img-top" style="aspect-ratio: 1 / 1; object-fit: cover;">
+                                 class="card-img-top nv-gallery-square">
                         @endif
                     </a>
                     <div class="card-body p-2">

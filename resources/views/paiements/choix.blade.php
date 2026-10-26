@@ -86,8 +86,8 @@ Choix du paiement
                         <div class="border rounded p-4 h-100">
 
                             <div class="mb-3">
-                                <i class="ri-money-dollar-circle-line text-success"
-                                   style="font-size: 2rem;"></i>
+                                <i class="ri-money-dollar-circle-line text-success fs-2"
+                                  ></i>
                             </div>
 
                             <h5 class="mb-2">
@@ -137,8 +137,8 @@ Choix du paiement
                         <div class="border rounded p-4 h-100">
 
                             <div class="mb-3">
-                                <i class="ri-smartphone-line text-primary"
-                                   style="font-size: 2rem;"></i>
+                                <i class="ri-smartphone-line text-primary fs-2"
+                                  ></i>
                             </div>
 
                             <h5 class="mb-2">

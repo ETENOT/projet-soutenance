@@ -62,7 +62,7 @@
                 </h5>
 
                 {{-- Hauteur limitée : la liste défile au lieu d'allonger la page --}}
-                <div class="pe-2" style="max-height: 460px; overflow-y: auto;">
+                <div class="pe-2 nv-review-scroll">
                     @forelse($listeAvis as $avis)
                         <div class="border rounded-3 p-3 mb-3">
                             <div class="d-flex justify-content-between align-items-start gap-3">

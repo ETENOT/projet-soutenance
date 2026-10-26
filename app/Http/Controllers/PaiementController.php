@@ -6,8 +6,8 @@ use App\Models\Classe;
 use App\Models\Inscription;
 use App\Models\Notification;
 use App\Models\Paiement;
+use App\Services\PaiementService;
 use App\Notifications\InscriptionEnregistree;
-use App\Notifications\PaiementConfirme;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -179,7 +179,7 @@ class PaiementController extends Controller
 
         return view('paiements.create', [
             'inscription' => $inscription,
-            'montant' => $this->montantDe($inscription),
+            'montant' => app(PaiementService::class)->montantDe($inscription),
         ]);
     }
 
@@ -275,7 +275,7 @@ class PaiementController extends Controller
             );
         }
 
-        $montant = $this->montantDe($inscription);
+        $montant = app(PaiementService::class)->montantDe($inscription);
 
         $reference = 'NEO-PART-INS-'
             . $inscription->id
@@ -433,7 +433,8 @@ class PaiementController extends Controller
         /*
          * Création du paiement local uniquement maintenant.
          */
-        $paiement = $this->enregistrer(
+        $service = app(PaiementService::class);
+        $paiement = $service->enregistrer(
             $inscription,
             'singpay',
             $attente['reference'],
@@ -455,7 +456,7 @@ class PaiementController extends Controller
                 );
         }
 
-        $this->envoyerEmail($paiement);
+        $service->envoyerEmail($paiement);
 
         return redirect()
             ->route('cours.mes')
@@ -491,11 +492,7 @@ class PaiementController extends Controller
      */
     public function store(Inscription $inscription)
     {
-        $paiement = $this->enregistrer(
-            $inscription,
-            'direct',
-            null
-        );
+        $paiement = app(PaiementService::class)->enregistrerAuComptoir($inscription);
 
         if (! $paiement) {
             return back()->with(
@@ -503,8 +500,6 @@ class PaiementController extends Controller
                 'Cette inscription est déjà payée.'
             );
         }
-
-        $this->envoyerEmail($paiement);
 
         return back()->with(
             'success',
@@ -540,26 +535,6 @@ class PaiementController extends Controller
     }
 
     /**
-     * Calcule le montant d'une inscription.
-     *
-     * Le prix est toujours récupéré depuis le cours,
-     * jamais depuis un formulaire utilisateur.
-     */
-    private function montantDe(Inscription $inscription)
-    {
-        $inscription->loadMissing(
-            'classe.cours',
-            'user.role'
-        );
-
-        $cours = $inscription->classe->cours;
-
-        return $inscription->user->role?->nom === 'entreprise'
-            ? $cours->prix_entreprise
-            : $cours->prix_particulier;
-    }
-
-    /**
      * Calcule le montant à partir d'un cours et d'un utilisateur.
      *
      * Utilisé avant que l'inscription existe.
@@ -571,86 +546,6 @@ class PaiementController extends Controller
         return $user->role?->nom === 'entreprise'
             ? $cours->prix_entreprise
             : $cours->prix_particulier;
-    }
-
-    /**
-     * Crée le paiement.
-     *
-     * Utilisé par :
-     * - SingPay après confirmation ;
-     * - paiement direct par l'administration.
-     */
-    private function enregistrer(
-        Inscription $inscription,
-        string $mode,
-        ?string $reference,
-        ?string $singpayTransactionId = null,
-        ?string $singpayStatus = null,
-        ?string $singpayResult = null
-    ): ?Paiement {
-
-        return DB::transaction(function () use (
-            $inscription,
-            $mode,
-            $reference,
-            $singpayTransactionId,
-            $singpayStatus,
-            $singpayResult
-        ) {
-
-            // Verrouillage de l'inscription.
-            $insc = Inscription::with([
-                'classe.cours',
-                'user.role'
-            ])
-                ->lockForUpdate()
-                ->findOrFail($inscription->id);
-
-            // Empêche la création de deux paiements.
-            if ($insc->paiement()->exists()) {
-                return null;
-            }
-
-            $cours = $insc->classe->cours;
-
-            $montant = $this->montantDe($insc);
-
-            $paiement = Paiement::create([
-                'montant' => $montant,
-                'inscription_id' => $insc->id,
-                'mode' => $mode,
-                'statut' => 'valide',
-                'reference' => $reference,
-                'singpay_transaction_id' => $singpayTransactionId,
-                'singpay_status' => $singpayStatus,
-                'singpay_result' => $singpayResult,
-            ]);
-
-            $moyen = $mode === 'direct'
-                ? 'au comptoir'
-                : 'via ' . Paiement::MODES[$mode];
-
-            // Notification de paiement confirmé.
-            Notification::create([
-                'user_id' => $insc->user_id,
-                'message' => 'Paiement confirmé : « '
-                    . $cours->titre
-                    . ' » ('
-                    . $insc->classe->nom
-                    . '), '
-                    . number_format(
-                        $montant,
-                        0,
-                        ',',
-                        ' '
-                    )
-                    . ' fcfa '
-                    . $moyen
-                    . '. Votre inscription est validée.',
-            ]);
-
-            return $paiement;
-        });
     }
 
     /**
@@ -686,19 +581,4 @@ class PaiementController extends Controller
         }
     }
 
-    /**
-     * Email de confirmation du paiement.
-     */
-    private function envoyerEmail(Paiement $paiement): void
-    {
-        try {
-            $paiement->inscription
-                ->user
-                ->notify(
-                    new PaiementConfirme($paiement)
-                );
-        } catch (\Throwable $e) {
-            report($e);
-        }
-    }
 }

@@ -12,6 +12,7 @@
       $groupes       regroupements possibles : ['clé' => 'Libellé']  (facultatif)
       $groupe        regroupement actif (clé ou null)
       $vueCriteres   vue Blade de la 3e colonne "Plus de critères" (selects, nombres, dates...)
+      $plageInscrits affiche des champs de nombre minimum et maximum d'inscrits (facultatif)
 --}}
 @php
     // URL de la liste sans certains paramètres (sert au "×" de chaque étiquette)
@@ -24,6 +25,7 @@
     $etiquettes = $etiquettes ?? [];
     $filtres = $filtres ?? [];
     $vueCriteres = $vueCriteres ?? null;
+    $plageInscrits = $plageInscrits ?? false;
     $recherche = $recherche ?? true;
     $libelleRecherche = $libelleRecherche ?? 'Rechercher';
     $colonnesMenu = (int) (count($filtres) > 0) + (int) (count($groupes) > 0) + (int) ($vueCriteres !== null);
@@ -125,6 +127,23 @@
 
                         @include($vueCriteres)
 
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Appliquer</button>
+                    </div>
+                @endif
+
+                @if ($plageInscrits)
+                    <div class="{{ $largeurColonne }}">
+                        <h6 class="fw-semibold mb-2"><i class="ri-group-line text-primary me-1"></i>Nombre d'inscrits</h6>
+                        <div class="mb-2">
+                            <label for="inscrits-min" class="form-label mb-1">Minimum</label>
+                            <input type="number" name="inscrits_min" id="inscrits-min" min="0"
+                                   value="{{ request('inscrits_min') }}" class="form-control form-control-sm">
+                        </div>
+                        <div class="mb-3">
+                            <label for="inscrits-max" class="form-label mb-1">Maximum</label>
+                            <input type="number" name="inscrits_max" id="inscrits-max" min="0"
+                                   value="{{ request('inscrits_max') }}" class="form-control form-control-sm">
+                        </div>
                         <button type="submit" class="btn btn-sm btn-primary w-100">Appliquer</button>
                     </div>
                 @endif

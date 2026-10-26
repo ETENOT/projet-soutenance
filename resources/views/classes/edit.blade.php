@@ -20,6 +20,16 @@
             ->reject(fn ($messages, $cle) => str_starts_with($cle, 'jours_exclus'))
             ->flatten();
     @endphp
+    @if ($erreursFormulaire->isNotEmpty())
+        <div class="alert alert-danger" role="alert">
+            <strong>Enregistrement impossible :</strong>
+            <ul class="mb-0 mt-2">
+                @foreach ($erreursFormulaire as $erreur)
+                    <li>{{ $erreur }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     {{-- En-tête : état de la classe + fermeture (admin ou formateur) --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
@@ -68,21 +78,12 @@
                             @error('nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
-                        <div class="row">
-                            <div class="col-sm-6 mb-3">
-                                <label for="capacite_min" class="form-label">Capacité minimale</label>
-                                <input type="number" name="capacite_min" id="capacite_min" min="1" max="255"
-                                       class="form-control @error('capacite_min') is-invalid @enderror"
-                                       value="{{ old('capacite_min', $classe->capacite_min) }}">
-                                @error('capacite_min')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-sm-6 mb-3">
-                                <label for="capacite_max" class="form-label">Capacité maximale</label>
-                                <input type="number" name="capacite_max" id="capacite_max" min="1" max="255"
-                                       class="form-control @error('capacite_max') is-invalid @enderror"
-                                       value="{{ old('capacite_max', $classe->capacite_max) }}">
-                                @error('capacite_max')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
+                        <div class="mb-3">
+                            <label for="capacite_max" class="form-label">Capacité maximale</label>
+                            <input type="number" name="capacite_max" id="capacite_max" min="1" max="255"
+                                   class="form-control @error('capacite_max') is-invalid @enderror"
+                                   value="{{ old('capacite_max', $classe->capacite_max) }}">
+                            @error('capacite_max')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="row">
@@ -135,12 +136,16 @@
 
                         <div class="mb-4">
                             <label for="lieu_image" class="form-label">Photo du lieu <span class="text-muted">(facultatif)</span></label>
+                            <div class="mb-2">
+                                <img src="{{ $classe->lieu_image_url }}" alt="Photo du lieu : {{ $classe->lieu }}"
+                                     class="rounded object-fit-cover" width="120" height="80">
+                                <small class="text-muted ms-2">
+                                    {{ $classe->lieu_image ? 'Une photo est enregistrée ; une nouvelle la remplacera.' : 'Photo du bâtiment par défaut ; vous pouvez la remplacer.' }}
+                                </small>
+                            </div>
                             <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
                                    class="form-control @error('lieu_image') is-invalid @enderror">
                             @error('lieu_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            @if ($classe->lieu_image_url)
-                                <div class="form-text">Une photo est déjà enregistrée : en choisir une nouvelle la remplacera.</div>
-                            @endif
                         </div>
 
                         <button type="submit" class="btn btn-primary">
@@ -196,6 +201,10 @@
 
                                             <td class="text-end">
                                                 <div class="d-inline-flex align-items-center gap-2">
+                                                    @if ($inscription->paiement)
+                                                        <a href="{{ route('paiements.recu', $inscription->paiement) }}" target="_blank" class="btn btn-sm btn-soft-primary">Reçu</a>
+                                                    @endif
+
                                                     @unless ($inscription->paiement)
                                                         <form action="{{ route('paiements.store', $inscription) }}" method="POST" class="m-0"
                                                               onsubmit="return confirm('Enregistrer le paiement de cette inscription ?')">

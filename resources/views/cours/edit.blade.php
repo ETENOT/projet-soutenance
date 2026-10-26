@@ -1,298 +1,591 @@
 @extends('layouts.master')
 
 @section('title')
-    Gérer la classe — {{ $cours->titre }}
+Modifier la formation
 @endsection
 
 @section('content')
-    @component('components.breadcrumb')
-        @slot('li_1')
-            <a href="{{ route('admin.cours.classes.index', $cours) }}">Classes de "{{ $cours->titre }}"</a>
-        @endslot
-        @slot('title')
-            {{ $classe->nom }}
-        @endslot
-    @endcomponent
 
-    {{-- Erreurs de validation du formulaire « Informations » (celles des jours exclus ont leur propre affichage) --}}
-    @php
-        $erreursFormulaire = collect($errors->messages())
-            ->reject(fn ($messages, $cle) => str_starts_with($cle, 'jours_exclus'))
-            ->flatten();
-    @endphp
-    @if ($erreursFormulaire->isNotEmpty())
-        <div class="alert alert-danger" role="alert">
-            <strong>Enregistrement impossible :</strong>
-            <ul class="mb-0 mt-2">
-                @foreach ($erreursFormulaire as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+@component('components.breadcrumb')
+    @slot('li_1')
+        <a href="{{ route('admin.cours.index') }}">Gestion des cours</a>
+    @endslot
+    @slot('title')
+        Modifier la formation
+    @endslot
+@endcomponent
 
-    {{-- En-tête : état de la classe + fermeture (admin ou formateur) --}}
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <span class="badge bg-{{ $classe->etat_couleur }}-subtle text-{{ $classe->etat_couleur }} fs-12">
-                {{ $classe->etat_libelle }}
-            </span>
-            <span class="text-muted">
-                {{ $cours->titre }} · du {{ $classe->date_debut->format('d/m/Y') }} au {{ $classe->date_fin->format('d/m/Y') }}
-            </span>
+{{-- ==========================================
+     EN-TÊTE
+=========================================== --}}
+<div class="row">
+    <div class="col-12">
+
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+
+            <div>
+                <h4 class="mb-sm-0">Modifier la formation</h4>
+
+                <p class="text-muted mb-0 mt-1">
+                    Modifiez les informations, le programme et les tarifs de cette formation.
+                </p>
+            </div>
+
         </div>
 
-        @if ($classe->estFermee())
-            <span class="badge bg-dark-subtle text-dark fs-12">
-                <i class="ri-lock-line me-1"></i>Classe fermée le {{ $classe->fermee_le->format('d/m/Y H:i') }}
-            </span>
-        @elseif ($classe->peutEtreFermee())
-            <form action="{{ route('admin.cours.classes.fermer', [$cours, $classe]) }}" method="POST" class="m-0"
-                  onsubmit="return confirm('Fermer cette classe ? Les taux de présence seront figés et les attestations calculées. Action définitive.');">
-                @csrf
-                <button type="submit" class="btn btn-danger">
-                    <i class="ri-lock-line me-1"></i>Fermer la classe
-                </button>
-            </form>
-        @endif
     </div>
+</div>
 
-    <div class="row g-4">
 
-        {{-- ====== INFORMATIONS ====== --}}
-        <div class="col-xl-5">
-            <div class="card h-100 mb-0">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Informations</h5>
-                </div>
-                <div class="card-body">
-                    <form action="{{ route('admin.cours.classes.update', [$cours, $classe]) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
+{{-- ==========================================
+     FORMULAIRE PRINCIPAL
+=========================================== --}}
+<form
+    action="{{ route('admin.cours.update', $cours) }}"
+    method="POST"
+    enctype="multipart/form-data"
+>
 
-                        <div class="mb-3">
-                            <label for="nom" class="form-label">Nom de la classe</label>
-                            <input type="text" name="nom" id="nom"
-                                   class="form-control @error('nom') is-invalid @enderror"
-                                   value="{{ old('nom', $classe->nom) }}">
-                            @error('nom')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
+    @csrf
+    @method('PUT')
 
-                        <div class="mb-3">
-                            <label for="capacite_max" class="form-label">Capacité maximale</label>
-                            <input type="number" name="capacite_max" id="capacite_max" min="1" max="255"
-                                   class="form-control @error('capacite_max') is-invalid @enderror"
-                                   value="{{ old('capacite_max', $classe->capacite_max) }}">
-                            @error('capacite_max')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
 
-                        <div class="row">
-                            <div class="col-sm-6 mb-3">
-                                <label for="date_debut" class="form-label">Date de début</label>
-                                <input type="date" name="date_debut" id="date_debut"
-                                       class="form-control @error('date_debut') is-invalid @enderror"
-                                       value="{{ old('date_debut', $classe->date_debut->format('Y-m-d')) }}">
-                                @error('date_debut')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                            <div class="col-sm-6 mb-3">
-                                <label for="date_fin" class="form-label">Date de fin</label>
-                                <input type="date" name="date_fin" id="date_fin"
-                                       class="form-control @error('date_fin') is-invalid @enderror"
-                                       value="{{ old('date_fin', $classe->date_fin->format('Y-m-d')) }}">
-                                @error('date_fin')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            </div>
-                        </div>
+    <div class="row">
 
-                        <div class="mb-3">
-                            <label for="formateur_id" class="form-label">Formateur</label>
-                            <select name="formateur_id" id="formateur_id"
-                                    class="form-select @error('formateur_id') is-invalid @enderror">
-                                <option value="">— Aucun formateur —</option>
-                                @foreach ($formateurs as $formateur)
-                                    <option value="{{ $formateur->id }}"
-                                        @selected((string) old('formateur_id', $classe->formateur_id) === (string) $formateur->id)>
-                                        {{ $formateur->name }} ({{ $formateur->email }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('formateur_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
+        {{-- ==========================================
+             COLONNE PRINCIPALE
+        =========================================== --}}
+        <div class="col-xl-8">
 
-                        <div class="mb-3">
-                            <label for="lieu" class="form-label">Lieu</label>
-                            <input type="text" name="lieu" id="lieu"
-                                   class="form-control @error('lieu') is-invalid @enderror"
-                                   value="{{ old('lieu', $classe->lieu) }}">
-                            @error('lieu')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="lieu_lien" class="form-label">Lien Google Maps <span class="text-muted">(facultatif)</span></label>
-                            <input type="url" name="lieu_lien" id="lieu_lien"
-                                   class="form-control @error('lieu_lien') is-invalid @enderror"
-                                   value="{{ old('lieu_lien', $classe->lieu_lien) }}">
-                            @error('lieu_lien')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="lieu_image" class="form-label">Photo du lieu <span class="text-muted">(facultatif)</span></label>
-                            <div class="mb-2">
-                                <img src="{{ $classe->lieu_image_url }}" alt="Photo du lieu : {{ $classe->lieu }}"
-                                     class="rounded object-fit-cover" width="120" height="80">
-                                <small class="text-muted ms-2">
-                                    {{ $classe->lieu_image ? 'Une photo est enregistrée ; une nouvelle la remplacera.' : 'Photo du bâtiment par défaut ; vous pouvez la remplacer.' }}
-                                </small>
-                            </div>
-                            <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
-                                   class="form-control @error('lieu_image') is-invalid @enderror">
-                            @error('lieu_image')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ri-save-line me-1"></i>Enregistrer
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {{-- ====== INSCRITS ====== --}}
-        <div class="col-xl-7">
-            <div class="card h-100 mb-0">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Utilisateurs inscrits</h5>
-                    <span class="badge bg-primary-subtle text-primary fs-12">
-                        {{ $classe->inscriptions->count() }}/{{ $classe->capacite_max }}
-                    </span>
-                </div>
-                <div class="card-body">
-
-                    @if ($classe->inscriptions->isEmpty())
-                        <p class="text-muted fs-13 mb-0">Aucun utilisateur inscrit pour l'instant.</p>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table align-middle table-nowrap mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Utilisateur</th>
-                                        <th>Paiement</th>
-                                        <th class="text-end">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($classe->inscriptions as $inscription)
-                                        <tr>
-                                            <td>
-                                                <span class="fw-medium">{{ $inscription->user->name }}</span><br>
-                                                <span class="text-muted fs-12">{{ $inscription->user->email }}</span>
-                                            </td>
-
-                                            {{-- Une inscription est « payée » si elle possède un Paiement --}}
-                                            <td>
-                                                @if ($inscription->paiement)
-                                                    <span class="badge bg-success-subtle text-success">Payé</span><br>
-                                                    <span class="text-muted fs-12">
-                                                        {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa · {{ $inscription->paiement->libelle_mode }}
-                                                    </span>
-                                                @else
-                                                    <span class="badge bg-warning-subtle text-warning">Impayé</span>
-                                                @endif
-                                            </td>
-
-                                            <td class="text-end">
-                                                <div class="d-inline-flex align-items-center gap-2">
-                                                    @if ($inscription->paiement)
-                                                        <a href="{{ route('paiements.recu', $inscription->paiement) }}" target="_blank" class="btn btn-sm btn-soft-primary">Reçu</a>
-                                                    @endif
-
-                                                    @unless ($inscription->paiement)
-                                                        <form action="{{ route('paiements.store', $inscription) }}" method="POST" class="m-0"
-                                                              onsubmit="return confirm('Enregistrer le paiement de cette inscription ?')">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-sm btn-success">Enregistrer le paiement</button>
-                                                        </form>
-                                                    @endunless
-
-                                                    {{-- Retirer une inscription payée supprime aussi son paiement : on prévient avant --}}
-                                                    <form action="{{ route('admin.cours.classes.inscrits.destroy', [$cours, $classe, $inscription->user]) }}" method="POST" class="m-0"
-                                                          onsubmit="return confirm('{{ $inscription->paiement ? 'Cette inscription est payée : le paiement enregistré sera supprimé avec elle. Continuer ?' : 'Retirer cet utilisateur de la classe ?' }}')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-soft-danger">Retirer</button>
-                                                    </form>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
-
-                    {{-- Ajout manuel d'utilisateurs --}}
-                    <hr class="my-4">
-
-                    <form action="{{ route('admin.cours.classes.inscrits.store', [$cours, $classe]) }}" method="POST">
-                        @csrf
-                        <h6 class="mb-1">Ajouter des utilisateurs</h6>
-                        <p class="text-muted fs-13 mb-3">Cochez un ou plusieurs utilisateurs, puis validez.</p>
-
-                        @if ($candidats->isEmpty())
-                            <p class="text-muted fs-13 mb-0">Aucun utilisateur disponible à inscrire.</p>
-                        @else
-                            <div class="nv-choix-liste">
-                                <div class="d-grid gap-2">
-                                    @foreach ($candidats as $utilisateur)
-                                        <label class="nv-choix p-2 d-flex align-items-center gap-2 mb-0">
-                                            <input class="form-check-input mt-0" type="checkbox" name="user_ids[]"
-                                                   value="{{ $utilisateur->id }}"
-                                                   @checked(in_array($utilisateur->id, old('user_ids', [])))>
-                                            <span class="nv-choix-label">
-                                                {{ $utilisateur->name }} <span class="text-muted">({{ $utilisateur->email }})</span>
-                                            </span>
-                                        </label>
-                                    @endforeach
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-outline-primary mt-3">
-                                <i class="ri-user-add-line me-1"></i>Ajouter les utilisateurs sélectionnés
-                            </button>
-                        @endif
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        {{-- ====== JOURS NON COMPTABILISÉS ======
-             Formulaire séparé de « Informations » : il n'envoie que la liste des jours
-             (champs cachés jours_exclus[]) à ClasseController::updateJoursExclus(). --}}
-        <div class="col-12">
+            {{-- ==========================================
+                 INFORMATIONS GÉNÉRALES
+            =========================================== --}}
             <div class="card">
+
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Jours non comptabilisés</h5>
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="avatar-sm rounded bg-primary-subtle d-flex align-items-center justify-content-center"
+                            >
+                                <i class="ri-book-open-line fs-20 text-primary"></i>
+                            </div>
+                        </div>
+
+                        <div class="ms-3">
+                            <h5 class="card-title mb-1">
+                                Informations générales
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Informations principales de la formation.
+                            </p>
+                        </div>
+
+                    </div>
+
                 </div>
+
+
                 <div class="card-body">
-                    <form action="{{ route('admin.cours.classes.jours-exclus', [$cours, $classe]) }}" method="POST">
-                        @csrf
-                        @method('PUT')
 
-                        @include('classes.jours_exclus', [
-                            'joursExclus' => $classe->datesExclues()->all(),
-                            'min' => $classe->date_debut->toDateString(),   // bornes fixes : celles de la classe enregistrée
-                            'max' => $classe->date_fin->toDateString(),
-                            'verrouille' => $classe->estFermee(),
-                        ])
+                    {{-- TITRE + CATÉGORIE --}}
+                    <div class="row">
 
-                        @unless ($classe->estFermee())
-                            <button type="submit" class="btn btn-outline-primary mt-3">
-                                <i class="ri-save-line me-1"></i>Enregistrer les jours
-                            </button>
-                        @endunless
-                    </form>
+                        <div class="col-md-8 mb-3">
+
+                            <label for="titre" class="form-label">
+                                Nom de la formation
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="titre"
+                                id="titre"
+                                class="form-control @error('titre') is-invalid @enderror"
+                                value="{{ old('titre', $cours->titre) }}"
+                                placeholder="Ex. Microsoft Excel - Niveau débutant"
+                            >
+
+                            @error('titre')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+
+                        <div class="col-md-4 mb-3">
+
+                            <label for="categorie" class="form-label">
+                                Catégorie
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                name="categorie"
+                                id="categorie"
+                                class="form-control @error('categorie') is-invalid @enderror"
+                                value="{{ old('categorie', $cours->categorie) }}"
+                                placeholder="Ex. Bureautique"
+                            >
+
+                            @error('categorie')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- DESCRIPTION --}}
+                    <div class="mb-0">
+
+                        <label for="description" class="form-label">
+                            Description de la formation
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea
+                            name="description"
+                            id="description"
+                            rows="6"
+                            class="form-control @error('description') is-invalid @enderror"
+                            placeholder="Présentez brièvement cette formation..."
+                        >{{ old('description', $cours->description) }}</textarea>
+
+                        @error('description')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+
+                        <div class="form-text">
+                            Cette description peut être affichée dans le catalogue des formations.
+                        </div>
+
+                    </div>
+
                 </div>
+
             </div>
+
+
+            {{-- ==========================================
+                 TARIFICATION
+            =========================================== --}}
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div class="d-flex align-items-center">
+
+                        <div class="flex-shrink-0">
+                            <div
+                                class="avatar-sm rounded bg-warning-subtle d-flex align-items-center justify-content-center"
+                            >
+                                <i class="ri-money-dollar-circle-line fs-20 text-warning"></i>
+                            </div>
+                        </div>
+
+                        <div class="ms-3">
+                            <h5 class="card-title mb-1">
+                                Tarification
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Tarifs appliqués selon le type de client.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body">
+
+                    <div class="row">
+
+                        {{-- PARTICULIER --}}
+                        <div class="col-md-6">
+
+                            <div class="border rounded p-3 h-100">
+
+                                <div class="d-flex align-items-center mb-3">
+
+                                    <div
+                                        class="avatar-sm rounded bg-primary-subtle d-flex align-items-center justify-content-center"
+                                    >
+                                        <i class="ri-user-line text-primary"></i>
+                                    </div>
+
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">
+                                            Tarif particulier
+                                        </h6>
+
+                                        <small class="text-muted">
+                                            Prix destiné aux particuliers
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <label
+                                    for="prix_particulier"
+                                    class="form-label"
+                                >
+                                    Prix (FCFA)
+                                </label>
+
+                                <div class="input-group">
+
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="prix_particulier"
+                                        id="prix_particulier"
+                                        class="form-control @error('prix_particulier') is-invalid @enderror"
+                                        value="{{ old('prix_particulier', $cours->prix_particulier) }}"
+                                    >
+
+                                    <span class="input-group-text">
+                                        FCFA
+                                    </span>
+
+                                </div>
+
+                                @error('prix_particulier')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- ENTREPRISE --}}
+                        <div class="col-md-6">
+
+                            <div class="border rounded p-3 h-100">
+
+                                <div class="d-flex align-items-center mb-3">
+
+                                    <div
+                                        class="avatar-sm rounded bg-success-subtle d-flex align-items-center justify-content-center"
+                                    >
+                                        <i class="ri-building-line text-success"></i>
+                                    </div>
+
+                                    <div class="ms-3">
+                                        <h6 class="mb-1">
+                                            Tarif entreprise
+                                        </h6>
+
+                                        <small class="text-muted">
+                                            Prix destiné aux entreprises
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <label
+                                    for="prix_entreprise"
+                                    class="form-label"
+                                >
+                                    Prix (FCFA)
+                                </label>
+
+                                <div class="input-group">
+
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        name="prix_entreprise"
+                                        id="prix_entreprise"
+                                        class="form-control @error('prix_entreprise') is-invalid @enderror"
+                                        value="{{ old('prix_entreprise', $cours->prix_entreprise) }}"
+                                    >
+
+                                    <span class="input-group-text">
+                                        FCFA
+                                    </span>
+
+                                </div>
+
+                                @error('prix_entreprise')
+                                    <div class="text-danger small mt-1">
+                                        {{ $message }}
+                                    </div>
+                                @enderror
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- ==========================================
+                 ACTIONS
+            =========================================== --}}
+            <div class="card">
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-end gap-2">
+
+                        <a
+                            href="{{ route('admin.cours.index') }}"
+                            class="btn btn-light"
+                        >
+                            <i class="ri-arrow-left-line me-1"></i>
+                            Annuler
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            <i class="ri-save-3-line me-1"></i>
+                            Enregistrer les modifications
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        {{-- ==========================================
+             COLONNE LATÉRALE
+        =========================================== --}}
+        <div class="col-xl-4">
+
+            {{-- IMAGE DE LA FORMATION --}}
+            @include('cours.partials.champ-image')
+
+            {{-- CONTENU PÉDAGOGIQUE --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-folder-open-line me-1 text-primary"></i>
+                        Contenu pédagogique
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <p class="text-muted">
+                        Gérez les chapitres et les ressources pédagogiques
+                        associés à cette formation.
+                    </p>
+
+                    <a
+                        href="{{ route('admin.cours.contenus', $cours) }}"
+                        class="btn btn-outline-primary w-100"
+                    >
+                        <i class="ri-book-open-line me-1"></i>
+                        Gérer les chapitres et contenus
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            {{-- RÉSUMÉ --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-file-info-line me-1 text-primary"></i>
+                        Résumé
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="text-center mb-4">
+
+                        <div
+                            class="avatar-lg rounded-circle bg-primary-subtle d-inline-flex align-items-center justify-content-center"
+                        >
+                            <i class="ri-book-open-line text-primary fs-28"></i>
+                        </div>
+
+                        <h5 class="mt-3 mb-1">
+                            {{ $cours->titre }}
+                        </h5>
+
+                        <p class="text-muted mb-0">
+                            {{ $cours->categorie }}
+                        </p>
+
+                    </div>
+
+
+                    <div class="border-top pt-3">
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Chapitres
+                            </span>
+
+                            <span class="fw-semibold">
+                                {{ $cours->chapitres->count() }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between mb-3">
+
+                            <span class="text-muted">
+                                Ressources
+                            </span>
+
+                            <span class="fw-semibold">
+                                {{ $cours->resources->count() }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="d-flex justify-content-between">
+
+                            <span class="text-muted">
+                                Catégorie
+                            </span>
+
+                            <span class="text-muted">
+                                {{ $cours->categorie }}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- TARIFS RAPIDES --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-money-dollar-circle-line me-1 text-warning"></i>
+                        Tarifs actuels
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+
+                        <span class="text-muted">
+                            Particulier
+                        </span>
+
+                        <strong>
+                            {{ number_format($cours->prix_particulier, 0, ',', ' ') }} FCFA
+                        </strong>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <span class="text-muted">
+                            Entreprise
+                        </span>
+
+                        <strong>
+                            {{ number_format($cours->prix_entreprise, 0, ',', ' ') }} FCFA
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- INFORMATION CONTENU --}}
+            <div class="card">
+
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-information-line me-1 text-info"></i>
+                        Organisation du contenu
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="d-flex align-items-start mb-3">
+
+                        <i class="ri-book-open-line text-primary fs-18 me-2"></i>
+
+                        <div>
+                            <h6 class="mb-1">
+                                Chapitres
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                Les chapitres structurent le contenu pédagogique de la formation.
+                            </p>
+                        </div>
+
+                    </div>
+
+
+                    <div class="d-flex align-items-start">
+
+                        <i class="ri-folder-video-line text-info fs-18 me-2"></i>
+
+                        <div>
+                            <h6 class="mb-1">
+                                Ressources
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                Les fichiers, vidéos et liens sont associés directement à un chapitre.
+                            </p>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
 
     </div>
+
+</form>
+
 @endsection

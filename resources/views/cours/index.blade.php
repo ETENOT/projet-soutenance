@@ -171,7 +171,7 @@
                 <thead class="table-light">
                     <tr>
                         {{-- Coche / décoche tous les cours de la page --}}
-                        <th style="width: 40px;">
+                        <th class="nv-selection-column">
                             <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
                         </th>
                         <th>Formation</th>
@@ -218,14 +218,14 @@
                                        class="form-check-input case-cours" aria-label="Sélectionner {{ $unCours->titre }}">
                             </td>
 
-                            <td style="min-width: 280px;">
+                            <td class="nv-min-w-280">
                                 <div class="d-flex align-items-center gap-3">
                                     <span class="avatar-sm flex-shrink-0">
                                         <span class="avatar-title rounded-3 bg-primary-subtle text-primary fs-4">
                                             <i class="ri-book-2-line"></i>
                                         </span>
                                     </span>
-                                    <div style="white-space: normal;">
+                                    <div class="nv-table-cell-wrap">
                                         <div class="fw-semibold">{{ $unCours->titre }}</div>
                                         @if($unCours->description)
                                             <small class="text-muted">

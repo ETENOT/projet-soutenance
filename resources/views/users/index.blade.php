@@ -179,7 +179,7 @@
                 <thead class="table-light">
                     <tr>
                         {{-- Coche / décoche tous les utilisateurs de la page --}}
-                        <th style="width: 40px;">
+                        <th class="nv-selection-column">
                             <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
                         </th>
                         <th>Nom</th>

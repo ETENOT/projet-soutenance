@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\CoursResource;
 use App\Models\Quiz;
 use App\Models\ResultatQuiz;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class CoursController extends Controller
 {
@@ -144,6 +146,23 @@ class CoursController extends Controller
             'repartitionAvis' => $repartitionAvis,
             'listeAvis' => $listeAvis,
         ]);
+    }
+
+    /**
+     * Télécharger le programme d'un cours au format PDF.
+     */
+    public function programmePdf(Cours $cours)
+    {
+        $cours->load([
+            'chapitres' => function ($query) {
+                $query->orderBy('ordre');
+            },
+        ]);
+
+        return Pdf::loadView('cours.programme-pdf', [
+            'cours' => $cours,
+            'logo' => public_path('images/logo_neovision.png'),
+        ])->download('programme-' . Str::slug($cours->titre) . '.pdf');
     }
 
     /**

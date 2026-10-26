@@ -129,7 +129,7 @@
                         Accéder au cours
                     </a>
 
-                    <a href="#" class="btn btn-outline-primary w-100 mt-2">
+                    <a href="{{ route('cours.programme.pdf', $cours) }}" class="btn btn-outline-primary w-100 mt-2">
                         <i class="ri-download-2-line me-1"></i> Télécharger le programme
                     </a>
                 </div>

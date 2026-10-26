@@ -91,7 +91,7 @@
                         </div>
 
                         {{-- Vidéo : fichier importé OU lien externe (le contrôleur exige ce choix) --}}
-                        <div class="mb-3" id="blocSource" style="display:none">
+                        <div class="mb-3 d-none" id="blocSource">
                             <label for="video_source" class="form-label">Source de la vidéo</label>
                             <select name="video_source" id="video_source" class="form-select">
                                 <option value="upload" @selected(old('video_source', 'upload') === 'upload')>Importer un fichier</option>
@@ -105,7 +105,7 @@
                             <div class="form-text" id="aideFichier">PDF, Word, PowerPoint, Excel, JPG ou PNG</div>
                         </div>
 
-                        <div class="mb-3" id="blocUrl" style="display:none">
+                        <div class="mb-3 d-none" id="blocUrl">
                             <label for="url" class="form-label">URL</label>
                             <input type="url" name="url" id="url" class="form-control"
                                    value="{{ old('url') }}" placeholder="https://...">
@@ -134,10 +134,10 @@
                 const t = type.value;
                 const videoUrl = t === 'video' && source.value === 'url';
 
-                blocSource.style.display = t === 'video' ? 'block' : 'none';
+                blocSource.classList.toggle('d-none', t !== 'video');
                 // Un fichier est demandé pour un document ou une vidéo importée ; une URL pour un lien ou une vidéo externe
-                blocFichier.style.display = (t === 'fichier' || (t === 'video' && !videoUrl)) ? 'block' : 'none';
-                blocUrl.style.display = (t === 'lien' || videoUrl) ? 'block' : 'none';
+                blocFichier.classList.toggle('d-none', !(t === 'fichier' || (t === 'video' && !videoUrl)));
+                blocUrl.classList.toggle('d-none', !(t === 'lien' || videoUrl));
                 aide.textContent = t === 'video'
                     ? 'MP4, WebM, OGG, MOV, AVI ou MKV'
                     : 'PDF, Word, PowerPoint, Excel, JPG ou PNG';

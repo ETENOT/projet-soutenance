@@ -36,9 +36,9 @@
             </span>
         </div>
 
-        <div class="js-progression-chart"
+        <div class="js-progression-chart nv-chart-height"
              data-points="{{ json_encode($points) }}"
-             style="min-height: 300px;"></div>
+            ></div>
     @elseif ($nbPoints === 1)
         <p class="text-muted mb-0">
             Terminez au moins un deuxième quiz pour voir l'évolution de vos résultats au fil du temps.

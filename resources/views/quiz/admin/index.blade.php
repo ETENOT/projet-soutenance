@@ -7,7 +7,7 @@
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1')
-            Administration
+            <a href="{{ route('dashboard') }}">Administration</a>
         @endslot
         @slot('title')
             Suivi des quiz

@@ -189,7 +189,7 @@
                     <thead class="table-light">
                         <tr>
                             {{-- Coche / décoche toutes les questions de la page --}}
-                            <th style="width: 40px;">
+                            <th class="nv-selection-column">
                                 <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
                             </th>
                             <th>Question</th>
@@ -217,7 +217,7 @@
                                            class="form-check-input case-question" aria-label="Sélectionner la question {{ $question->id }}">
                                 </td>
 
-                                <td style="min-width: 280px; white-space: normal;">
+                                <td class="nv-min-w-280 nv-table-cell-wrap">
                                     {{ \Illuminate\Support\Str::limit($question->enonce, 120) }}
                                 </td>
 

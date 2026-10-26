@@ -8,6 +8,8 @@ use App\Models\CoursResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Http\UploadedFile;
 
 class CoursResourceController extends Controller
 {
@@ -101,10 +103,8 @@ class CoursResourceController extends Controller
                 'Ce type de fichier n’est pas accepté comme document.'
             );
 
-            $chemin = $fichier->store(
-                'cours_resources/' . $cours->id,
-                'public'
-            );
+            // Les fichiers restent privés et ne sont servis qu'après vérification des droits.
+            $chemin = $this->stockerFichier($fichier, $cours, $data['titre'], $extension);
 
             CoursResource::create([
                 'cours_id' => $cours->id,
@@ -157,10 +157,7 @@ class CoursResourceController extends Controller
                     'Ce fichier n’est pas une vidéo compatible.'
                 );
 
-                $chemin = $fichier->store(
-                    'cours_resources/' . $cours->id,
-                    'public'
-                );
+                $chemin = $this->stockerFichier($fichier, $cours, $data['titre'], $extension);
 
                 CoursResource::create([
                     'cours_id' => $cours->id,
@@ -259,7 +256,7 @@ class CoursResourceController extends Controller
 
         if ($resource->chemin) {
 
-            Storage::disk('public')->delete(
+            Storage::disk('local')->delete(
                 $resource->chemin
             );
         }
@@ -319,6 +316,32 @@ class CoursResourceController extends Controller
         return Auth::user()->role?->nom === 'formateur'
             ? route('cours.resources.formateur.index', $cours)
             : route('admin.cours.contenus', $cours);
+    }
+
+    /**
+     * Enregistrer un fichier privé avec un nom reconnaissable dans le dossier du cours.
+     */
+    private function stockerFichier(
+        UploadedFile $fichier,
+        Cours $cours,
+        string $titre,
+        string $extension
+    ): string {
+        $nomFichier = (Str::slug($titre) ?: 'ressource')
+            . '-' . Str::random(8)
+            . '.' . $extension;
+
+        $chemin = $fichier->storeAs(
+            'cours_resources/' . $cours->id,
+            $nomFichier,
+            'local'
+        );
+
+        if ($chemin === false) {
+            throw new \RuntimeException('Le fichier de la ressource n’a pas pu être enregistré.');
+        }
+
+        return $chemin;
     }
 
     /**
@@ -404,7 +427,7 @@ class CoursResourceController extends Controller
         ) {
 
             return response()->file(
-                Storage::disk('public')->path(
+                Storage::disk('local')->path(
                     $resource->chemin
                 )
             );
@@ -453,7 +476,7 @@ class CoursResourceController extends Controller
             $resource->chemin
         ) {
 
-            return Storage::disk('public')->response(
+            return Storage::disk('local')->response(
                 $resource->chemin
             );
         }
@@ -478,7 +501,7 @@ class CoursResourceController extends Controller
             404
         );
 
-        return Storage::disk('public')->download(
+        return Storage::disk('local')->download(
             $resource->chemin,
             $resource->titre . '.' . $resource->extension
         );

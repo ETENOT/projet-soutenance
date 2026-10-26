@@ -34,7 +34,7 @@
                             <tr>
                                 <th>Cours</th>
                                 <th class="text-center">Questions dans la banque</th>
-                                <th style="width: 180px;">Noté sur</th>
+                                <th class="nv-score-column">Noté sur</th>
                                 <th>Quiz obtenu</th>
                             </tr>
                         </thead>

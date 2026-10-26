@@ -137,7 +137,7 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
-                                <input type="tel" name="telephone" id="telephone" placeholder="+24177123456"
+                                <input type="tel" id="telephone" placeholder="+24177123456"
                                        class="form-control @error('telephone') is-invalid @enderror"
                                        value="{{ old('telephone') }}" @disabled($roleChoisi !== 'particulier')>
                                 <div class="form-text">Format international, avec l'indicatif du pays.</div>
@@ -223,7 +223,12 @@
     </form>
 @endsection
 
+@section('css')
+    <link rel="stylesheet" href="{{ URL::asset('build/libs/intl-tel-input/css/intlTelInput.min.css') }}">
+@endsection
+
 @section('script')
+<script src="{{ URL::asset('build/libs/intl-tel-input/js/intlTelInputWithUtils.min.js') }}"></script>
 <script>
     // Le formulaire s'adapte au type de compte choisi : on affiche le bloc du rôle,
     // on cache les autres ET on désactive leurs champs (un champ désactivé n'est pas envoyé,
@@ -244,10 +249,40 @@
             admin: "Un administrateur a accès à toute la gestion de la plateforme : utilisateurs, formations, classes et paiements. Aucune autre information n'est nécessaire.",
         };
 
+        const telephoneInput = document.getElementById('telephone');
+        const telephoneField = window.intlTelInput(telephoneInput, {
+            initialCountry: 'ga',
+            countryOrder: ['ga', 'fr'],
+            countryNameLocale: 'fr',
+            separateDialCode: true,
+            strictMode: true,
+            hiddenInputs: () => ({ phone: 'telephone' }),
+        });
+
+        if (telephoneInput.value) {
+            telephoneField.setNumber(telephoneInput.value);
+        }
+
+        function mettreAJourValiditeTelephone() {
+            if (telephoneInput.disabled || telephoneInput.value.trim() === '') {
+                telephoneInput.setCustomValidity('');
+                return;
+            }
+
+            telephoneInput.setCustomValidity(
+                telephoneField.isValidNumber() === false
+                    ? 'Numéro invalide pour le pays sélectionné.'
+                    : ''
+            );
+        }
+
+        telephoneInput.addEventListener('input', mettreAJourValiditeTelephone);
+        telephoneInput.addEventListener('countrychange', mettreAJourValiditeTelephone);
+
         function afficher(bloc, visible) {
             bloc.classList.toggle('d-none', !visible);
             // Les champs d'un bloc caché sont désactivés
-            bloc.querySelectorAll('input, select, textarea').forEach(function (champ) {
+            bloc.querySelectorAll('input:not(#telephone), select, textarea').forEach(function (champ) {
                 champ.disabled = !visible;
             });
         }
@@ -260,6 +295,8 @@
             afficher(blocs.particulier, role === 'particulier');
             afficher(blocs.entreprise, role === 'entreprise');
             afficher(blocs.simple, role === 'formateur' || role === 'admin');
+            telephoneField.setDisabled(role !== 'particulier');
+            mettreAJourValiditeTelephone();
 
             if (textes[role]) {
                 texteSimple.textContent = textes[role];

@@ -5,13 +5,22 @@
 @endsection
 
 @section('content')
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('cours.show', $quiz->cours) }}">{{ $quiz->cours->titre }}</a>
+        @endslot
+        @slot('title')
+            Passer le quiz
+        @endslot
+    @endcomponent
+
 <div>
             <a href="{{ route('cours.show', $quiz->cours) }}"
         class="top-0 start-0 m-3 m-sm-4 z-3 text-black-50 text-decoration-none fw-medium">
             <i class="ri-arrow-left-line align-middle me-1"></i>
             {{ __("Sortir du quiz") }}
         </a>
-    <div class="container py-4" style="max-width: 800px;">
+    <div class="container py-4 nv-quiz-container-800">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="mb-0">Quiz — {{ $quiz->cours->titre }}</h2>
             {{-- data-restant : temps restant en secondes, calculé côté serveur, lu par le JS ci-dessous --}}

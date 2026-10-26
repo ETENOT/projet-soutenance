@@ -6,6 +6,15 @@
 
 @section('content')
 
+@component('components.breadcrumb')
+    @slot('li_1')
+        <a href="{{ route('admin.cours.index') }}">Gestion des cours</a>
+    @endslot
+    @slot('title')
+        Créer une formation
+    @endslot
+@endcomponent
+
     {{-- ==========================================
          EN-TÊTE DE LA PAGE
     =========================================== --}}
@@ -20,20 +29,6 @@
                     <p class="text-muted mb-0 mt-1">
                         Créez une nouvelle formation et définissez son contenu ainsi que ses tarifs.
                     </p>
-                </div>
-
-                <div class="page-title-right">
-                    <ol class="breadcrumb m-0">
-                        <li class="breadcrumb-item">
-                            <a href="{{ route('admin.cours.index') }}">
-                                Formations
-                            </a>
-                        </li>
-
-                        <li class="breadcrumb-item active">
-                            Créer une formation
-                        </li>
-                    </ol>
                 </div>
 
             </div>

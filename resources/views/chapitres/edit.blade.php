@@ -6,37 +6,14 @@
 
 <div class="chapter-edit-page">
 
-    {{-- Fil d'Ariane --}}
-    <div class="mb-4">
-        <div class="d-flex align-items-center flex-wrap gap-2 text-muted small">
-
-            <a href="{{ route('admin.cours.index') }}"
-               class="text-decoration-none text-muted">
-                Cours
-            </a>
-
-            <span>/</span>
-
-            <a href="{{ route('admin.cours.show', $cours) }}"
-               class="text-decoration-none text-muted">
-                {{ $cours->titre }}
-            </a>
-
-            <span>/</span>
-
-            <a href="{{ route('admin.cours.contenus', $cours) }}"
-               class="text-decoration-none text-muted">
-                Contenus pédagogiques
-            </a>
-
-            <span>/</span>
-
-            <span class="text-dark">
-                Modifier le chapitre
-            </span>
-
-        </div>
-    </div>
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('admin.cours.contenus', $cours) }}">{{ $cours->titre }}</a>
+        @endslot
+        @slot('title')
+            Modifier le chapitre
+        @endslot
+    @endcomponent
 
 
     {{-- En-tête --}}

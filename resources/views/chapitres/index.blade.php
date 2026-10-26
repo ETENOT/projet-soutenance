@@ -6,38 +6,14 @@
 
 <div class="container-fluid">
 
-    {{-- =========================================================
-         BREADCRUMB
-    ========================================================== --}}
-    <div class="mb-4">
-
-        <div class="d-flex align-items-center gap-2 small text-muted">
-
-            <a
-                href="{{ route('admin.cours.index') }}"
-                class="text-muted text-decoration-none"
-            >
-                Cours
-            </a>
-
-            <i class="ri-arrow-right-s-line"></i>
-
-            <a
-                href="{{ route('admin.cours.show', $cours) }}"
-                class="text-muted text-decoration-none"
-            >
-                {{ $cours->titre }}
-            </a>
-
-            <i class="ri-arrow-right-s-line"></i>
-
-            <span>
-                Contenus pédagogiques
-            </span>
-
-        </div>
-
-    </div>
+    @component('components.breadcrumb')
+        @slot('li_1')
+            <a href="{{ route('admin.cours.show', $cours) }}">{{ $cours->titre }}</a>
+        @endslot
+        @slot('title')
+            Chapitres
+        @endslot
+    @endcomponent
 
 
     {{-- =========================================================

@@ -5,7 +5,16 @@
 @endsection
 
 @section('content')
-<div class="container py-4" style="max-width: 800px;">
+@component('components.breadcrumb')
+    @slot('li_1')
+        <a href="{{ route('quiz.historique', $resultatQuiz->quiz->cours) }}">Historique des quiz</a>
+    @endslot
+    @slot('title')
+        Résultat du quiz
+    @endslot
+@endcomponent
+
+<div class="container py-4 nv-quiz-container-800">
     <h2 class="mb-3">Résultat</h2>
 
     <div class="alert alert-info fs-5">
