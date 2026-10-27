@@ -49,10 +49,10 @@
                             <p style="font-size:15px; color:#495057; margin:0 0 24px; line-height:1.6;">
                                 @if($estEntreprise)
                                     Vous pouvez dès maintenant consulter notre catalogue pour trouver
-                                    les formations adaptées aux besoins de votre entreprise.
+                                    les cours adaptés aux besoins de votre entreprise.
                                 @else
                                     Vous pouvez dès maintenant consulter notre catalogue, choisir
-                                    la formation qui vous intéresse et vous inscrire à une classe.
+                                    le cours qui vous intéresse et vous inscrire à une classe.
                                 @endif
                             </p>
 
@@ -60,7 +60,7 @@
                             <div style="text-align:center; margin:32px 0;">
                                 <a href="{{ route('cours.catalogue') }}"
                                    style="display:inline-block; background-color:#405189; color:#ffffff; text-decoration:none; font-size:15px; font-weight:600; padding:12px 28px; border-radius:6px;">
-                                    Découvrir les formations
+                                    Découvrir les cours
                                 </a>
                             </div>
 

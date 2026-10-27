@@ -30,7 +30,7 @@
             @foreach ($classes as $classe)
                 <a href="{{ route('forum.galerie', ['classe' => $classe->id]) }}"
                    class="btn btn-sm {{ $classeFiltre === $classe->id ? 'btn-primary' : 'btn-soft-primary' }}">
-                    {{ $classe->nom }}
+                    {{ $classe->cours?->titre }} · {{ $classe->nom }}
                 </a>
             @endforeach
         </div>
@@ -45,7 +45,7 @@
                     @php $urlPhoto = route('forum.photo', [$message->classe_id, $message->id]); @endphp
                     <a href="{{ $urlPhoto }}" class="js-photo"
                        data-src="{{ $urlPhoto }}" data-video="{{ $message->est_video ? '1' : '0' }}"
-                       data-legende="{{ $message->classe->nom }} · {{ $message->user->name }} · {{ $message->created_at->format('d/m/Y H:i') }}">
+                       data-legende="{{ $message->classe->cours?->titre }} · {{ $message->classe->nom }} · {{ $message->user->name }} · {{ $message->created_at->format('d/m/Y H:i') }}">
                         @if ($message->est_video)
                             {{-- Vidéo : 1re image comme vignette + pastille « lecture » --}}
                             <div class="position-relative">
@@ -56,12 +56,12 @@
                             </div>
                         @else
                             <img src="{{ $urlPhoto }}" loading="lazy"
-                                 alt="Photo du forum {{ $message->classe->nom }}"
+                                 alt="Photo du forum {{ $message->classe->cours?->titre }} — {{ $message->classe->nom }}"
                                  class="card-img-top nv-gallery-square">
                         @endif
                     </a>
                     <div class="card-body p-2">
-                        <p class="mb-0 fs-12 text-truncate fw-medium">{{ $message->classe->nom }}</p>
+                        <p class="mb-0 fs-12 text-truncate fw-medium">{{ $message->classe->cours?->titre }} · {{ $message->classe->nom }}</p>
                         <p class="mb-0 fs-12 text-muted text-truncate">
                             {{ $message->user->name }} · {{ $message->created_at->format('d/m/Y') }}
                         </p>

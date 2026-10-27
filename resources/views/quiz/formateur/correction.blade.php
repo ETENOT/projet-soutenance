@@ -7,7 +7,7 @@
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1')
-            <a href="{{ route('quiz.formateur.index', $classe) }}">Résultats au quiz — {{ $classe->nom }}</a>
+            <a href="{{ route('quiz.formateur.index', $classe) }}">Résultats au quiz — {{ $classe->cours?->titre }} — {{ $classe->nom }}</a>
         @endslot
         @slot('title')
             Correction

@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-    {{ $classe->nom }}
+    {{ $classe->cours?->titre }} — {{ $classe->nom }}
 @endsection
 
 @section('content')
@@ -10,7 +10,7 @@
             <a href="{{ route('classes.formateur.index') }}">Mes classes</a>
         @endslot
         @slot('title')
-            {{ $classe->nom }}
+            {{ $classe->cours?->titre }} — {{ $classe->nom }}
         @endslot
     @endcomponent
 
@@ -24,6 +24,7 @@
                     <h5 class="card-title mb-0">Informations de la classe</h5>
                 </div>
                 <div class="card-body">
+                    <p class="mb-2"><strong>Cours :</strong> {{ $classe->cours?->titre ?? '—' }}</p>
                     <p class="mb-1">
                         <span class="badge bg-{{ $classe->etat_couleur }}-subtle text-{{ $classe->etat_couleur }}">
                             {{ $classe->etat_libelle }}

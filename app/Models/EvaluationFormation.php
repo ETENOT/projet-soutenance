@@ -23,7 +23,7 @@ class EvaluationFormation extends Model
             'note_info_prealable' => 'Information préalable sur le contenu',
             'note_contenu_adapte' => 'Contenu adapté à mon niveau',
             'note_contenu_conforme' => 'Contenu conforme à ce qui était prévu',
-            'note_groupe_homogene' => 'Niveau du groupe homogène',
+            'note_groupe_homogene' => 'Groupe homogène',
             'note_correspond_besoin' => 'Formation correspondant à mon besoin',
         ],
     ];

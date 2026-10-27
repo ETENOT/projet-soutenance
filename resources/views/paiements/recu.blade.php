@@ -96,7 +96,7 @@
             <td class="val">{{ $stagiaire->name }}</td>
         </tr>
         <tr>
-            <td class="lib">Formation</td>
+            <td class="lib">Cours</td>
             <td class="val">{{ $cours->titre }}</td>
         </tr>
         <tr>
@@ -138,7 +138,7 @@
         </tr>
     </table>
 
-    <div class="pied">NEO VISION · Ce reçu atteste le règlement des frais de formation ci-dessus.</div>
+    <div class="pied">NEO VISION · Ce reçu atteste le règlement des frais du cours ci-dessus.</div>
 </div>
 
 </body>

@@ -236,7 +236,7 @@ class AdminFormateurController extends Controller
 
         $classe->update(['formateur_id' => $formateur->id]);
 
-        return back()->with('success', "La classe « {$classe->nom} » est maintenant affectée à {$formateur->name}.");
+        return back()->with('success', "La classe « {$classe->cours?->titre} — {$classe->nom} » est maintenant affectée à {$formateur->name}.");
     }
 
     /**
@@ -255,7 +255,7 @@ class AdminFormateurController extends Controller
 
         $classe->update(['formateur_id' => null]);
 
-        return back()->with('success', "La classe « {$classe->nom} » n'a plus de formateur.");
+        return back()->with('success', "La classe « {$classe->cours?->titre} — {$classe->nom} » n'a plus de formateur.");
     }
 
     // ------------------------------------------------------------------

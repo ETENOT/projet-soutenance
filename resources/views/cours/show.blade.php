@@ -77,7 +77,7 @@
                             {{-- Catégorie juste sous le titre --}}
                             <div class="mb-3">
                                 <span class="badge bg-danger-subtle text-danger rounded-pill px-3 py-2">
-                                    <i class="ri-bookmark-line me-1"></i>{{ $cours->categorie }}
+                                    <i class="ri-bookmark-line me-1"></i>{{ $cours->categorie?->nom }}
                                 </span>
                             </div>
 
@@ -104,7 +104,7 @@
         <div class="col-lg-4">
             <div class="card h-100 border shadow-sm bg-light mb-0">
                 <div class="card-body p-4">
-                    <div class="text-muted small mb-1">Tarif de la formation</div>
+                    <div class="text-muted small mb-1">Tarif du cours</div>
 
                     @if($role === 'entreprise')
                         <div class="fs-2 fw-bold text-danger">
@@ -130,7 +130,7 @@
                     </a>
 
                     <a href="{{ route('cours.programme.pdf', $cours) }}" class="btn btn-outline-primary w-100 mt-2">
-                        <i class="ri-download-2-line me-1"></i> Télécharger le programme
+                        <i class="ri-download-2-line me-1"></i> Télécharger les chapitres
                     </a>
                 </div>
             </div>
@@ -152,10 +152,10 @@
                 </li>
 
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link text-nowrap" id="programme-tab" data-bs-toggle="tab"
-                            data-bs-target="#programme" type="button" role="tab"
-                            aria-controls="programme" aria-selected="false">
-                        <i class="ri-list-check me-1"></i> Programme
+                    <button class="nav-link text-nowrap" id="chapitres-tab" data-bs-toggle="tab"
+                            data-bs-target="#chapitres" type="button" role="tab"
+                            aria-controls="chapitres" aria-selected="false">
+                        <i class="ri-list-check me-1"></i> Chapitres
                     </button>
                 </li>
 
@@ -204,11 +204,7 @@
                                 <tbody>
                                     <tr>
                                         <td class="text-muted"><i class="ri-bookmark-line text-danger me-2"></i>Catégorie</td>
-                                        <td class="text-end fw-bold">{{ $cours->categorie }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-muted"><i class="ri-bar-chart-line text-danger me-2"></i>Niveau</td>
-                                        <td class="text-end fw-bold">{{ $cours->niveau ?: 'Non précisé' }}</td>
+                                        <td class="text-end fw-bold">{{ $cours->categorie?->nom }}</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -226,7 +222,7 @@
                             @forelse($prochainesSessions as $classe)
                                 <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center gap-2">
                                     <div>
-                                        <div class="fw-bold">{{ $classe->nom }}</div>
+                                        <div class="fw-bold">{{ $cours->titre }} — {{ $classe->nom }}</div>
                                         <div class="text-muted small mt-1">
                                             <i class="ri-calendar-line text-danger me-1"></i>
                                             Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
@@ -253,12 +249,12 @@
             </div>
         </div>
 
-        {{-- ---------- Programme ---------- --}}
-        <div class="tab-pane fade" id="programme" role="tabpanel" aria-labelledby="programme-tab">
+        {{-- ---------- Chapitres ---------- --}}
+        <div class="tab-pane fade" id="chapitres" role="tabpanel" aria-labelledby="chapitres-tab">
             <div class="card border shadow-sm">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-4">
-                        <i class="ri-list-check text-danger me-2"></i>Programme de la formation
+                        <i class="ri-list-check text-danger me-2"></i>Chapitres du cours
                     </h5>
 
                     @if($cours->chapitres->count())
@@ -293,7 +289,7 @@
                     @else
                         <div class="text-center text-muted py-5">
                             <i class="ri-file-warning-line fs-1 d-block mb-2"></i>
-                            Le programme de cette formation n'est pas encore disponible.
+                            Aucun chapitre n’est encore disponible pour ce cours.
                         </div>
                     @endif
                 </div>
@@ -313,7 +309,7 @@
                             <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
 
                                 <div>
-                                    <h6 class="fw-bold mb-2"><i class="ri-graduation-cap-line text-danger me-1"></i>{{ $classe->nom }}</h6>
+                                    <h6 class="fw-bold mb-2"><i class="ri-graduation-cap-line text-danger me-1"></i>{{ $cours->titre }} — {{ $classe->nom }}</h6>
 
                                     <div class="text-muted small mb-1">
                                         <i class="ri-calendar-event-line text-danger me-1"></i>
@@ -402,7 +398,7 @@
             <div class="card border shadow-sm">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-4">
-                        <i class="ri-question-line text-danger me-2"></i>Quiz de la formation
+                        <i class="ri-question-line text-danger me-2"></i>Quiz du cours
                     </h5>
 
                     @if(session('quiz_en_cours'))

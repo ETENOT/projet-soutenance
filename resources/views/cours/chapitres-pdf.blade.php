@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="utf-8">
-    <title>Programme - {{ $cours->titre }}</title>
+    <title>Chapitres - {{ $cours->titre }}</title>
     <style>
         @page { margin: 22mm 18mm; }
         body { color: #273449; font-family: DejaVu Sans, sans-serif; font-size: 12px; line-height: 1.6; }
@@ -24,20 +24,20 @@
     <div class="entete">
         <img class="logo" src="{{ $logo }}" alt="NEO VISION">
         <h1>{{ $cours->titre }}</h1>
-        <div class="meta">{{ $cours->categorie }} · Niveau : {{ $cours->niveau ?: 'Non précisé' }}</div>
+        <div class="meta">{{ $cours->categorie?->nom }}</div>
     </div>
 
     <h2>Présentation</h2>
     <div class="description">{!! nl2br(e($cours->description)) !!}</div>
 
-    <h2>Programme</h2>
+    <h2>Chapitres</h2>
     @forelse ($cours->chapitres as $chapitre)
         <section class="chapitre">
             <h3>{{ $loop->iteration }}. {{ $chapitre->titre }}</h3>
             <div>{!! nl2br(e($chapitre->contenu)) !!}</div>
         </section>
     @empty
-        <p>Le programme de cette formation n'est pas encore disponible.</p>
+        <p>Aucun chapitre n'est encore disponible pour ce cours.</p>
     @endforelse
 
     <h2>Tarifs</h2>
@@ -52,6 +52,6 @@
         </tr>
     </table>
 
-    <div class="pied">NEO VISION · Programme de formation</div>
+    <div class="pied">NEO VISION · Cours</div>
 </body>
 </html>

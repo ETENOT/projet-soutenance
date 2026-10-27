@@ -7,7 +7,7 @@
 {{-- ===== Fil d'Ariane ===== --}}
 @component('components.breadcrumb')
     @slot('li_1')
-        <a href="{{ route('dashboard') }}">Formation</a>
+        <a href="{{ route('dashboard') }}">Cours</a>
     @endslot
     @slot('title')
         Mes classes
@@ -75,7 +75,7 @@
                                     <h5 class="fw-bold mb-1">{{ $inscription->classe->cours->titre }}</h5>
                                     <div class="text-muted small">
                                         <i class="ri-graduation-cap-line text-danger me-1"></i>
-                                        Classe : {{ $inscription->classe->nom }}
+                                        Classe : {{ $inscription->classe->cours->titre }} — {{ $inscription->classe->nom }}
                                     </div>
                                     <div class="text-muted small">
                                         <i class="ri-calendar-event-line text-danger me-1"></i>
@@ -87,7 +87,7 @@
 
                             <div class="d-flex flex-md-column align-items-md-end gap-2">
                                 <span class="badge bg-success-subtle text-success px-3 py-2">
-                                    <i class="ri-checkbox-circle-line me-1"></i>Formation en cours
+                                    <i class="ri-checkbox-circle-line me-1"></i>Cours en cours
                                 </span>
                                 <a href="{{ route('cours.espace', $inscription->classe->cours) }}"
                                    class="btn btn-danger btn-sm text-nowrap">
@@ -125,7 +125,7 @@
                                     <h5 class="fw-bold mb-1">{{ $inscription->classe->cours->titre }}</h5>
                                     <div class="text-muted small">
                                         <i class="ri-graduation-cap-line text-danger me-1"></i>
-                                        Classe : {{ $inscription->classe->nom }}
+                                        Classe : {{ $inscription->classe->cours->titre }} — {{ $inscription->classe->nom }}
                                     </div>
                                     <div class="text-muted small">
                                         <i class="ri-calendar-event-line text-danger me-1"></i>
@@ -140,7 +140,7 @@
                                 </span>
                                 <a href="{{ route('cours.show', $inscription->classe->cours) }}"
                                    class="btn btn-primary btn-sm text-nowrap">
-                                    Voir la formation <i class="ri-arrow-right-line ms-1"></i>
+                                    Voir le cours <i class="ri-arrow-right-line ms-1"></i>
                                 </a>
                             </div>
 
@@ -174,7 +174,7 @@
                                     <h5 class="fw-bold mb-1">{{ $inscription->classe->cours->titre }}</h5>
                                     <div class="text-muted small">
                                         <i class="ri-graduation-cap-line text-danger me-1"></i>
-                                        Classe : {{ $inscription->classe->nom }}
+                                        Classe : {{ $inscription->classe->cours->titre }} — {{ $inscription->classe->nom }}
                                     </div>
                                     <div class="text-muted small">
                                         <i class="ri-calendar-event-line text-danger me-1"></i>

@@ -141,15 +141,10 @@ class AttestationService
         ];
     }
 
-    // « Contenu : Word 1 – Excel 1 » : les modules du programme (lignes « ## ») ou, à défaut,
-    // les titres des chapitres du cours.
+    // « Contenu : Word 1 – Excel 1 » : les titres des chapitres du cours.
     private function contenuDuCours(Cours $cours): ?string
     {
-        $titres = collect($cours->plan_sections)->pluck('titre');
-
-        if ($titres->isEmpty()) {
-            $titres = $cours->chapitres()->pluck('titre');
-        }
+        $titres = $cours->chapitres()->pluck('titre');
 
         return $titres->isEmpty() ? null : Str::limit($titres->implode(' – '), 250);
     }

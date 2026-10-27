@@ -16,7 +16,8 @@
     ];
 
     $icon = $icones[($index ?? 0) % count($icones)];
-    $categorie = strtolower((string) $unCours->categorie);
+    $nomCategorie = $unCours->categorie?->nom;
+    $categorie = strtolower((string) $nomCategorie);
 
     // Icône selon la catégorie
     if (str_contains($categorie, 'excel')) {
@@ -50,9 +51,9 @@
     @endif
 
     <div class="card-body p-3 d-flex flex-column">
-        @if(!empty($unCours->categorie))
+        @if($nomCategorie)
             <span class="badge bg-primary-subtle text-primary text-uppercase align-self-start mb-2">
-                {{ $unCours->categorie }}
+                {{ $nomCategorie }}
             </span>
         @endif
 
@@ -73,7 +74,7 @@
         </div>
 
         <p class="text-muted small mb-0 text-truncate">
-            {{ $unCours->description ?: 'Description à venir pour cette formation.' }}
+            {{ $unCours->description ?: 'Description à venir pour ce cours.' }}
         </p>
 
         {{-- Informations --}}

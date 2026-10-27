@@ -1,13 +1,13 @@
 @extends('layouts.master')
 
 @section('title')
-    Résultats au quiz — {{ $classe->nom }}
+    Résultats au quiz — {{ $classe->cours?->titre }} — {{ $classe->nom }}
 @endsection
 
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1')
-            <a href="{{ route('classes.formateur.show', $classe) }}">{{ $classe->nom }}</a>
+            <a href="{{ route('classes.formateur.show', $classe) }}">{{ $classe->cours?->titre }} — {{ $classe->nom }}</a>
         @endslot
         @slot('title')
             Résultats au quiz

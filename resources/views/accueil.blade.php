@@ -30,7 +30,7 @@
         <div class="collapse navbar-collapse" id="nvMenu">
             <ul class="navbar-nav nav nav-pills mx-lg-4 gap-lg-1">
                 <li class="nav-item"><a class="nav-link active" href="#accueil">Accueil</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('cours.catalogue') }}">Formations</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('cours.catalogue') }}">Cours</a></li>
                 <li class="nav-item"><a class="nav-link" href="#calendrier">Classes</a></li>
                 <li class="nav-item"><a class="nav-link" href="#pourquoi">À propos</a></li>
             </ul>
@@ -63,7 +63,7 @@
         {{-- Chiffres clés (réels), en pastilles compactes --}}
         <div class="d-flex flex-wrap gap-2">
             @foreach([
-                ['ri-book-open-line',   $nbCours,     'formations'],
+                ['ri-book-open-line',   $nbCours,     'cours'],
                 ['ri-folder-open-line', $nbDomaines,  'catégories'],
                 ['ri-calendar-2-line',  $nbClasses,   'classes'],
                 ['ri-article-line',     $nbChapitres, 'chapitres'],
@@ -104,14 +104,14 @@
         <div class="nv-parcours rounded-4 p-3 p-lg-4">
             <hr class="nv-bar">
             <h2 class="fw-bold mb-1">Votre parcours <span class="text-primary">particulier</span></h2>
-            <p class="text-muted small mb-4">De la découverte du catalogue à l'accès à votre formation, en 4 étapes simples.</p>
+            <p class="text-muted small mb-4">De la découverte du catalogue à l'accès à votre cours, en 4 étapes simples.</p>
 
             <div class="row g-4">
                 @foreach([
-                    ['ri-search-eye-line',     'Visiter le catalogue',     'Parcourez toutes nos formations.'],
+                    ['ri-search-eye-line',     'Visiter le catalogue',     'Parcourez tous nos cours.'],
                     ['ri-book-open-line',      'Choisir un cours',         'Comparez les contenus, les avis et les prix.'],
                     ['ri-calendar-check-line', "S'inscrire à une classe",  'Choisissez la session qui vous convient.'],
-                    ['ri-folder-open-line',    'Accéder aux contenus',     'Chapitres et ressources de votre formation.'],
+                    ['ri-folder-open-line',    'Accéder aux contenus',     'Chapitres et ressources de votre cours.'],
                 ] as [$icone, $titre, $texte])
                     <div class="col-6 col-md-4 col-lg">
                         <div class="nv-etape">
@@ -140,7 +140,7 @@
 
             <p class="small text-muted text-center mt-3 mb-0">
                 <i class="ri-repeat-2-line text-danger me-1"></i>
-                L'étape 5 est facultative : vous pouvez la passer, la sauter ou la recommencer à tout moment de votre formation.
+                L'étape 5 est facultative : vous pouvez la passer, la sauter ou la recommencer à tout moment de votre cours.
             </p>
         </div>
     </div>
@@ -152,11 +152,11 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
             <div>
                 <hr class="nv-bar">
-                <h2 class="fw-bold mb-1">Nos formations les mieux notées</h2>
-                <p class="text-muted small mb-0">Les formations préférées de nos stagiaires, d'après leurs avis.</p>
+                <h2 class="fw-bold mb-1">Nos cours les mieux notés</h2>
+                <p class="text-muted small mb-0">Les cours préférés de nos stagiaires, d'après leurs avis.</p>
             </div>
             <a href="{{ route('cours.catalogue') }}" class="fw-semibold small text-nowrap">
-                Voir toutes les formations <i class="ri-arrow-right-line ms-1"></i>
+                Voir tous les cours <i class="ri-arrow-right-line ms-1"></i>
             </a>
         </div>
 
@@ -170,7 +170,7 @@
                 <div class="col-12">
                     <div class="alert alert-light border text-center mb-0">
                         <i class="ri-star-line fs-2 text-primary d-block mb-2"></i>
-                        Les formations les mieux notées apparaîtront ici dès les premiers avis.
+                        Les cours les mieux notés apparaîtront ici dès les premiers avis.
                     </div>
                 </div>
             @endforelse
@@ -185,7 +185,7 @@
         <div class="mb-3">
             <hr class="nv-bar">
             <h2 class="fw-bold mb-1">Les prochaines classes</h2>
-            <p class="text-muted small mb-0">Cliquez sur une classe pour découvrir la formation et vous inscrire.</p>
+            <p class="text-muted small mb-0">Cliquez sur une classe pour découvrir le cours et vous inscrire.</p>
         </div>
 
         <div class="row">
@@ -199,7 +199,7 @@
                         ['nv-cal-a-venir', 'À venir : pas encore commencée, inscriptions possibles jusqu\'au jour de début'],
                         ['nv-cal-en-cours', 'En cours : déjà commencée, inscriptions closes'],
                     ],
-                    'aide' => 'Comment lire ce calendrier : chaque classe a deux repères. « Début » (barre pleine) marque son premier jour, « Fin » (texte coloré, sans fond) son dernier jour, dans la couleur de son état. Passez la souris sur une barre pour voir les dates et le lieu, ou cliquez pour ouvrir la formation.',
+                    'aide' => 'Comment lire ce calendrier : chaque classe a deux repères. « Début » (barre pleine) marque son premier jour, « Fin » (texte coloré, sans fond) son dernier jour, dans la couleur de son état. Passez la souris sur une barre pour voir les dates et le lieu, ou cliquez pour ouvrir le cours.',
                 ])
             </div>
         </div>
@@ -221,9 +221,9 @@
 
                     <div class="row g-3">
                         @foreach([
-                            ['ri-tools-line',         'danger',  'Formations pratiques',    'Des contenus concrets, à appliquer tout de suite.'],
+                            ['ri-tools-line',         'danger',  'Cours pratiques',         'Des contenus concrets, à appliquer tout de suite.'],
                             ['ri-user-star-line',     'primary', 'Formateurs accrédités',   'Des intervenants qualifiés pour chaque domaine.'],
-                            ['ri-questionnaire-line', 'danger',  'Quiz et suivi',           'Testez votre niveau et suivez votre progression.'],
+                            ['ri-questionnaire-line', 'danger',  'Quiz et suivi',           'Testez vos connaissances et suivez votre progression.'],
                             ['ri-building-line',      'primary', 'En centre ou en entreprise', 'Un tarif particulier ou entreprise adapté.'],
                         ] as [$icone, $couleur, $titre, $texte])
                             <div class="col-6 col-md-3 nv-why-item">
@@ -241,7 +241,7 @@
                     <div class="nv-cta-card rounded-4 p-3 p-lg-4 text-white">
                         <i class="ri-graduation-cap-fill fs-2"></i>
                         <h5 class="fw-bold text-white mt-2">Prêt à booster votre carrière ?</h5>
-                        <p class="small opacity-75">Rejoignez NEO VISION dès aujourd'hui et accédez à des formations de qualité.</p>
+                        <p class="small opacity-75">Rejoignez NEO VISION dès aujourd'hui et accédez à des cours de qualité.</p>
                         <a href="{{ route('register') }}" class="nv-cta-btn">
                             <span>Créer un compte</span>
                             <span class="nv-arrow-btn"><i class="ri-arrow-right-line"></i></span>
@@ -261,7 +261,7 @@
             <small class="text-muted">&copy; {{ date('Y') }} NEO VISION. Tous droits réservés.</small>
         </div>
         <div class="d-flex flex-wrap gap-3 align-items-center small">
-            <a href="{{ route('cours.catalogue') }}">Formations</a>
+            <a href="{{ route('cours.catalogue') }}">Cours</a>
             <a href="#pourquoi">À propos</a>
             <a href="{{ route('login') }}">Connexion</a>
             <a href="{{ route('register') }}">Inscription</a>

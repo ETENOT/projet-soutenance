@@ -223,7 +223,7 @@ class Classe extends Model
     */
    public function versEvenementCalendrier(?string $url = null, array $classesCss = []): array
    {
-       $nomCours = $this->cours?->titre ?? 'Formation';
+       $nomCours = $this->cours?->titre ?? 'Cours';
        $couleur = $this->etat === 'en_cours' ? 'nv-cal-en-cours' : 'nv-cal-a-venir';
 
        return [

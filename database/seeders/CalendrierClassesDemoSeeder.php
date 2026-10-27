@@ -15,10 +15,10 @@ class CalendrierClassesDemoSeeder extends Seeder
     public function run(): void
     {
         $sessions = [
-            ['Microsoft Word', 'TEST calendrier +N - Word'],
-            ['Microsoft Excel', 'TEST calendrier +N - Excel'],
-            ['Microsoft PowerPoint', 'TEST calendrier +N - PowerPoint'],
-            ['Gestion de projet', 'TEST calendrier +N - Gestion de projet'],
+            ['Microsoft Word', 'Session calendrier +N'],
+            ['Microsoft Excel', 'Session calendrier +N'],
+            ['Microsoft PowerPoint', 'Session calendrier +N'],
+            ['Gestion de projet', 'Session calendrier +N'],
         ];
 
         $debut = today()->addDays(2);

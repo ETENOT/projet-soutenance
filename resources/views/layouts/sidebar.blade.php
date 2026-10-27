@@ -108,7 +108,7 @@
 
 
                     {{-- ================================
-                         FORMATIONS
+                         COURS
                     ================================= --}}
 
                     <li class="nav-item">
@@ -118,9 +118,17 @@
                             href="{{ route('admin.cours.index') }}"
                         >
                             <i class="ri-book-open-line"></i>
-                            <span>Gestion des Formations</span>
+                            <span>Gestion des cours</span>
                         </a>
 
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
+                           href="{{ route('admin.categories.index') }}">
+                            <i class="ri-price-tag-3-line"></i>
+                            <span>Catégories</span>
+                        </a>
                     </li>
 
                     {{-- ================================
@@ -214,7 +222,7 @@
                     </li>
 
                     {{-- ================================
-                         ÉVALUATIONS (formateurs + formations)
+                         ÉVALUATIONS (formateurs + cours)
                     ================================= --}}
 
                     <li class="nav-item">

@@ -26,12 +26,22 @@
                 </span>
                 <h3 class="fw-bold text-white mb-2">{{ $cours->titre }}</h3>
                 <p class="text-white opacity-75 mb-0">
-                    Consultez les informations et accédez directement aux différents éléments de cette formation.
+                    Consultez les informations et accédez directement aux différents éléments de ce cours.
                 </p>
             </div>
 
             <div class="col-lg-4">
-                <div class="d-flex flex-wrap justify-content-lg-end gap-2">
+                <div class="d-flex flex-wrap align-items-center justify-content-lg-end gap-3">
+                    @if ($cours->image)
+                        <img src="{{ asset('storage/' . $cours->image) }}" alt="{{ $cours->titre }}"
+                             class="rounded-3 object-fit-cover" style="width: 96px; height: 96px;">
+                    @else
+                        <span class="avatar-lg flex-shrink-0">
+                            <span class="avatar-title rounded-3 bg-white bg-opacity-25 text-white fs-1">
+                                <i class="ri-book-open-line"></i>
+                            </span>
+                        </span>
+                    @endif
                     <a href="{{ route('admin.cours.edit', $cours) }}" class="btn btn-light">
                         <i class="ri-edit-line me-1"></i> Modifier
                     </a>
@@ -58,7 +68,7 @@
                         <i class="ri-arrow-right-line text-muted fs-4"></i>
                     </div>
                     <h5 class="fw-bold mb-1">Chapitres</h5>
-                    <p class="text-muted small mb-3">Gérez le programme détaillé de cette formation.</p>
+                    <p class="text-muted small mb-3">Gérez les chapitres détaillés de ce cours.</p>
                     <div class="fw-semibold">
                         <i class="ri-folder-2-line text-danger me-1"></i>
                         {{ $cours->chapitres->count() }} chapitre(s)
@@ -104,7 +114,7 @@
                         <i class="ri-arrow-right-line text-muted fs-4"></i>
                     </div>
                     <h5 class="fw-bold mb-1">Classes</h5>
-                    <p class="text-muted small mb-3">Consultez et gérez les sessions associées à cette formation.</p>
+                    <p class="text-muted small mb-3">Consultez et gérez les classes associées à ce cours.</p>
                     <div class="fw-semibold">
                         <i class="ri-calendar-line text-danger me-1"></i>
                         {{ $cours->classes->count() }} classe(s)
@@ -127,7 +137,7 @@
                         <i class="ri-arrow-right-line text-muted fs-4"></i>
                     </div>
                     <h5 class="fw-bold mb-1">Quiz</h5>
-                    <p class="text-muted small mb-3">Consultez et gérez les évaluations de cette formation.</p>
+                    <p class="text-muted small mb-3">Consultez et gérez les évaluations de ce cours.</p>
                     <div class="fw-semibold">
                         <i class="ri-question-line text-danger me-1"></i>
                         {{ $cours->quizzes->count() }} quiz
@@ -148,7 +158,7 @@
                     <h5 class="fw-bold mb-1">
                         <i class="ri-information-line text-danger me-2"></i>Informations du cours
                     </h5>
-                    <p class="text-muted small mb-4">Informations générales de la formation.</p>
+                    <p class="text-muted small mb-4">Informations générales du cours.</p>
 
                     <table class="table table-borderless align-middle mb-0">
                         <tbody>
@@ -158,14 +168,8 @@
                             </tr>
                             <tr>
                                 <td class="text-muted"><i class="ri-bookmark-line text-danger me-2"></i>Catégorie</td>
-                                <td class="text-end fw-bold">{{ $cours->categorie }}</td>
+                                <td class="text-end fw-bold">{{ $cours->categorie?->nom }}</td>
                             </tr>
-                            @if($cours->niveau)
-                                <tr>
-                                    <td class="text-muted"><i class="ri-bar-chart-line text-danger me-2"></i>Niveau</td>
-                                    <td class="text-end fw-bold">{{ $cours->niveau }}</td>
-                                </tr>
-                            @endif
                             @if($cours->duree)
                                 <tr>
                                     <td class="text-muted"><i class="ri-time-line text-danger me-2"></i>Durée</td>

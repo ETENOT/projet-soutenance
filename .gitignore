@@ -26,3 +26,4 @@ Homestead.json
 storage/framework/views/*.php
 #pour garder les dossiers tracés bon git lgarde les dossiers non vides de toute façon
 !storage/framework/views/.gitignore 
+storage/fonts/

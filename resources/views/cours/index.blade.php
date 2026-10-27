@@ -10,7 +10,7 @@
         <a href="{{ route('dashboard') }}">Accueil</a>
     @endslot
     @slot('title')
-        Formations
+        Cours
     @endslot
 @endcomponent
 
@@ -19,7 +19,7 @@
     {{-- ===== En-tête ===== --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <p class="text-muted mb-0 col-lg-8 px-0">
-            Gérez vos formations, vos classes et vos contenus pédagogiques.
+            Gérez vos cours, vos classes et leurs contenus pédagogiques.
         </p>
 
         <a href="{{ route('admin.cours.create') }}" class="btn btn-primary fw-semibold">
@@ -111,7 +111,8 @@
             $etiquettes[] = ['Sans quiz', ['sans_quiz'], 'ri-questionnaire-line'];
         }
         if (request()->filled('categorie')) {
-            $etiquettes[] = ['Catégorie : ' . request('categorie'), ['categorie'], 'ri-price-tag-3-line'];
+            $categorieChoisie = $toutesLesCategories->firstWhere('id', request('categorie'));
+            $etiquettes[] = ['Catégorie : ' . ($categorieChoisie?->nom ?? request('categorie')), ['categorie'], 'ri-price-tag-3-line'];
         }
         if (request()->filled('classes_min') || request()->filled('classes_max')) {
             $etiquettes[] = ['Classes : ' . (request('classes_min') ?: '0') . ' à ' . (request('classes_max') ?: '∞'), ['classes_min', 'classes_max'], 'ri-group-line'];
@@ -138,7 +139,7 @@
 
     @include('partials.barre-recherche', [
         'action' => route('admin.cours.index'),
-        'placeholder' => 'Rechercher une formation (titre, catégorie, description)…',
+        'placeholder' => 'Rechercher un cours (titre, catégorie, description)…',
         'etiquettes' => $etiquettes,
         'filtres' => $filtres,
         'groupes' => $libellesGroupe,
@@ -174,7 +175,7 @@
                         <th class="nv-selection-column">
                             <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
                         </th>
-                        <th>Formation</th>
+                        <th>Cours</th>
                         <th>Catégorie</th>
                         <th class="text-center">Chapitres</th>
                         <th class="text-center">Classes</th>
@@ -194,7 +195,7 @@
                         @if ($groupe)
                             @php
                                 $cle = $cleGroupe($unCours);
-                                $libelleGroupe = $unCours->categorie ?: 'Sans catégorie';
+                                $libelleGroupe = $unCours->categorie?->nom ?: 'Sans catégorie';
                             @endphp
                             @if ($cle !== $groupePrecedent)
                                 @php
@@ -220,25 +221,25 @@
 
                             <td class="nv-min-w-280">
                                 <div class="d-flex align-items-center gap-3">
-                                    <span class="avatar-sm flex-shrink-0">
-                                        <span class="avatar-title rounded-3 bg-primary-subtle text-primary fs-4">
-                                            <i class="ri-book-2-line"></i>
+                                    @if($unCours->image)
+                                        <img src="{{ asset('storage/' . $unCours->image) }}" alt="{{ $unCours->titre }}"
+                                             class="avatar-sm rounded object-fit-cover flex-shrink-0">
+                                    @else
+                                        <span class="avatar-sm flex-shrink-0">
+                                            <span class="avatar-title rounded bg-primary-subtle text-primary fs-4">
+                                                <i class="ri-book-2-line"></i>
+                                            </span>
                                         </span>
-                                    </span>
+                                    @endif
                                     <div class="nv-table-cell-wrap">
                                         <div class="fw-semibold">{{ $unCours->titre }}</div>
-                                        @if($unCours->description)
-                                            <small class="text-muted">
-                                                {{ \Illuminate\Support\Str::limit($unCours->description, 90) }}
-                                            </small>
-                                        @endif
                                     </div>
                                 </div>
                             </td>
 
                             <td>
                                 @if($unCours->categorie)
-                                    <span class="badge bg-primary-subtle text-primary">{{ $unCours->categorie }}</span>
+                                    <span class="badge bg-primary-subtle text-primary">{{ $unCours->categorie?->nom }}</span>
                                 @else
                                     <span class="text-muted">—</span>
                                 @endif

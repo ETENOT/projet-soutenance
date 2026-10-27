@@ -9,7 +9,7 @@ Choix du paiement
 
 @component('components.breadcrumb')
     @slot('li_1')
-        Formation
+        Cours
     @endslot
 
     @slot('title')

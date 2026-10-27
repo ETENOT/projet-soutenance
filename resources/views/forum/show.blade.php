@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-    Forum — {{ $classe->nom }}
+    Forum — {{ $classe->cours?->titre }} — {{ $classe->nom }}
 @endsection
 
 @section('css')
@@ -15,7 +15,7 @@
             <a href="{{ route('forum.index') }}">Forums</a>
         @endslot
         @slot('title')
-            {{ $classe->nom }}
+            {{ $classe->cours?->titre }} — {{ $classe->nom }}
         @endslot
     @endcomponent
 
@@ -83,7 +83,7 @@
                 <div class="chat-conversation p-3 nv-forum-chat-window" id="zoneMessages">
                     <ul class="list-unstyled chat-conversation-list" id="listeMessages"></ul>
                     <p class="text-center text-muted my-4 d-none" id="messageVide">
-                        Aucun message pour l'instant. Lancez la discussion et partagez vos photos et vidéos de la formation !
+                        Aucun message pour l'instant. Lancez la discussion et partagez vos photos et vidéos du cours !
                     </p>
                 </div>
 
@@ -137,7 +137,9 @@
     <div class="offcanvas offcanvas-end nv-forum-gallery-panel" tabindex="-1" id="panneauGalerie" aria-labelledby="titreGalerie">
         <div class="offcanvas-header border-bottom">
             <div>
-                <h5 class="offcanvas-title mb-0" id="titreGalerie">Galerie — {{ $classe->nom }}</h5>
+                <h5 class="offcanvas-title mb-0" id="titreGalerie">
+                    Galerie — {{ $classe->cours?->titre }} · {{ $classe->nom }}
+                </h5>
                 <p class="text-muted fs-12 mb-0" id="galerieCompteur"></p>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>

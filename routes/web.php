@@ -130,8 +130,8 @@ Route::get('/attestations/{attestation}/telecharger', [App\Http\Controllers\Atte
 Route::get('/catalogue-cours', [App\Http\Controllers\CoursController::class, 'catalogue'])
     ->name('cours.catalogue');
 
-// Télécharger le programme public d'un cours au format PDF
-Route::get('/cours/{cours}/programme.pdf', [App\Http\Controllers\CoursController::class, 'programmePdf'])
+// Télécharger les chapitres d'un cours au format PDF
+Route::get('/cours/{cours}/chapitres.pdf', [App\Http\Controllers\CoursController::class, 'chapitresPdf'])
     ->name('cours.programme.pdf');
 
 // Détail d'un cours — côté utilisateur
@@ -233,6 +233,11 @@ Route::get('/cours/{cours}/resources/{resource}/voir', [App\Http\Controllers\Cou
     ->middleware('auth')
     ->name('cours.resources.voir');
 
+// Page de consultation d'une ressource dans l'espace du cours
+Route::get('/cours/{cours}/resources/{resource}', [App\Http\Controllers\CoursController::class, 'ressource'])
+    ->middleware('auth')
+    ->name('cours.ressource');
+
 // Télécharger un document
 Route::get('/cours/{cours}/resources/{resource}/telecharger', [App\Http\Controllers\CoursResourceController::class, 'download'])
     ->middleware('auth')
@@ -247,6 +252,15 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
+
+        Route::get('/categories', [App\Http\Controllers\CategorieController::class, 'index'])
+            ->name('categories.index');
+        Route::post('/categories', [App\Http\Controllers\CategorieController::class, 'store'])
+            ->name('categories.store');
+        Route::put('/categories/{categorie}', [App\Http\Controllers\CategorieController::class, 'update'])
+            ->name('categories.update');
+        Route::delete('/categories/{categorie}', [App\Http\Controllers\CategorieController::class, 'destroy'])
+            ->name('categories.destroy');
 
         // ------------------------------------------------------------------
         // ATTESTATIONS délivrées (liste, du plus récent au plus ancien)
@@ -338,6 +352,12 @@ Route::middleware(['auth', 'role:admin'])
         // ------------------------------------------------------------------
         // CHAPITRES
         // ------------------------------------------------------------------
+
+        Route::get('/cours/{cours}/chapitres/create', [App\Http\Controllers\ChapitreController::class, 'create'])
+            ->name('cours.chapitres.create');
+
+        Route::get('/cours/{cours}/chapitres/{chapitre}/edit', [App\Http\Controllers\ChapitreController::class, 'edit'])
+            ->name('cours.chapitres.edit');
 
         // Ajouter un chapitre
         Route::post('/cours/{cours}/chapitres', [App\Http\Controllers\ChapitreController::class, 'store'])
@@ -468,6 +488,9 @@ Route::middleware(['auth', 'role:admin'])
 
                 Route::post('/', [App\Http\Controllers\ClasseController::class, 'store'])
                     ->name('store');
+
+                Route::get('/{classe}', [App\Http\Controllers\ClasseController::class, 'show'])
+                    ->name('show');
 
                 Route::get('/{classe}/edit', [App\Http\Controllers\ClasseController::class, 'edit'])
                     ->name('edit');

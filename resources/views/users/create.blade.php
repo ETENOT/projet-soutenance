@@ -17,7 +17,7 @@
     @php
         // Présentation de chaque rôle : [icône, description courte]. L'ordre ci-dessous est celui de l'écran.
         $presentationRoles = [
-            'particulier' => ['ri-user-3-line', 'Suit des formations à titre personnel'],
+            'particulier' => ['ri-user-3-line', 'Suit des cours à titre personnel'],
             'entreprise'  => ['ri-building-2-line', 'Inscrit ses employés et demande des devis'],
             'formateur'   => ['ri-user-star-line', 'Anime les classes et suit les présences'],
             'admin'       => ['ri-shield-user-line', 'Gère toute la plateforme'],
@@ -96,16 +96,28 @@
 
                             <div class="col-md-6">
                                 <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password" id="password"
-                                       class="form-control @error('password') is-invalid @enderror" required>
+                                <div class="position-relative auth-pass-inputgroup">
+                                    <input type="password" name="password" id="password"
+                                           class="form-control password-input pe-5 @error('password') is-invalid @enderror" required>
+                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                                            type="button" aria-label="Afficher ou masquer le mot de passe">
+                                        <i class="ri-eye-fill align-middle"></i>
+                                    </button>
+                                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                </div>
                                 <div class="form-text">8 caractères minimum.</div>
-                                @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
 
                             <div class="col-md-6">
                                 <label for="password_confirmation" class="form-label">Confirmer le mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password_confirmation" id="password_confirmation"
-                                       class="form-control" required>
+                                <div class="position-relative auth-pass-inputgroup">
+                                    <input type="password" name="password_confirmation" id="password_confirmation"
+                                           class="form-control password-input pe-5" required>
+                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                                            type="button" aria-label="Afficher ou masquer la confirmation du mot de passe">
+                                        <i class="ri-eye-fill align-middle"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -190,7 +202,7 @@
 
                             <div class="col-md-6">
                                 <label for="contact_principal" class="form-label">Contact principal (téléphone) <span class="text-danger">*</span></label>
-                                <input type="tel" name="contact_principal" id="contact_principal" placeholder="+24177123456"
+                                <input type="tel" id="contact_principal" placeholder="+24177123456"
                                        class="form-control @error('contact_principal') is-invalid @enderror"
                                        value="{{ old('contact_principal') }}" @disabled($roleChoisi !== 'entreprise')>
                                 <div class="form-text">Format international, avec l'indicatif du pays.</div>
@@ -206,7 +218,7 @@
                         <i class="ri-information-line text-primary me-1"></i>
                         <span id="texteSimple">
                             {{ $roleChoisi === 'admin'
-                                ? 'Un administrateur a accès à toute la gestion de la plateforme : utilisateurs, formations, classes et paiements. Aucune autre information n\'est nécessaire.'
+                                ? 'Un administrateur a accès à toute la gestion de la plateforme : utilisateurs, cours, classes et paiements. Aucune autre information n\'est nécessaire.'
                                 : 'Le formateur pourra être affecté à des classes depuis la gestion des classes. Aucune autre information n\'est nécessaire.' }}
                         </span>
                     </div>
@@ -229,6 +241,7 @@
 
 @section('script')
 <script src="{{ URL::asset('build/libs/intl-tel-input/js/intlTelInputWithUtils.min.js') }}"></script>
+<script src="{{ URL::asset('build/js/pages/password-addon.init.js') }}"></script>
 <script>
     // Le formulaire s'adapte au type de compte choisi : on affiche le bloc du rôle,
     // on cache les autres ET on désactive leurs champs (un champ désactivé n'est pas envoyé,
@@ -246,7 +259,7 @@
 
         const textes = {
             formateur: "Le formateur pourra être affecté à des classes depuis la gestion des classes. Aucune autre information n'est nécessaire.",
-            admin: "Un administrateur a accès à toute la gestion de la plateforme : utilisateurs, formations, classes et paiements. Aucune autre information n'est nécessaire.",
+            admin: "Un administrateur a accès à toute la gestion de la plateforme : utilisateurs, cours, classes et paiements. Aucune autre information n'est nécessaire.",
         };
 
         const telephoneInput = document.getElementById('telephone');
@@ -259,8 +272,22 @@
             hiddenInputs: () => ({ phone: 'telephone' }),
         });
 
+        const contactPrincipalInput = document.getElementById('contact_principal');
+        const contactPrincipalField = window.intlTelInput(contactPrincipalInput, {
+            initialCountry: 'ga',
+            countryOrder: ['ga', 'fr'],
+            countryNameLocale: 'fr',
+            separateDialCode: true,
+            strictMode: true,
+            hiddenInputs: () => ({ phone: 'contact_principal' }),
+        });
+
         if (telephoneInput.value) {
             telephoneField.setNumber(telephoneInput.value);
+        }
+
+        if (contactPrincipalInput.value) {
+            contactPrincipalField.setNumber(contactPrincipalInput.value);
         }
 
         function mettreAJourValiditeTelephone() {
@@ -279,10 +306,26 @@
         telephoneInput.addEventListener('input', mettreAJourValiditeTelephone);
         telephoneInput.addEventListener('countrychange', mettreAJourValiditeTelephone);
 
+        function mettreAJourValiditeContactPrincipal() {
+            if (contactPrincipalInput.disabled || contactPrincipalInput.value.trim() === '') {
+                contactPrincipalInput.setCustomValidity('');
+                return;
+            }
+
+            contactPrincipalInput.setCustomValidity(
+                contactPrincipalField.isValidNumber() === false
+                    ? 'Numéro invalide pour le pays sélectionné.'
+                    : ''
+            );
+        }
+
+        contactPrincipalInput.addEventListener('input', mettreAJourValiditeContactPrincipal);
+        contactPrincipalInput.addEventListener('countrychange', mettreAJourValiditeContactPrincipal);
+
         function afficher(bloc, visible) {
             bloc.classList.toggle('d-none', !visible);
             // Les champs d'un bloc caché sont désactivés
-            bloc.querySelectorAll('input:not(#telephone), select, textarea').forEach(function (champ) {
+            bloc.querySelectorAll('input:not(#telephone):not(#contact_principal), select, textarea').forEach(function (champ) {
                 champ.disabled = !visible;
             });
         }
@@ -296,7 +339,9 @@
             afficher(blocs.entreprise, role === 'entreprise');
             afficher(blocs.simple, role === 'formateur' || role === 'admin');
             telephoneField.setDisabled(role !== 'particulier');
+            contactPrincipalField.setDisabled(role !== 'entreprise');
             mettreAJourValiditeTelephone();
+            mettreAJourValiditeContactPrincipal();
 
             if (textes[role]) {
                 texteSimple.textContent = textes[role];

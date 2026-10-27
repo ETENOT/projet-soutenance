@@ -18,10 +18,13 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
 
+            // Catégories utilisées par les formations
+            CategorieSeeder::class,
+
             // Création des formations
             CoursSeeder::class,
 
-            // Création des chapitres à partir des programmes des cours
+            // Création directe des chapitres des formations
             ChapitreSeeder::class,
 
             // Ressources pédagogiques rattachées aux formations

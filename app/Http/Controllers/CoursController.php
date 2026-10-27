@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cours;
 use App\Models\Chapitre;
+use App\Models\Categorie;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -31,12 +32,12 @@ class CoursController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $cours = Cours::withCount(['classes', 'quizzes', 'chapitres', 'avis'])
+        $cours = Cours::with('categorie')->withCount(['classes', 'quizzes', 'chapitres', 'avis'])
             ->withAvg('avis', 'note')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('titre', 'like', '%' . $search . '%')
-                        ->orWhere('categorie', 'like', '%' . $search . '%')
+                        ->orWhereHas('categorie', fn ($categorie) => $categorie->where('nom', 'like', '%' . $search . '%'))
                         ->orWhere('description', 'like', '%' . $search . '%');
                 });
             })
@@ -59,6 +60,7 @@ class CoursController extends Controller
     public function show(Cours $cours)
     {
         $cours->load([
+            'categorie',
             'chapitres' => function ($query) {
                 $query->orderBy('ordre');
             },
@@ -148,21 +150,19 @@ class CoursController extends Controller
         ]);
     }
 
-    /**
-     * Télécharger le programme d'un cours au format PDF.
-     */
-    public function programmePdf(Cours $cours)
+    public function chapitresPdf(Cours $cours)
     {
         $cours->load([
+            'categorie',
             'chapitres' => function ($query) {
                 $query->orderBy('ordre');
             },
         ]);
 
-        return Pdf::loadView('cours.programme-pdf', [
+        return Pdf::loadView('cours.chapitres-pdf', [
             'cours' => $cours,
             'logo' => public_path('images/logo_neovision.png'),
-        ])->download('programme-' . Str::slug($cours->titre) . '.pdf');
+        ])->download('chapitres-' . Str::slug($cours->titre) . '.pdf');
     }
 
     /**
@@ -171,6 +171,7 @@ class CoursController extends Controller
     public function adminShow(Cours $cours)
     {
         $cours->load([
+            'categorie',
             'chapitres' => function ($query) {
                 $query->orderBy('ordre');
             },
@@ -200,6 +201,7 @@ class CoursController extends Controller
         // Validation des filtres numériques : un nombre négatif ou un maximum inférieur
         // au minimum renvoie un message d'erreur au lieu d'une page cassée.
         $request->validate([
+            'categorie' => ['nullable', 'integer', 'exists:categories,id'],
             'classes_min' => ['nullable', 'integer', 'min:0'],
             // La comparaison avec le minimum n'a de sens QUE si un minimum est saisi :
             // sans cela, "gte" échoue dès que le champ minimum est vide.
@@ -237,16 +239,17 @@ class CoursController extends Controller
                 'classes as classes_a_venir_count' => fn ($q) => $q->avecEtat('a_venir'),
             ])
             // Recherche texte : titre, catégorie ou description
+            ->with('categorie')
             ->when($request->filled('q'), function ($query) use ($request) {
                 $mot = '%' . $request->input('q') . '%';
                 $query->where(function ($w) use ($mot) {
                     $w->where('titre', 'like', $mot)
-                        ->orWhere('categorie', 'like', $mot)
+                        ->orWhereHas('categorie', fn ($categorie) => $categorie->where('nom', 'like', $mot))
                         ->orWhere('description', 'like', $mot);
                 });
             })
             // Catégorie exacte choisie dans la liste
-            ->when($request->filled('categorie'), fn ($query) => $query->where('categorie', $request->input('categorie')))
+            ->when($request->filled('categorie'), fn ($query) => $query->where('categorie_id', $request->input('categorie')))
             // Nombre de classes minimum / maximum : has('classes', '>=', N) compte en SQL
             ->when($request->filled('classes_min'), fn ($query) => $query->has('classes', '>=', (int) $request->input('classes_min')))
             ->when($request->filled('classes_max'), fn ($query) => $query->has('classes', '<=', (int) $request->input('classes_max')))
@@ -267,13 +270,13 @@ class CoursController extends Controller
         if ($groupe) {
             // Clé de groupe d'un cours : la même sert à trier, à afficher les en-têtes et à compter
             $cleGroupe = match ($groupe) {
-                'categorie' => fn (Cours $c) => (string) ($c->categorie ?? ''),
+                'categorie' => fn (Cours $c) => (string) ($c->categorie?->nom ?? ''),
             };
 
             // Nombre de cours par groupe sur TOUT le résultat filtré (pas seulement la page courante)
             $comptesGroupes = (clone $query)->get()->countBy($cleGroupe);
 
-            $query->orderByRaw('categorie is null')->orderBy('categorie');
+            $query->orderBy(Categorie::select('nom')->whereColumn('categories.id', 'cours.categorie_id'));
         }
 
         $cours = $query
@@ -290,7 +293,7 @@ class CoursController extends Controller
             'cleGroupe' => $cleGroupe,
             'comptesGroupes' => $comptesGroupes,
             // Liste des catégories pour le menu déroulant (sur TOUS les cours, pas seulement la page)
-            'toutesLesCategories' => Cours::query()->whereNotNull('categorie')->distinct()->orderBy('categorie')->pluck('categorie'),
+            'toutesLesCategories' => Categorie::orderBy('nom')->get(),
             // Totaux sur toute la base (pas seulement la page affichée, ni le filtre)
             'nombreCours' => Cours::count(),
             'nombreChapitres' => Chapitre::count(),
@@ -303,7 +306,9 @@ class CoursController extends Controller
      */
     public function create()
     {
-        return view('cours.create');
+        return view('cours.create', [
+            'categories' => Categorie::orderBy('nom')->get(),
+        ]);
     }
 
     /**
@@ -313,7 +318,7 @@ class CoursController extends Controller
     {
         return [
             'titre' => ['required', 'string', 'max:255'],
-            'categorie' => ['required', 'string', 'max:255'],
+            'categorie_id' => ['required', 'integer', 'exists:categories,id'],
             'description' => ['nullable', 'string'],
             'prix_particulier' => ['required', 'numeric', 'min:0'],
             'prix_entreprise' => ['required', 'numeric', 'min:0'],
@@ -375,6 +380,7 @@ class CoursController extends Controller
     {
         return view('cours.edit', [
             'cours' => $cours,
+            'categories' => Categorie::orderBy('nom')->get(),
         ]);
     }
 

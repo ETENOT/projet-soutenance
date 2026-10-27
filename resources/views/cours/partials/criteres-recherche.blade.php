@@ -1,9 +1,9 @@
-{{-- Colonne "Plus de critères" de la liste admin des formations (incluse par partials/barre-recherche) --}}
+{{-- Colonne "Plus de critères" de la liste admin des cours (incluse par partials/barre-recherche) --}}
 <select name="categorie" class="form-select form-select-sm mb-2" aria-label="Filtrer par catégorie"
         onchange="this.form.submit()">
     <option value="">Toutes les catégories</option>
     @foreach ($toutesLesCategories as $categorie)
-        <option value="{{ $categorie }}" @selected(request('categorie') === $categorie)>{{ $categorie }}</option>
+        <option value="{{ $categorie->id }}" @selected((string) request('categorie') === (string) $categorie->id)>{{ $categorie->nom }}</option>
     @endforeach
 </select>
 

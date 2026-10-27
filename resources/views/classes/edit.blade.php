@@ -240,10 +240,19 @@
                         @if ($candidats->isEmpty())
                             <p class="text-muted fs-13 mb-0">Aucun utilisateur disponible à inscrire.</p>
                         @else
+                            <div class="mb-3">
+                                <label for="recherche-utilisateurs" class="form-label">Rechercher un utilisateur</label>
+                                <input type="search" id="recherche-utilisateurs" class="form-control"
+                                       placeholder="Nom ou e-mail">
+                            </div>
+                            <p class="text-muted fs-13 mb-2">
+                                Cases cochées : <span id="nombre-utilisateurs-selectionnes">0</span>
+                            </p>
                             <div class="nv-choix-liste">
-                                <div class="d-grid gap-2">
+                                <div class="d-grid gap-2" id="liste-utilisateurs-candidats">
                                     @foreach ($candidats as $utilisateur)
-                                        <label class="nv-choix p-2 d-flex align-items-center gap-2 mb-0">
+                                        <label class="nv-choix p-2 d-flex align-items-center gap-2 mb-0 utilisateur-candidat"
+                                               data-recherche="{{ mb_strtolower($utilisateur->name.' '.$utilisateur->email) }}">
                                             <input class="form-check-input mt-0" type="checkbox" name="user_ids[]"
                                                    value="{{ $utilisateur->id }}"
                                                    @checked(in_array($utilisateur->id, old('user_ids', [])))>
@@ -253,6 +262,9 @@
                                         </label>
                                     @endforeach
                                 </div>
+                                <p class="text-muted fs-13 mt-2 mb-0 d-none" id="aucun-utilisateur-trouve">
+                                    Aucun utilisateur trouvé.
+                                </p>
                             </div>
 
                             <button type="submit" class="btn btn-outline-primary mt-3">
@@ -293,6 +305,40 @@
                 </div>
             </div>
         </div>
-
     </div>
+@endsection
+
+@section('script')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const recherche = document.getElementById('recherche-utilisateurs');
+            const candidats = Array.from(document.querySelectorAll('.utilisateur-candidat'));
+            const aucunResultat = document.getElementById('aucun-utilisateur-trouve');
+            const compteur = document.getElementById('nombre-utilisateurs-selectionnes');
+
+            function mettreAJourCompteur() {
+                compteur.textContent = document.querySelectorAll('.utilisateur-candidat input[type="checkbox"]:checked').length;
+            }
+
+            function filtrerCandidats() {
+                const terme = recherche.value.trim().toLocaleLowerCase();
+                let visibles = 0;
+
+                candidats.forEach(function (candidat) {
+                    const correspond = candidat.dataset.recherche.includes(terme);
+                    candidat.classList.toggle('d-none', !correspond);
+                    if (correspond) visibles++;
+                });
+
+                aucunResultat.classList.toggle('d-none', visibles !== 0);
+            }
+
+            recherche.addEventListener('input', filtrerCandidats);
+            document.querySelectorAll('.utilisateur-candidat input[type="checkbox"]').forEach(function (caseUtilisateur) {
+                caseUtilisateur.addEventListener('change', mettreAJourCompteur);
+            });
+
+            mettreAJourCompteur();
+        });
+    </script>
 @endsection

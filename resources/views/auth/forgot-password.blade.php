@@ -1,12 +1,18 @@
 @extends('layouts.master-without-nav')
 
 @section('title')
-    @lang('translation.password-reset')
+    Mot de passe oublié ?
 @endsection
 
 @section('content')
 
-<div class="auth-page-wrapper pt-5">
+<div class="auth-page-wrapper auth-page-brand pt-5">
+
+    <a href="{{ url('/') }}"
+       class="btn btn-light position-fixed top-0 start-0 m-3 m-sm-4 z-3 auth-return-home">
+        <i class="ri-arrow-left-line align-middle me-1"></i>
+        Retour à l'accueil
+    </a>
 
     <!-- Arrière-plan de la page -->
     <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
@@ -46,8 +52,8 @@
                             <a href="{{ url('/') }}"
                                class="d-inline-block auth-logo">
 
-                                <img src="{{ URL::asset('build/images/logo_neovision.png') }}"
-                                     alt="NEO-VISION"
+                                <img src="{{ asset('images/logo_neovision.png') }}"
+                                     alt="Néovision"
                                      height="55">
 
                             </a>
@@ -73,23 +79,16 @@
 
                         <div class="card-body p-4">
 
-                            <!-- Titre + icône animée Velzon -->
+                            <!-- Titre et consignes -->
                             <div class="text-center mt-2">
 
                                 <h5 class="text-primary">
-                                    {{ __('Mot de passe oublié ?') }}
+                                    Mot de passe oublié ?
                                 </h5>
 
                                 <p class="text-muted">
-                                    {{ __("Pas de souci. Indiquez votre adresse e-mail et nous vous enverrons un lien pour en choisir un nouveau.") }}
+                                    Saisissez votre e-mail : nous vous enverrons un lien pour choisir un nouveau mot de passe.
                                 </p>
-
-                                <lord-icon
-                                    src="https://cdn.lordicon.com/rhvddzym.json"
-                                    trigger="loop"
-                                    colors="primary:#0ab39c"
-                                    class="avatar-xl">
-                                </lord-icon>
 
                             </div>
 
@@ -115,7 +114,7 @@
                                         <label for="email"
                                                class="form-label">
 
-                                            {{ __('Adresse e-mail') }}
+                                            Adresse e-mail
 
                                             <span class="text-danger">*</span>
 
@@ -127,7 +126,7 @@
                                             name="email"
                                             value="{{ old('email') }}"
                                             class="form-control @error('email') is-invalid @enderror"
-                                            placeholder="{{ __('Entrez votre adresse e-mail') }}"
+                                            placeholder="Entrez votre adresse e-mail"
                                             required
                                             autofocus
                                         >
@@ -148,7 +147,7 @@
                                             class="btn btn-success w-100"
                                             type="submit">
 
-                                            {{ __('Envoyer le lien de réinitialisation') }}
+                                            Envoyer le lien
 
                                         </button>
 
@@ -168,13 +167,9 @@
 
                         <p class="mb-0">
 
-                            {{ __('Vous vous souvenez de votre mot de passe ?') }}
-
-                            
-                                <a href="{{ route('login') }}"
-                                class="fw-semibold text-primary text-decoration-underline">
-
-                                {{ __('Retour à la connexion') }}
+                            <a href="{{ route('login') }}"
+                               class="fw-semibold text-primary text-decoration-underline auth-switch-link">
+                                Retour à la connexion
 
                             </a>
 

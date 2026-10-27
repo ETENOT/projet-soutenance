@@ -42,6 +42,7 @@ class HomeController extends Controller
 
         // Les 4 cours les mieux notés, avec suffisamment d'avis pour être représentatifs.
         $coursPopulaires = \App\Models\Cours::has('avis', '>=', 3)
+            ->with('categorie')
             ->withAvg('avis', 'note')
             ->withCount(['avis', 'chapitres', 'classes'])
             ->orderByDesc('avis_avg_note')
@@ -51,7 +52,7 @@ class HomeController extends Controller
 
         // Chiffres clés affichés dans la bannière
         $nbCours     = \App\Models\Cours::count();
-        $nbDomaines  = \App\Models\Cours::whereNotNull('categorie')->distinct()->count('categorie');
+        $nbDomaines  = \App\Models\Categorie::count();
         $nbClasses   = \App\Models\Classe::count();
         $nbChapitres = \App\Models\Chapitre::count();
 

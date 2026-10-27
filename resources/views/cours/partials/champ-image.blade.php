@@ -1,5 +1,5 @@
 {{--
-    Champ « Image de la formation » des formulaires de création et de modification d'un cours.
+    Champ « Image du cours » des formulaires de création et de modification d'un cours.
     Paramètre : $cours (facultatif, présent seulement à la modification : sert à montrer l'image actuelle).
     L'image choisie est affichée tout de suite en aperçu (script en bas de ce fichier).
 --}}
@@ -11,7 +11,7 @@
     <div class="card-header">
         <h5 class="card-title mb-0">
             <i class="ri-image-line me-1 text-primary"></i>
-            Image de la formation
+            Image du cours
         </h5>
     </div>
 
@@ -32,7 +32,7 @@
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
         <div class="form-text">
-            Logo ou photo qui représente la formation (par exemple le logo de Word).
+            Logo ou photo qui représente le cours (par exemple le logo de Word).
             JPG, PNG, WebP ou GIF, 2 Mo maximum. Un logo sur fond transparent donne le meilleur rendu.
         </div>
 

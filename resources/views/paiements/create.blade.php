@@ -7,7 +7,7 @@
 @section('content')
     @component('components.breadcrumb')
         @slot('li_1')
-            Formation
+            Cours
         @endslot
         @slot('title')
             Paiement en ligne

@@ -82,7 +82,7 @@ class ForumController extends Controller
         $photos = MessageForum::query()
             ->whereNotNull('photo')
             ->whereIn('classe_id', $idsClasses)
-            ->with(['user', 'classe'])
+            ->with(['user', 'classe.cours'])
             ->orderByDesc('id')
             ->paginate(24)
             ->withQueryString();

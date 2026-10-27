@@ -18,7 +18,7 @@
         <form method="GET" action="{{ route('classes.formateur.index') }}" class="mb-3">
             <div class="input-group">
                 <input type="search" name="q" value="{{ $recherche }}"
-                       class="form-control" placeholder="Rechercher une classe, une formation ou un lieu…"
+                       class="form-control" placeholder="Rechercher une classe, un cours ou un lieu…"
                        aria-label="Rechercher dans mes classes">
                 <select id="filtre-etat" name="etat" class="form-select" aria-label="Filtrer par statut"
                         style="max-width: 170px">
@@ -54,7 +54,7 @@
                         <tbody>
                             @forelse ($classes as $classe)
                                 <tr>
-                                    <td class="fw-medium">{{ $classe->nom }}</td>
+                                    <td class="fw-medium">{{ $classe->cours?->titre }} — {{ $classe->nom }}</td>
                                     <td>{{ $classe->cours->titre ?? '—' }}</td>
                                     <td>
                                         {{-- $classe->etat_libelle / etat_couleur : voir App\Models\Classe --}}

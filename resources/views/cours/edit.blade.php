@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-Modifier la formation
+Modifier le cours
 @endsection
 
 @section('content')
@@ -11,31 +11,9 @@ Modifier la formation
         <a href="{{ route('admin.cours.index') }}">Gestion des cours</a>
     @endslot
     @slot('title')
-        Modifier la formation
+        Modifier le cours
     @endslot
 @endcomponent
-
-{{-- ==========================================
-     EN-TÊTE
-=========================================== --}}
-<div class="row">
-    <div class="col-12">
-
-        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-
-            <div>
-                <h4 class="mb-sm-0">Modifier la formation</h4>
-
-                <p class="text-muted mb-0 mt-1">
-                    Modifiez les informations, le programme et les tarifs de cette formation.
-                </p>
-            </div>
-
-        </div>
-
-    </div>
-</div>
-
 
 {{-- ==========================================
      FORMULAIRE PRINCIPAL
@@ -80,7 +58,7 @@ Modifier la formation
                             </h5>
 
                             <p class="text-muted mb-0">
-                                Informations principales de la formation.
+                                Informations principales du cours.
                             </p>
                         </div>
 
@@ -97,7 +75,7 @@ Modifier la formation
                         <div class="col-md-8 mb-3">
 
                             <label for="titre" class="form-label">
-                                Nom de la formation
+                                Nom du cours
                                 <span class="text-danger">*</span>
                             </label>
 
@@ -107,7 +85,7 @@ Modifier la formation
                                 id="titre"
                                 class="form-control @error('titre') is-invalid @enderror"
                                 value="{{ old('titre', $cours->titre) }}"
-                                placeholder="Ex. Microsoft Excel - Niveau débutant"
+                                placeholder="Ex. Microsoft Excel"
                             >
 
                             @error('titre')
@@ -126,16 +104,22 @@ Modifier la formation
                                 <span class="text-danger">*</span>
                             </label>
 
-                            <input
-                                type="text"
-                                name="categorie"
+                            <select
+                                name="categorie_id"
                                 id="categorie"
-                                class="form-control @error('categorie') is-invalid @enderror"
-                                value="{{ old('categorie', $cours->categorie) }}"
-                                placeholder="Ex. Bureautique"
+                                class="form-select @error('categorie_id') is-invalid @enderror"
+                                required
                             >
+                                <option value="">Choisir une catégorie</option>
+                                @foreach ($categories as $categorie)
+                                    <option value="{{ $categorie->id }}"
+                                        @selected(old('categorie_id', $cours->categorie_id) == $categorie->id)>
+                                        {{ $categorie->nom }}
+                                    </option>
+                                @endforeach
+                            </select>
 
-                            @error('categorie')
+                            @error('categorie_id')
                                 <div class="invalid-feedback">
                                     {{ $message }}
                                 </div>
@@ -150,7 +134,7 @@ Modifier la formation
                     <div class="mb-0">
 
                         <label for="description" class="form-label">
-                            Description de la formation
+                            Description du cours
                             <span class="text-danger">*</span>
                         </label>
 
@@ -159,7 +143,7 @@ Modifier la formation
                             id="description"
                             rows="6"
                             class="form-control @error('description') is-invalid @enderror"
-                            placeholder="Présentez brièvement cette formation..."
+                            placeholder="Présentez brièvement ce cours..."
                         >{{ old('description', $cours->description) }}</textarea>
 
                         @error('description')
@@ -169,7 +153,7 @@ Modifier la formation
                         @enderror
 
                         <div class="form-text">
-                            Cette description peut être affichée dans le catalogue des formations.
+                            Cette description peut être affichée dans le catalogue des cours.
                         </div>
 
                     </div>
@@ -397,7 +381,7 @@ Modifier la formation
 
                     <p class="text-muted">
                         Gérez les chapitres et les ressources pédagogiques
-                        associés à cette formation.
+                        associés à ce cours.
                     </p>
 
                     <a
@@ -438,7 +422,7 @@ Modifier la formation
                         </h5>
 
                         <p class="text-muted mb-0">
-                            {{ $cours->categorie }}
+                            {{ $cours->categorie?->nom }}
                         </p>
 
                     </div>
@@ -479,7 +463,7 @@ Modifier la formation
                             </span>
 
                             <span class="text-muted">
-                                {{ $cours->categorie }}
+                                {{ $cours->categorie?->nom }}
                             </span>
 
                         </div>
@@ -555,7 +539,7 @@ Modifier la formation
                             </h6>
 
                             <p class="text-muted small mb-0">
-                                Les chapitres structurent le contenu pédagogique de la formation.
+                                Les chapitres structurent le contenu pédagogique du cours.
                             </p>
                         </div>
 

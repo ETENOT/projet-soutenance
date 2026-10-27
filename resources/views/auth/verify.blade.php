@@ -1,11 +1,15 @@
 @extends('layouts.master-without-nav')
 @section('title')
-@lang('translation.two-step-verification')
+Vérification de l’adresse e-mail
 @endsection
 @section('content')
 
-        <div class="auth-page-wrapper pt-5">
-            {{-- Fond décoratif Velzon (vague + particules), identique aux autres pages auth (login, forgot-password...) --}}
+        <div class="auth-page-wrapper auth-page-brand pt-5">
+            <a href="{{ url('/') }}"
+               class="btn btn-light position-fixed top-0 start-0 m-3 m-sm-4 z-3 auth-return-home">
+                <i class="ri-arrow-left-line align-middle me-1"></i>
+                Retour à l'accueil
+            </a>
             <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
                 <div class="bg-overlay"></div>
                 <div class="shape">
@@ -21,11 +25,11 @@
                         <div class="col-lg-12">
                             <div class="text-center mt-sm-5 mb-4 text-white-50">
                                 <div>
-                                    <a href="{{ route('root') }}" class="d-inline-block auth-logo">
-                                        <img  src="{{ URL::asset('build/images/logo_neovision.png') }}" alt="" height="55">
+                                    <a href="{{ url('/') }}" class="d-inline-block auth-logo">
+                                        <img src="{{ asset('images/logo_neovision.png') }}" alt="Néovision" height="55">
                                     </a>
                                 </div>
-                                <p class="mt-3 fs-15 fw-medium">Formation NéoVision</p>
+                                <p class="mt-3 fs-15 fw-medium">Voir, Faire et Réaliser Différemment</p>
                             </div>
                         </div>
                     </div>
@@ -34,17 +38,9 @@
                         <div class="col-md-8 col-lg-6 col-xl-5">
                             <div class="card mt-4">
                                 <div class="card-body p-4">
-                                    <div class="mb-4">
-                                        <div class="avatar-lg mx-auto">
-                                            <div class="avatar-title bg-light text-primary display-5 rounded-circle">
-                                                <i class="ri-mail-line"></i>
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     <div class="p-2 mt-4">
                                         <div class="text-muted text-center mb-4 mx-lg-3">
-                                            <h4>Vérifiez votre adresse email</h4>
+                                            <h5 class="text-primary">Vérifiez votre adresse e-mail</h5>
                                             {{-- auth()->user() est garanti non-null ici : cette page est derrière le middleware 'auth' --}}
                                             <p>Saisissez le code à 6 chiffres envoyé à <span class="fw-semibold">{{ auth()->user()->email }}</span></p>
                                         </div>

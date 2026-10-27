@@ -21,12 +21,12 @@
     {{-- ===== Message de bienvenue ===== --}}
     <div class="bg-primary bg-gradient text-white rounded-4 p-4 p-md-5 mb-4">
         <span class="badge rounded-pill bg-white bg-opacity-25 text-white px-3 py-2 mb-3">
-            <i class="ri-graduation-cap-line me-1"></i> {{ $cours->categorie }}
+            <i class="ri-graduation-cap-line me-1"></i> {{ $cours->categorie?->nom }}
         </span>
 
-        <h3 class="fw-bold text-white mb-2">Bienvenue dans votre espace de formation !</h3>
+        <h3 class="fw-bold text-white mb-2">Bienvenue dans votre espace de cours !</h3>
         <p class="text-white opacity-75 mb-0 col-lg-8 px-0">
-            Retrouvez ici tous les contenus de votre formation, vos chapitres et vos ressources pédagogiques.
+            Retrouvez ici tous les contenus de votre cours, vos chapitres et vos ressources pédagogiques.
         </p>
     </div>
 
@@ -47,7 +47,7 @@
                         </span>
 
                         <div>
-                            <h6 class="fw-bold mb-1">{{ $classe->nom }}</h6>
+                            <h6 class="fw-bold mb-1">{{ $cours->titre }} — {{ $classe->nom }}</h6>
                             <div class="text-muted small">
                                 <i class="ri-calendar-event-line text-danger me-1"></i>
                                 Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
@@ -68,12 +68,12 @@
 
     <div class="row g-4">
 
-        {{-- ===== Contenu de la formation (chapitres) ===== --}}
+        {{-- ===== Contenu du cours (chapitres) ===== --}}
         <div class="col-lg-7">
             <div class="card border shadow-sm h-100 mb-0">
                 <div class="card-body p-4">
                     <h5 class="fw-bold mb-4">
-                        <i class="ri-book-open-line text-danger me-2"></i>Contenu de la formation
+                        <i class="ri-book-open-line text-danger me-2"></i>Contenu du cours
                     </h5>
 
                     <div class="accordion" id="chapitresAccordion">

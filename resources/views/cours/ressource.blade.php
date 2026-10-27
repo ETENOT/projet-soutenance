@@ -61,7 +61,7 @@
 
                 <div class="card-body border-top">
                     <a href="{{ route('cours.espace', $cours) }}" class="btn btn-outline-primary btn-sm w-100">
-                        <i class="ri-arrow-left-line me-1"></i> Retour à l'espace formation
+                        <i class="ri-arrow-left-line me-1"></i> Retour à l'espace cours
                     </a>
                 </div>
             </div>

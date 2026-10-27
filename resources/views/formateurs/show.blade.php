@@ -136,7 +136,7 @@
                         <option value="">Toutes ses classes</option>
                         @foreach ($classes as $classe)
                             <option value="{{ $classe->id }}" @selected($classeFiltre?->id === $classe->id)>
-                                {{ $classe->nom }} ({{ $classe->date_debut->format('d/m/Y') }})
+                                {{ $classe->cours->titre }} · {{ $classe->nom }} ({{ $classe->date_debut->format('d/m/Y') }})
                             </option>
                         @endforeach
                     </select>

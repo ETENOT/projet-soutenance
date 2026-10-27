@@ -19,7 +19,7 @@
         {{-- ===== En-tête : description + boutons d'action ===== --}}
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
             <p class="text-muted mb-0 col-lg-6 px-0">
-                Gérez les questions (QCM) utilisées dans les quiz de chaque formation : ajoutez, importez,
+                Gérez les questions (QCM) utilisées dans les quiz de chaque cours : ajoutez, importez,
                 modifiez, déplacez d'un cours à l'autre ou supprimez-les.
             </p>
 

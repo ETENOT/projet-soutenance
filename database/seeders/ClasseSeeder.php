@@ -26,7 +26,7 @@ class ClasseSeeder extends Seeder
  
 		// Chaque classe represente une session avec ses propres dates et son lieu.
 		Classe::create([
-			'nom' => 'Microsoft Word - Session Octobre 2026',
+			'nom' => 'Session Octobre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-10-05',
 			'date_fin' => '2026-10-09',
@@ -35,7 +35,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Microsoft Word - Session Decembre 2026',
+			'nom' => 'Session Décembre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-12-07',
 			'date_fin' => '2026-12-11',
@@ -44,7 +44,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Microsoft Excel - Session Octobre 2026',
+			'nom' => 'Session Octobre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-10-12',
 			'date_fin' => '2026-10-16',
@@ -53,7 +53,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Microsoft PowerPoint - Session Octobre 2026',
+			'nom' => 'Session Octobre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-10-19',
 			'date_fin' => '2026-10-23',
@@ -62,7 +62,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Developpement Web - Session Novembre 2026',
+			'nom' => 'Session Novembre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-11-02',
 			'date_fin' => '2026-11-20',
@@ -71,7 +71,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Comptabilite - Session Novembre 2026',
+			'nom' => 'Session Novembre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-11-23',
 			'date_fin' => '2026-12-04',
@@ -80,7 +80,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Gestion de projet - Session Decembre 2026',
+			'nom' => 'Session Décembre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-12-07',
 			'date_fin' => '2026-12-11',
@@ -89,7 +89,7 @@ class ClasseSeeder extends Seeder
 		]);
  
 		Classe::create([
-			'nom' => 'Anglais professionnel - Session Decembre 2026',
+			'nom' => 'Session Décembre 2026',
 			'capacite_max' => 10,
 			'date_debut' => '2026-12-14',
 			'date_fin' => '2026-12-18',
@@ -102,7 +102,7 @@ class ClasseSeeder extends Seeder
 		// le jour ou on lance le seed. Aucune inscription n'est creee ici : c'est le
 		// particulier qui s'inscrit avec le bouton, pour tester tout le parcours.
 		Classe::create([
-			'nom' => 'Initiation - Session en cours',
+			'nom' => 'Session en cours',
 			'capacite_max' => 10,
 			'date_debut' => now()->subDays(2),
 			'date_fin' => now()->addDays(14),

@@ -11,19 +11,11 @@ return new class extends Migration
         Schema::create('cours', function (Blueprint $table) {
             $table->id();
 
-            // Informations principales
             $table->string('titre');
-             // Ces champs alimentent l'affichage et la recherche du catalogue.
-            $table->string('categorie');
+            $table->foreignId('categorie_id')->constrained('categories')->restrictOnDelete();
             $table->text('description')->nullable();
 
-           // Plan détaillé du cours, visible publiquement (même sans être inscrit) :
-            // c'est ce contenu qui doit donner envie de s'inscrire.
-            $table->text('programme')->nullable();
-
-            // Informations pédagogiques
             $table->string('image')->nullable();
-            $table->string('niveau')->nullable();
 
             // "Noté sur" du quiz du cours = nombre de questions tirées au hasard dans la banque.
             // NULL = pas de limite : on pose toute la banque de questions.

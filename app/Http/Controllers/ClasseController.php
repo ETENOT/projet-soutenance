@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classe;
+use App\Models\Categorie;
 use App\Models\Cours;
 use App\Models\User;
 use App\Models\Inscription;
@@ -29,6 +30,7 @@ class ClasseController extends Controller
         // Validation des nouveaux filtres : une date incorrecte, une période à l'envers ou un
         // nombre négatif renvoie un message d'erreur au lieu d'une page cassée.
         $request->validate([
+        'categorie' => ['nullable', 'integer', 'exists:categories,id'],
         'date_du' => ['nullable', 'date'],
         // Les comparaisons "après le début" et "supérieur au minimum" n'ont de sens que si
         // la borne correspondante est saisie : sinon la règle échoue sur un champ vide.
@@ -55,7 +57,7 @@ class ClasseController extends Controller
         'inscrits_max.gte'       => 'Le nombre maximum d\'inscrits doit être supérieur ou égal au minimum.',
     ]);
 
-        $query = Classe::with(['cours', 'formateur'])->withCount('inscriptions');
+        $query = Classe::with(['cours.categorie', 'formateur'])->withCount('inscriptions');
 
         if ($recherche = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($recherche) {
@@ -84,7 +86,7 @@ class ClasseController extends Controller
 
         // --- Catégorie : c'est une colonne du COURS, on filtre donc à travers la relation ---
         if ($request->filled('categorie')) {
-            $query->whereHas('cours', fn ($c) => $c->where('categorie', $request->input('categorie')));
+            $query->whereHas('cours.categorie', fn ($categorie) => $categorie->whereKey($request->input('categorie')));
         }
 
         // --- Période : on garde les classes qui se déroulent (au moins un jour) dans l'intervalle ---
@@ -140,7 +142,7 @@ class ClasseController extends Controller
                 'formation' => fn (Classe $c) => (string) $c->cours_id,
                 'formateur' => fn (Classe $c) => (string) ($c->formateur_id ?? 'aucun'),
                 'etat'      => fn (Classe $c) => $c->etat,
-                'categorie' => fn (Classe $c) => (string) ($c->cours?->categorie ?? ''),
+                'categorie' => fn (Classe $c) => (string) ($c->cours?->categorie?->nom ?? ''),
                 'lieu'      => fn (Classe $c) => (string) $c->lieu,
             };
 
@@ -153,7 +155,10 @@ class ClasseController extends Controller
                 'formation' => $query->orderBy(Cours::select('titre')->whereColumn('cours.id', 'classes.cours_id')),
                 'formateur' => $query->orderByRaw('formateur_id is null')
                     ->orderBy(User::select('name')->whereColumn('users.id', 'classes.formateur_id')),
-                'categorie' => $query->orderBy(Cours::select('categorie')->whereColumn('cours.id', 'classes.cours_id')),
+                'categorie' => $query->orderBy(Categorie::select('nom')->whereIn(
+                    'categories.id',
+                    Cours::select('categorie_id')->whereColumn('cours.id', 'classes.cours_id')
+                )),
                 'lieu'      => $query->orderBy('lieu'),
                 // en cours, puis à venir, puis terminées (une classe fermée est terminée)
                 'etat'      => $query->orderByRaw(
@@ -173,7 +178,7 @@ class ClasseController extends Controller
             'etatsChoisis' => $etats,
             'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
             'tousLesFormateurs' => $this->formateurs(),
-            'toutesLesCategories' => Cours::query()->whereNotNull('categorie')->distinct()->orderBy('categorie')->pluck('categorie'),
+            'toutesLesCategories' => Categorie::orderBy('nom')->get(),
             'tousLesLieux' => Classe::query()->distinct()->orderBy('lieu')->pluck('lieu'),
             'stats' => [
                 'en_cours'   => Classe::avecEtat('en_cours')->count(),
@@ -228,7 +233,7 @@ class ClasseController extends Controller
                 case 'retirer_formateur':
                     // Une classe fermée est figée : on ne change plus son formateur
                     if ($classe->estFermee()) {
-                        $ignorees[] = "« {$classe->nom} » : classe déjà fermée";
+                        $ignorees[] = "« {$classe->cours?->titre} — {$classe->nom} » : classe déjà fermée";
                         break;
                     }
                     $classe->update([
@@ -243,7 +248,7 @@ class ClasseController extends Controller
                         $service->fermer($classe, Auth::user());
                         $reussies++;
                     } catch (DomainException $e) {
-                        $ignorees[] = "« {$classe->nom} » : " . $e->getMessage();
+                        $ignorees[] = "« {$classe->cours?->titre} — {$classe->nom} » : " . $e->getMessage();
                     }
                     break;
 
@@ -251,7 +256,7 @@ class ClasseController extends Controller
                     // Protection : on ne supprime pas en masse une classe qui a des inscriptions PAYÉES
                     // (le paiement serait supprimé avec elle). Il faut la gérer individuellement.
                     if ($classe->inscriptions()->has('paiement')->exists()) {
-                        $ignorees[] = "« {$classe->nom} » : contient des inscriptions payées";
+                        $ignorees[] = "« {$classe->cours?->titre} — {$classe->nom} » : contient des inscriptions payées";
                         break;
                     }
                     $classe->delete();
@@ -353,6 +358,19 @@ class ClasseController extends Controller
     public function create(Cours $cours)
     {
         return view('classes.create', ['cours' => $cours, 'formateurs' => $this->formateurs()]);
+    }
+
+    public function show(Cours $cours, Classe $classe)
+    {
+        abort_unless((int) $classe->cours_id === (int) $cours->id, 404);
+
+        $classe->load('formateur', 'inscriptions.user', 'inscriptions.paiement')
+            ->loadCount('inscriptions');
+
+        return view('classes.show', [
+            'cours' => $cours,
+            'classe' => $classe,
+        ]);
     }
 
     // Comptes ayant le rôle "formateur" : liste proposée dans les formulaires de classe.

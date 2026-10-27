@@ -10,10 +10,9 @@
 
 
 
-    <div class="auth-page-wrapper pt-5">
-         <!-- Retour à l'accueil (fixe, en haut à gauche) -->
+    <div class="auth-page-wrapper auth-page-brand pt-5">
         <a href="{{ url('/') }}"
-        class="position-fixed top-0 start-0 m-3 m-sm-4 z-3 text-black-50 text-decoration-none fw-medium">
+           class="btn btn-light position-fixed top-0 start-0 m-3 m-sm-4 z-3 auth-return-home">
             <i class="ri-arrow-left-line align-middle me-1"></i>
             {{ __("Retour à l'accueil") }}
         </a>
@@ -57,7 +56,7 @@
 
                                 <a href="{{ url('/') }}" class="d-inline-block auth-logo">
 
-                                    <img src="{{ URL::asset('build/images/logo_neovision.png') }}" alt="Néovision" height="55">
+                                    <img src="{{ asset('images/logo_neovision.png') }}" alt="Néovision" height="55">
 
                                 </a>
 

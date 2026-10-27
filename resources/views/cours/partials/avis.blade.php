@@ -48,7 +48,7 @@
             @if($accesDocuments && auth()->user()->role?->nom === 'particulier')
                 <div class="alert alert-info border-0 mb-3">
                     <i class="ri-information-line me-1"></i>
-                    Vous avez suivi cette formation ? Donnez ou modifiez votre avis depuis
+                    Vous avez suivi ce cours ? Donnez ou modifiez votre avis depuis
                     <a href="{{ route('cours.mes') }}" class="fw-semibold">Mes classes</a>.
                 </div>
             @endif

@@ -1,398 +1,145 @@
 @extends('layouts.master')
 
-@section('title', 'Ressources de la formation')
+@section('title', 'Ressources du cours')
 
 @section('content')
-
-
-
-<div class="resources-page">
-
     @component('components.breadcrumb')
         @slot('li_1')
-            <a href="{{ route('admin.cours.contenus', [$cours, $chapitre]) }}">{{ $cours->titre }}</a>
+            <a href="{{ route('admin.cours.contenus', $cours) }}">{{ $cours->titre }}</a>
         @endslot
         @slot('title')
-            Ressources de la formation
+            Ressources du cours
         @endslot
     @endcomponent
 
-    {{-- =========================
-         EN-TÊTE
-    ========================== --}}
-
-    <div class="page-header">
-
-        <div class="page-header-left">
-            <h1 class="page-title">
-                Ressources de la formation
-            </h1>
-
-            <p class="page-subtitle">
-                Gérez les documents, vidéos et liens pédagogiques de cette formation.
-            </p>
-
-        </div>
-
-        <a
-            href="{{ route('admin.cours.chapitres.resources.create', [$cours, $chapitre]) }}"
-            class="btn-add-resource"
-        >
-            <span>＋</span>
-            Ajouter une ressource
-        </a>
-
-    </div>
-
-
-    {{-- =========================
-         MESSAGE DE SUCCÈS
-    ========================== --}}
-
-    @if(session('success'))
-
-        <div class="success-alert">
-            <span>✓</span>
-            <span>{{ session('success') }}</span>
-        </div>
-
-    @endif
-
-
-    {{-- =========================
-         INFORMATIONS DU CHAPITRE
-    ========================== --}}
-
-    <div class="chapter-card">
-
-        <div class="chapter-card-label">
-            <span>▣</span>
-            Chapitre
-        </div>
-
-        <h2 class="chapter-card-title">
-            {{ $chapitre->ordre }}. {{ $chapitre->titre }}
-        </h2>
-
-        <div class="chapter-card-info">
-            Cours : {{ $cours->titre }}
-        </div>
-
-    </div>
-
-
-    {{-- =========================
-         LISTE DES RESSOURCES
-    ========================== --}}
-
-    <div class="resources-card">
-
-        <div class="resources-card-header">
-
-            <h2 class="resources-card-title">
-                Ressources pédagogiques
-            </h2>
-
-            <span class="resources-count">
-                {{ $resources->count() }}
-            </span>
-
-        </div>
-
-
-        @if($resources->count() > 0)
-
-            <div class="resource-list">
-
-                @foreach($resources as $resource)
-
-                    <div class="resource-item">
-
-                        <div class="resource-main">
-
-                            {{-- Icône selon le type --}}
-                            <div class="resource-icon
-                                @if($resource->type === 'video')
-                                    video
-                                @elseif($resource->type === 'lien')
-                                    link
-                                @endif
-                            ">
-
-                                @if($resource->type === 'fichier')
-                                    📄
-                                @elseif($resource->type === 'video')
-                                    ▶
-                                @elseif($resource->type === 'lien')
-                                    🔗
-                                @endif
-
-                            </div>
-
-
-                            <div class="resource-info">
-
-                                <p class="resource-title">
-                                    {{ $resource->titre }}
-                                </p>
-
-                                <div class="resource-meta">
-
-                                    <span class="resource-type">
-
-                                        @if($resource->type === 'fichier')
-                                            Document
-                                        @elseif($resource->type === 'video')
-                                            Vidéo
-                                        @elseif($resource->type === 'lien')
-                                            Lien
-                                        @endif
-
-                                    </span>
-
-
-                                    @if($resource->type === 'fichier')
-
-                                        @if($resource->extension)
-                                            <span>
-                                                {{ strtoupper($resource->extension) }}
-                                            </span>
-                                        @endif
-
-                                        @if($resource->taille_lisible)
-                                            <span>•</span>
-                                            <span>
-                                                {{ $resource->taille_lisible }}
-                                            </span>
-                                        @endif
-
-                                    @elseif($resource->type === 'video')
-
-                                        @if($resource->chemin)
-                                            <span>
-                                                Vidéo uploadée
-                                            </span>
-                                        @elseif($resource->url)
-                                            <span>
-                                                Vidéo externe
-                                            </span>
-                                        @endif
-
-                                    @elseif($resource->type === 'lien')
-
-                                        <span>
-                                            Lien externe
-                                        </span>
-
-                                    @endif
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                        {{-- ACTIONS --}}
-                        <div class="resource-actions">
-
-                            @if($resource->type === 'fichier')
-
-                                <a
-                                    href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
-                                    class="btn-resource"
-                                    target="_blank"
-                                >
-                                    👁 Consulter
-                                </a>
-
-                                <a
-                                    href="{{ route('cours.resources.download', [$cours, $resource]) }}"
-                                    class="btn-resource"
-                                >
-                                    ↓ Télécharger
-                                </a>
-
-                            @elseif($resource->type === 'video')
-
-                                <button
-                                    type="button"
-                                    class="btn-resource"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#videoModal{{ $resource->id }}"
-                                >
-                                    👁 Consulter
-                                </button>
-
-                            @elseif($resource->type === 'lien')
-
-                                <a
-                                    href="{{ $resource->url }}"
-                                    class="btn-resource"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    ↗ Ouvrir
-                                </a>
-
-                            @endif
-
-
-                            <form
-                                action="{{ route('admin.cours.chapitres.resources.destroy', [$cours, $chapitre, $resource]) }}"
-                                method="POST"
-                                class="delete-form"
-                                onsubmit="return confirm('Voulez-vous vraiment supprimer cette ressource ?');"
-                            >
-
-                                @csrf
-                                @method('DELETE')
-
-                                <button
-                                    type="submit"
-                                    class="btn-resource btn-delete"
-                                >
-                                    🗑 Supprimer
-                                </button>
-
-                            </form>
-
-                        </div>
-
-                    </div>
-
-                    {{-- =========================
-     MODALE APERÇU VIDÉO
-========================= --}}
-
-@if($resource->type === 'video')
-
-    <div
-        class="modal fade"
-        id="videoModal{{ $resource->id }}"
-        tabindex="-1"
-        aria-hidden="true"
-    >
-
-        <div class="modal-dialog modal-xl modal-dialog-centered">
-
-            <div class="modal-content">
-
-                <div class="modal-header">
-
-                    <h5 class="modal-title fw-bold">
-                        {{ $resource->titre }}
-                    </h5>
-
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Fermer"
-                    ></button>
-
-                </div>
-
-                <div class="modal-body p-0 bg-dark">
-
-                    @if($resource->chemin)
-
-                        {{-- Vidéo uploadée --}}
-                        <video
-                            controls
-                            playsinline
-                            preload="metadata"
-                            class="w-100 nv-video-preview"
-                        >
-
-                            <source
-                                src="{{ asset('storage/' . $resource->chemin) }}"
-                                type="video/{{ strtolower($resource->extension ?? 'mp4') }}"
-                            >
-
-                            Votre navigateur ne prend pas en charge la lecture vidéo.
-
-                        </video>
-
-                    @elseif($resource->url)
-
-                        {{-- Vidéo externe --}}
-                        <div class="ratio ratio-16x9">
-
-                            <iframe
-                                src="{{ $resource->url }}"
-                                title="{{ $resource->titre }}"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowfullscreen
-                            ></iframe>
-
-                        </div>
-
-                    @else
-
-                        <div class="p-5 text-center text-white">
-
-                            <div class="mb-3 fs-1">
-                                ⚠
-                            </div>
-
-                            <p class="mb-0">
-                                Cette vidéo n'est pas disponible.
-                            </p>
-
-                        </div>
-
-                    @endif
-
-                </div>
-
+    <div class="container-fluid pb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <h4 class="mb-1">Ressources du cours</h4>
+                <p class="text-muted mb-0">Gérez les documents, vidéos et liens pédagogiques de ce cours.</p>
             </div>
-
+            <a href="{{ route('admin.cours.contenus', $cours) }}" class="btn btn-primary">
+                <i class="ri-add-line me-1"></i>Ajouter une ressource
+            </a>
         </div>
 
-    </div>
-
-@endif
-
-                @endforeach
-
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
             </div>
-
-        @else
-
-            {{-- =========================
-                 AUCUNE RESSOURCE
-            ========================== --}}
-
-            <div class="empty-state">
-
-                <div class="empty-icon">
-                    📚
-                </div>
-
-                <h3 class="empty-title">
-                    Aucune ressource pour le moment
-                </h3>
-
-                <p class="empty-text">
-                    Cette formation ne contient encore aucune ressource pédagogique.
-                    Vous pouvez ajouter un document, une vidéo ou un lien externe.
-                </p>
-
-                <a
-                    href="{{ route('admin.cours.chapitres.resources.create', [$cours, $chapitre]) }}"
-                    class="btn-add-resource"
-                >
-                    <span>＋</span>
-                    Ajouter une ressource
-                </a>
-
-            </div>
-
         @endif
 
+        <div class="card">
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h5 class="card-title mb-1">Ressources pédagogiques</h5>
+                    <span class="text-muted small">Cours : {{ $cours->titre }}</span>
+                </div>
+                <span class="badge bg-primary-subtle text-primary">{{ $resources->count() }} ressource(s)</span>
+            </div>
+            <div class="card-body">
+                @forelse ($resources as $resource)
+                    <div class="d-flex flex-wrap align-items-center gap-3 border-bottom py-3">
+                        <span class="avatar-sm bg-{{ $resource->type === 'video' ? 'danger' : ($resource->type === 'lien' ? 'success' : 'primary') }}-subtle text-{{ $resource->type === 'video' ? 'danger' : ($resource->type === 'lien' ? 'success' : 'primary') }} rounded d-inline-flex align-items-center justify-content-center fs-5">
+                            <i class="{{ $resource->type === 'video' ? 'ri-video-line' : ($resource->type === 'lien' ? 'ri-links-line' : 'ri-file-text-line') }}"></i>
+                        </span>
+                        <div class="flex-grow-1 min-w-0">
+                            <div class="fw-semibold">{{ $resource->titre }}</div>
+                            <div class="small text-muted">
+                                {{ $resource->type === 'fichier' ? 'Document' : ($resource->type === 'video' ? 'Vidéo' : 'Lien') }}
+                                @if ($resource->extension)
+                                    · {{ strtoupper($resource->extension) }}
+                                @endif
+                                @if ($resource->taille_lisible)
+                                    · {{ $resource->taille_lisible }}
+                                @endif
+                                @if ($resource->type === 'video' && $resource->chemin)
+                                    · Vidéo importée
+                                @elseif ($resource->type === 'video' && $resource->url)
+                                    · Vidéo externe
+                                @elseif ($resource->type === 'lien')
+                                    · Lien externe
+                                @endif
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            @if ($resource->type === 'fichier')
+                                <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
+                                   class="btn btn-soft-primary btn-sm" target="_blank" rel="noopener noreferrer">
+                                    <i class="ri-eye-line me-1"></i>Consulter
+                                </a>
+                                <a href="{{ route('cours.resources.download', [$cours, $resource]) }}"
+                                   class="btn btn-soft-secondary btn-sm">
+                                    <i class="ri-download-line me-1"></i>Télécharger
+                                </a>
+                            @elseif ($resource->type === 'video')
+                                <button type="button" class="btn btn-soft-primary btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#videoModal{{ $resource->id }}">
+                                    <i class="ri-eye-line me-1"></i>Consulter
+                                </button>
+                            @elseif ($resource->url)
+                                <a href="{{ $resource->url }}" class="btn btn-soft-primary btn-sm"
+                                   target="_blank" rel="noopener noreferrer">
+                                    <i class="ri-external-link-line me-1"></i>Ouvrir
+                                </a>
+                            @endif
+
+                            <form action="{{ route('admin.cours.resources.destroy', [$cours, $resource]) }}"
+                                  method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cette ressource ?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-soft-danger btn-sm">
+                                    <i class="ri-delete-bin-line me-1"></i>Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    @if ($resource->type === 'video')
+                        <div class="modal fade" id="videoModal{{ $resource->id }}" tabindex="-1"
+                             aria-labelledby="videoModalLabel{{ $resource->id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="videoModalLabel{{ $resource->id }}">{{ $resource->titre }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                                    </div>
+                                    <div class="modal-body p-0 bg-dark">
+                                        @if ($resource->chemin)
+                                            <video controls playsinline preload="metadata" class="w-100 nv-video-preview">
+                                                <source src="{{ asset('storage/' . $resource->chemin) }}"
+                                                        type="video/{{ strtolower($resource->extension ?? 'mp4') }}">
+                                                Votre navigateur ne prend pas en charge la lecture vidéo.
+                                            </video>
+                                        @elseif ($resource->url)
+                                            <div class="ratio ratio-16x9">
+                                                <iframe src="{{ $resource->url }}" title="{{ $resource->titre }}"
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                        allowfullscreen></iframe>
+                                            </div>
+                                        @else
+                                            <div class="p-5 text-center text-white">
+                                                <i class="ri-error-warning-line fs-1 d-block mb-3"></i>
+                                                <p class="mb-0">Cette vidéo n'est pas disponible.</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                @empty
+                    <div class="text-center py-5">
+                        <i class="ri-folder-open-line fs-1 text-muted"></i>
+                        <h5 class="mt-3">Aucune ressource pour le moment</h5>
+                        <p class="text-muted mb-3">Ce cours ne contient encore aucune ressource pédagogique.</p>
+                        <a href="{{ route('admin.cours.contenus', $cours) }}" class="btn btn-primary">
+                            <i class="ri-add-line me-1"></i>Ajouter une ressource
+                        </a>
+                    </div>
+                @endforelse
+            </div>
+        </div>
     </div>
-
-</div>
-
 @endsection

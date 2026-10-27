@@ -45,7 +45,7 @@
                     <div class="input-group">
                         <span class="input-group-text bg-transparent"><i class="ri-search-line text-primary"></i></span>
                         <input type="text" name="q" value="{{ request('q') }}" class="form-control"
-                               placeholder="Rechercher (stagiaire, formation ou numéro)..." aria-label="Rechercher une attestation">
+                               placeholder="Rechercher (stagiaire, cours ou numéro)..." aria-label="Rechercher une attestation">
                     </div>
                 </div>
                 <div class="col-lg-6 d-flex gap-2 justify-content-lg-end">
@@ -67,7 +67,7 @@
                         <th>Délivrée le</th>
                         <th>N°</th>
                         <th>Stagiaire</th>
-                        <th>Formation</th>
+                        <th>Cours</th>
                         <th>Classe</th>
                         <th>Présence</th>
                         <th class="text-end">Actions</th>
@@ -82,7 +82,13 @@
                             {{-- Nom figé sur le document (celui qui est imprimé sur le PDF) --}}
                             <td class="fw-medium">{{ $attestation->beneficiaire }}</td>
                             <td>{{ $attestation->intitule }}</td>
-                            <td>{{ $attestation->classe?->nom ?? '—' }}</td>
+                            <td>
+                                @if ($attestation->classe)
+                                    {{ $attestation->classe->cours?->titre }} — {{ $attestation->classe->nom }}
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td>{{ rtrim(rtrim(number_format($attestation->taux_presence, 2, ',', ''), '0'), ',') }} %</td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">

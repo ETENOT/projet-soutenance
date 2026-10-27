@@ -41,7 +41,7 @@ Catalogue des cours
     <div class="bg-primary bg-gradient text-white rounded-3 px-4 py-3 mb-4">
         <div class="row align-items-center g-3">
             <div class="col-md-7">
-                <h4 class="fw-bold text-white mb-0">Découvrez nos formations</h4>
+                <h4 class="fw-bold text-white mb-0">Découvrez nos cours</h4>
             </div>
 
             <div class="col-md-5">
@@ -52,8 +52,8 @@ Catalogue des cours
                         </span>
                         <input type="search" name="search" value="{{ $search }}"
                                class="form-control border-0 shadow-none"
-                               placeholder="Rechercher une formation..."
-                               aria-label="Rechercher une formation">
+                               placeholder="Rechercher un cours..."
+                               aria-label="Rechercher un cours">
                         <button type="submit" class="btn btn-danger px-2 fw-semibold rounded-2">Rechercher</button>
                     </div>
                 </form>
@@ -64,12 +64,12 @@ Catalogue des cours
     {{-- ===== En-tête des résultats ===== --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h4 class="fw-bold mb-1">Nos formations</h4>
+            <h4 class="fw-bold mb-1">Nos cours</h4>
             <p class="text-muted small mb-0">
                 @if($search !== '')
                     {{ $cours->total() }} résultat(s) pour « {{ $search }} »
                 @else
-                    {{ $cours->total() }} formation(s) disponible(s)
+                    {{ $cours->total() }} cours disponible(s)
                 @endif
             </p>
         </div>
@@ -94,11 +94,11 @@ Catalogue des cours
             {{-- Aucun cours --}}
             <div class="col-12 text-center py-5">
                 <i class="ri-inbox-line text-muted display-4"></i>
-                <h5 class="mt-3">Aucune formation trouvée</h5>
+                <h5 class="mt-3">Aucun cours trouvé</h5>
                 <p class="text-muted">Essayez avec un autre terme de recherche.</p>
 
                 @if($search !== '')
-                    <a href="{{ route('cours.catalogue') }}" class="btn btn-primary">Voir toutes les formations</a>
+                    <a href="{{ route('cours.catalogue') }}" class="btn btn-primary">Voir tous les cours</a>
                 @endif
             </div>
         @endforelse
@@ -109,7 +109,7 @@ Catalogue des cours
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mt-4 gap-3">
             <small class="text-muted">
                 Affichage de {{ $cours->firstItem() }} à {{ $cours->lastItem() }}
-                sur {{ $cours->total() }} formation(s)
+                sur {{ $cours->total() }} cours
             </small>
             {{ $cours->links() }}
         </div>

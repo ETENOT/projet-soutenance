@@ -19,17 +19,17 @@
     {{-- ===== En-tête ===== --}}
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <p class="text-muted mb-0 col-lg-8 px-0">
-            Gérez les classes (sessions) de vos formations : créez, modifiez, consultez les détails et suivez leur état.
+            Gérez les classes (sessions) de vos cours : créez, modifiez, consultez les détails et suivez leur état.
         </p>
 
-        {{-- Une classe appartient toujours à une formation : on choisit d'abord laquelle --}}
+        {{-- Une classe appartient toujours à un cours : on choisit d'abord lequel --}}
         <div class="dropdown">
             <button class="btn btn-primary fw-semibold dropdown-toggle" type="button"
                     data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="ri-add-line me-1"></i> Créer une classe
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
-                <li><h6 class="dropdown-header">Pour quelle formation ?</h6></li>
+                <li><h6 class="dropdown-header">Pour quel cours ?</h6></li>
                 @forelse($tousLesCours as $unCours)
                     <li>
                         <a class="dropdown-item" href="{{ route('admin.cours.classes.create', $unCours) }}">
@@ -37,7 +37,7 @@
                         </a>
                     </li>
                 @empty
-                    <li><span class="dropdown-item-text text-muted">Aucune formation créée.</span></li>
+                    <li><span class="dropdown-item-text text-muted">Aucun cours créé.</span></li>
                 @endforelse
             </ul>
         </div>
@@ -104,7 +104,7 @@
                     </span>
                     <div>
                         <h5 class="fw-bold mb-0">{{ $stats['formations'] }}</h5>
-                        <p class="text-muted mb-0 fs-12">Formations concernées</p>
+                        <p class="text-muted mb-0 fs-12">Cours concernés</p>
                     </div>
                 </div>
             </div>
@@ -130,7 +130,7 @@
 
         $libellesEtat = ['en_cours' => 'En cours', 'a_venir' => 'À venir', 'terminee' => 'Terminée'];
         $libellesGroupe = [
-            'formation' => 'Formation', 'formateur' => 'Formateur', 'etat' => 'Statut',
+            'formation' => 'Cours', 'formateur' => 'Formateur', 'etat' => 'Statut',
             'categorie' => 'Catégorie', 'lieu' => 'Lieu',
         ];
 
@@ -155,10 +155,11 @@
             $etiquettes[] = ['Formateur : ' . ($tousLesFormateurs->firstWhere('id', (int) request('formateur_id'))->name ?? '—'), ['formateur_id'], 'ri-user-star-line'];
         }
         if (request()->filled('cours_id')) {
-            $etiquettes[] = ['Formation : ' . ($tousLesCours->firstWhere('id', (int) request('cours_id'))->titre ?? '—'), ['cours_id'], 'ri-book-open-line'];
+            $etiquettes[] = ['Cours : ' . ($tousLesCours->firstWhere('id', (int) request('cours_id'))->titre ?? '—'), ['cours_id'], 'ri-book-open-line'];
         }
         if (request()->filled('categorie')) {
-            $etiquettes[] = ['Catégorie : ' . request('categorie'), ['categorie'], 'ri-price-tag-3-line'];
+            $categorieChoisie = $toutesLesCategories->firstWhere('id', request('categorie'));
+            $etiquettes[] = ['Catégorie : ' . ($categorieChoisie?->nom ?? request('categorie')), ['categorie'], 'ri-price-tag-3-line'];
         }
         if (request()->filled('lieu')) {
             $etiquettes[] = ['Lieu : ' . request('lieu'), ['lieu'], 'ri-map-pin-line'];
@@ -194,7 +195,7 @@
 
                 <input type="text" name="q" value="{{ request('q') }}"
                        class="form-control border-0 shadow-none flex-grow-1 w-auto p-1"
-                       placeholder="Rechercher une classe, une formation, un lieu…" aria-label="Rechercher une classe">
+                       placeholder="Rechercher une classe, un cours, un lieu…" aria-label="Rechercher une classe">
             </div>
 
             <button type="button" class="btn btn-outline-secondary dropdown-toggle"
@@ -265,13 +266,13 @@
                         @endforeach
                     </div>
 
-                    {{-- Colonne 3 : critères précis (liste de formations, formateurs, période, nombre d'inscrits) --}}
+                    {{-- Colonne 3 : critères précis (liste de cours, formateurs, période, nombre d'inscrits) --}}
                     <div class="col-md-4">
                         <h6 class="fw-semibold mb-2"><i class="ri-list-settings-line text-primary me-1"></i>Plus de critères</h6>
 
-                        <select name="cours_id" class="form-select form-select-sm mb-2" aria-label="Filtrer par formation"
+                        <select name="cours_id" class="form-select form-select-sm mb-2" aria-label="Filtrer par cours"
                                 onchange="this.form.submit()">
-                            <option value="">Toutes les formations</option>
+                            <option value="">Tous les cours</option>
                             @foreach ($tousLesCours as $unCours)
                                 <option value="{{ $unCours->id }}" @selected(request('cours_id') == $unCours->id)>{{ $unCours->titre }}</option>
                             @endforeach
@@ -290,7 +291,7 @@
                                 onchange="this.form.submit()">
                             <option value="">Toutes les catégories</option>
                             @foreach ($toutesLesCategories as $categorie)
-                                <option value="{{ $categorie }}" @selected(request('categorie') === $categorie)>{{ $categorie }}</option>
+                                <option value="{{ $categorie->id }}" @selected((string) request('categorie') === (string) $categorie->id)>{{ $categorie->nom }}</option>
                             @endforeach
                         </select>
 
@@ -386,8 +387,7 @@
                         <th style="width: 40px;">
                             <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
                         </th>
-                        <th>Formation</th>
-                        <th>Catégorie</th>
+                        <th>Cours</th>
                         <th>Classe</th>
                         <th>Formateur</th>
                         <th>Dates</th>
@@ -409,10 +409,10 @@
                             @php
                                 $cle = $cleGroupe($classe);
                                 $libelleGroupe = match ($groupe) {
-                                    'formation' => $classe->cours?->titre ?? 'Formation supprimée',
+                                    'formation' => $classe->cours?->titre ?? 'Cours supprimé',
                                     'formateur' => $classe->formateur?->name ?? 'Sans formateur',
                                     'etat' => $libellesEtat[$classe->etat] ?? $classe->etat,
-                                    'categorie' => $classe->cours?->categorie ?: 'Sans catégorie',
+                                    'categorie' => $classe->cours?->categorie?->nom ?: 'Sans catégorie',
                                     'lieu' => $classe->lieu,
                                 };
                             @endphp
@@ -421,7 +421,7 @@
                                     $groupePrecedent = $cle;
                                 @endphp
                                 <tr class="table-active">
-                                    <td colspan="10" class="fw-semibold">
+                                    <td colspan="9" class="fw-semibold">
                                         <i class="ri-stack-line text-primary me-1"></i>{{ $libelleGroupe }}
                                         <span class="badge bg-primary-subtle text-primary ms-1">{{ $comptesGroupes[$cle] ?? 0 }}</span>
                                     </td>
@@ -461,18 +461,9 @@
                                     @endif
 
                                     <div>
-                                        <div class="fw-semibold">{{ $classe->cours?->titre ?? 'Formation supprimée' }}</div>
+                                        <div class="fw-semibold">{{ $classe->cours?->titre ?? 'Cours supprimé' }}</div>
                                     </div>
                                 </div>
-                            </td>
-
-                            {{-- Catégorie du cours --}}
-                            <td>
-                                @if($classe->cours?->categorie)
-                                    <span class="badge bg-primary-subtle text-primary">{{ $classe->cours->categorie }}</span>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
                             </td>
 
                             <td class="fw-medium">{{ $classe->nom }}</td>
@@ -492,13 +483,10 @@
                                     <i class="ri-arrow-right-line text-muted mx-1"></i>
                                     {{ $classe->date_fin->format('d/m/Y') }}
                                 </div>
-                                <small class="text-muted">
-                                    {{ max(1, (int) ceil($classe->date_debut->diffInDays($classe->date_fin) / 7)) }} semaine(s)
-                                </small>
                             </td>
 
                             <td>
-                                @include('partials.lieu-classe', ['classe' => $classe])
+                                @include('partials.lieu-classe', ['classe' => $classe, 'libelle' => false])
                             </td>
 
                             <td>
@@ -514,13 +502,16 @@
                                 <span class="badge {{ $badge[0] }}">{{ $badge[1] }}</span>
                             </td>
 
-                            {{-- Actions : modifier (gérer) et supprimer. L'icône "œil" a été retirée. --}}
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
                                     @if($classe->cours)
+                                        <a href="{{ route('admin.cours.classes.show', [$classe->cours, $classe]) }}"
+                                           class="btn btn-sm btn-soft-primary" title="Voir les détails">
+                                            <i class="ri-eye-line"></i>
+                                        </a>
                                         <a href="{{ route('admin.cours.classes.edit', [$classe->cours, $classe]) }}"
                                            class="btn btn-sm btn-soft-secondary" title="Gérer la classe et ses inscrits">
-                                            <i class="ri-edit-line"></i>
+                                            <i class="ri-settings-3-line"></i>
                                         </a>
 
                                         <form action="{{ route('admin.cours.classes.destroy', [$classe->cours, $classe]) }}"
@@ -538,7 +529,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-5">
+                            <td colspan="9" class="text-center text-muted py-5">
                                 <i class="ri-group-line display-5 d-block mb-2"></i>
                                 Aucune classe ne correspond à votre recherche.
                                 @if ($etiquettes || request()->filled('q'))

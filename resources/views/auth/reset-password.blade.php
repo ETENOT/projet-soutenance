@@ -1,12 +1,18 @@
 @extends('layouts.master-without-nav')
 
 @section('title')
-    @lang('translation.password-create')
+    Nouveau mot de passe
 @endsection
 
 @section('content')
 
-<div class="auth-page-wrapper pt-5">
+<div class="auth-page-wrapper auth-page-brand pt-5">
+
+    <a href="{{ url('/') }}"
+       class="btn btn-light position-fixed top-0 start-0 m-3 m-sm-4 z-3 auth-return-home">
+        <i class="ri-arrow-left-line align-middle me-1"></i>
+        Retour à l'accueil
+    </a>
 
     <!-- Arrière-plan de la page -->
     <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
@@ -46,8 +52,8 @@
                             <a href="{{ url('/') }}"
                                class="d-inline-block auth-logo">
 
-                                <img src="{{ URL::asset('build/images/logo_neovision.png') }}"
-                                     alt="NEO-VISION"
+                                <img src="{{ asset('images/logo_neovision.png') }}"
+                                     alt="Néovision"
                                      height="55">
 
                             </a>
@@ -77,11 +83,11 @@
                             <div class="text-center mt-2">
 
                                 <h5 class="text-primary">
-                                    {{ __('Créer un nouveau mot de passe') }}
+                                    Nouveau mot de passe
                                 </h5>
 
                                 <p class="text-muted">
-                                    {{ __('Votre nouveau mot de passe doit être différent de l\'ancien.') }}
+                                    Choisissez un nouveau mot de passe pour votre compte.
                                 </p>
 
                             </div>
@@ -107,7 +113,7 @@
                                         <label for="email"
                                                class="form-label">
 
-                                            {{ __('Adresse e-mail') }}
+                                            Adresse e-mail
 
                                             <span class="text-danger">*</span>
 
@@ -139,7 +145,7 @@
                                         <label for="password-input"
                                                class="form-label">
 
-                                            {{ __('Mot de passe') }}
+                                            Nouveau mot de passe
 
                                             <span class="text-danger">*</span>
 
@@ -152,7 +158,7 @@
                                                 type="password"
                                                 name="password"
                                                 class="form-control password-input pe-5 @error('password') is-invalid @enderror"
-                                                placeholder="{{ __('Entrez votre nouveau mot de passe') }}"
+                                                placeholder="Entrez votre nouveau mot de passe"
                                                 onpaste="return false"
                                                 required
                                                 autofocus
@@ -184,7 +190,7 @@
                                         <label for="confirm-password-input"
                                                class="form-label">
 
-                                            {{ __('Confirmez le mot de passe') }}
+                                            Confirmer le mot de passe
 
                                             <span class="text-danger">*</span>
 
@@ -197,7 +203,7 @@
                                                 type="password"
                                                 name="password_confirmation"
                                                 class="form-control password-input pe-5 @error('password_confirmation') is-invalid @enderror"
-                                                placeholder="{{ __('Confirmez votre nouveau mot de passe') }}"
+                                                placeholder="Confirmez votre nouveau mot de passe"
                                                 onpaste="return false"
                                                 required
                                                 autocomplete="new-password"
@@ -227,23 +233,23 @@
                                          class="p-3 bg-light mb-2 rounded">
 
                                         <h5 class="fs-13">
-                                            {{ __('Pour un mot de passe robuste :') }}
+                                            Pour un mot de passe robuste :
                                         </h5>
 
                                         <p id="pass-length" class="invalid fs-12 mb-2">
-                                            {{ __('Au minimum') }} <b>{{ __('8 caractères') }}</b>
+                                            Au minimum <b>8 caractères</b>
                                         </p>
 
                                         <p id="pass-lower" class="invalid fs-12 mb-2">
-                                            {{ __('Au moins une') }} <b>{{ __('minuscule') }}</b> (a-z)
+                                            Au moins une <b>minuscule</b> (a-z)
                                         </p>
 
                                         <p id="pass-upper" class="invalid fs-12 mb-2">
-                                            {{ __('Au moins une') }} <b>{{ __('majuscule') }}</b> (A-Z)
+                                            Au moins une <b>majuscule</b> (A-Z)
                                         </p>
 
                                         <p id="pass-number" class="invalid fs-12 mb-0">
-                                            {{ __('Au moins un') }} <b>{{ __('chiffre') }}</b> (0-9)
+                                            Au moins un <b>chiffre</b> (0-9)
                                         </p>
 
                                     </div>
@@ -256,7 +262,7 @@
                                             class="btn btn-success w-100"
                                             type="submit">
 
-                                            {{ __('Réinitialiser le mot de passe') }}
+                                            Réinitialiser le mot de passe
 
                                         </button>
 
@@ -276,13 +282,9 @@
 
                         <p class="mb-0">
 
-                            {{ __('Vous vous souvenez de votre mot de passe ?') }}
-
-                            
-                                <a href="{{ route('login') }}"
-                                class="fw-semibold text-primary text-decoration-underline">
-
-                                {{ __('Retour à la connexion') }}
+                            <a href="{{ route('login') }}"
+                               class="fw-semibold text-primary text-decoration-underline auth-switch-link">
+                                Retour à la connexion
 
                             </a>
 

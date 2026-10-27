@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('title')
-    Créer une formation
+    Créer un cours
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@
         <a href="{{ route('admin.cours.index') }}">Gestion des cours</a>
     @endslot
     @slot('title')
-        Créer une formation
+        Créer un cours
     @endslot
 @endcomponent
 
@@ -24,10 +24,10 @@
             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
 
                 <div>
-                    <h4 class="mb-sm-0">Créer une formation</h4>
+                    <h4 class="mb-sm-0">Créer un cours</h4>
 
                     <p class="text-muted mb-0 mt-1">
-                        Créez une nouvelle formation et définissez son contenu ainsi que ses tarifs.
+                        Créez un nouveau cours et définissez son contenu ainsi que ses tarifs.
                     </p>
                 </div>
 
@@ -71,7 +71,7 @@
                                 </h5>
 
                                 <p class="text-muted mb-0">
-                                    Présentez les informations principales de la formation.
+                                    Présentez les informations principales du cours.
                                 </p>
                             </div>
 
@@ -87,7 +87,7 @@
                             <div class="col-md-8 mb-3">
 
                                 <label for="titre" class="form-label">
-                                    Nom de la formation
+                                    Nom du cours
                                     <span class="text-danger">*</span>
                                 </label>
 
@@ -97,7 +97,7 @@
                                     id="titre"
                                     class="form-control @error('titre') is-invalid @enderror"
                                     value="{{ old('titre') }}"
-                                    placeholder="Ex. Microsoft Excel - Niveau débutant"
+                                    placeholder="Ex. Microsoft Excel"
                                 >
 
                                 @error('titre')
@@ -116,16 +116,21 @@
                                     <span class="text-danger">*</span>
                                 </label>
 
-                                <input
-                                    type="text"
-                                    name="categorie"
+                                <select
+                                    name="categorie_id"
                                     id="categorie"
-                                    class="form-control @error('categorie') is-invalid @enderror"
-                                    value="{{ old('categorie') }}"
-                                    placeholder="Ex. Bureautique"
+                                    class="form-select @error('categorie_id') is-invalid @enderror"
+                                    required
                                 >
+                                    <option value="">Choisir une catégorie</option>
+                                    @foreach ($categories as $categorie)
+                                        <option value="{{ $categorie->id }}" @selected(old('categorie_id') == $categorie->id)>
+                                            {{ $categorie->nom }}
+                                        </option>
+                                    @endforeach
+                                </select>
 
-                                @error('categorie')
+                                @error('categorie_id')
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>
@@ -140,7 +145,7 @@
                         <div class="mb-3">
 
                             <label for="description" class="form-label">
-                                Description de la formation
+                                Description du cours
                                 <span class="text-danger">*</span>
                             </label>
 
@@ -149,7 +154,7 @@
                                 id="description"
                                 rows="6"
                                 class="form-control @error('description') is-invalid @enderror"
-                                placeholder="Présentez brièvement cette formation, ses objectifs et le public auquel elle s'adresse..."
+                                placeholder="Présentez brièvement ce cours, ses objectifs et le public auquel il s'adresse..."
                             >{{ old('description') }}</textarea>
 
                             @error('description')
@@ -159,7 +164,7 @@
                             @enderror
 
                             <div class="form-text">
-                                Cette description pourra être affichée sur le catalogue des formations.
+                                Cette description pourra être affichée sur le catalogue des cours.
                             </div>
 
                         </div>
@@ -364,11 +369,11 @@
                             </div>
 
                             <h5 class="mt-3 mb-1">
-                                Nouvelle formation
+                                Nouveau cours
                             </h5>
 
                             <p class="text-muted mb-0">
-                                Les informations saisies ici serviront à créer la formation.
+                                Les informations saisies ici serviront à créer le cours.
                             </p>
 
                         </div>
@@ -456,7 +461,7 @@
 
                             <div class="ms-2">
                                 <p class="text-muted mb-0">
-                                    Présentez clairement les objectifs de la formation.
+                                    Présentez clairement les objectifs du cours.
                                 </p>
                             </div>
 
@@ -471,7 +476,7 @@
 
                             <div class="ms-2">
                                 <p class="text-muted mb-0">
-                                    Les chapitres détaillés se créent après l'enregistrement de la formation.
+                                    Les chapitres détaillés se créent après l'enregistrement du cours.
                                 </p>
                             </div>
 
@@ -492,7 +497,7 @@
                             class="btn btn-primary w-100 mb-2"
                         >
                             <i class="ri-add-line me-1"></i>
-                            Créer la formation
+                            Créer le cours
                         </button>
 
                         <a

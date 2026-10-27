@@ -33,7 +33,7 @@ class ClasseScenariosSeeder extends Seeder
         $scenarios = [
             // Terminée : inscriptions closes
             [
-                'nom' => 'TEST 1 - Terminée (inscriptions closes)',
+                'nom' => 'Session de test 1',
                 'debut' => -20, 'fin' => -16,
                 'lieu' => 'Palais des Sports de Libreville',
                 'lien' => 'https://www.google.com/maps/search/?api=1&query=Palais+des+Sports+Libreville',
@@ -41,7 +41,7 @@ class ClasseScenariosSeeder extends Seeder
             ],
             // Commencée depuis 2 jours : inscriptions closes
             [
-                'nom' => 'TEST 2 - En cours depuis 2 jours (inscriptions closes)',
+                'nom' => 'Session de test 2',
                 'debut' => -2, 'fin' => 3,
                 'lieu' => 'Université Omar Bongo',
                 'lien' => 'https://www.google.com/maps/search/?api=1&query=Universite+Omar+Bongo+Libreville',
@@ -49,7 +49,7 @@ class ClasseScenariosSeeder extends Seeder
             ],
             // Commence AUJOURD'HUI : inscriptions closes (la date de début est atteinte)
             [
-                'nom' => 'TEST 3 - Commence aujourd\'hui (inscriptions closes)',
+                'nom' => 'Session de test 3',
                 'debut' => 0, 'fin' => 4,
                 'lieu' => 'Aéroport Léon Mba',
                 'lien' => 'https://www.google.com/maps/search/?api=1&query=Aeroport+Leon+Mba+Libreville',
@@ -57,7 +57,7 @@ class ClasseScenariosSeeder extends Seeder
             ],
             // Commence DEMAIN : encore ouverte, lien + photo
             [
-                'nom' => 'TEST 4 - Commence demain (ouverte)',
+                'nom' => 'Session de test 4',
                 'debut' => 1, 'fin' => 5,
                 'lieu' => 'Marché du Mont-Bouët',
                 'lien' => 'https://www.google.com/maps/search/?api=1&query=Marche+Mont-Bouet+Libreville',
@@ -65,7 +65,7 @@ class ClasseScenariosSeeder extends Seeder
             ],
             // Ouverte, SANS lien ni photo : le nom du lieu ouvre une recherche Google Maps
             [
-                'nom' => 'TEST 5 - Dans 10 jours (ouverte, lieu sans lien ni photo)',
+                'nom' => 'Session de test 5',
                 'debut' => 10, 'fin' => 14,
                 'lieu' => 'Port-Gentil',
                 'lien' => null,
@@ -73,7 +73,7 @@ class ClasseScenariosSeeder extends Seeder
             ],
             // Ouverte, lien SANS photo
             [
-                'nom' => 'TEST 6 - Dans 20 jours (ouverte, lien sans photo)',
+                'nom' => 'Session de test 6',
                 'debut' => 20, 'fin' => 24,
                 'lieu' => 'Pointe-Denis',
                 'lien' => 'https://www.google.com/maps/search/?api=1&query=Pointe-Denis+Gabon',

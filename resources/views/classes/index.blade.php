@@ -155,7 +155,7 @@
                                 <input type="checkbox" name="ids[]" value="{{ $classe->id }}" form="formActions"
                                        class="form-check-input case-classe" aria-label="Sélectionner {{ $classe->nom }}">
                             </td>
-                            <td class="fw-semibold">{{ $classe->nom }}</td>
+                            <td class="fw-semibold">{{ $cours->titre }} — {{ $classe->nom }}</td>
                             <td>
                                 {{ $classe->date_debut->format('d/m/Y') }}
                                 <span class="text-muted">→</span>

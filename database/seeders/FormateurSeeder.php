@@ -47,12 +47,14 @@ class FormateurSeeder extends Seeder
         $excel = Cours::where('titre', 'Microsoft Excel')->firstOrFail();
 
         // EN COURS : on réutilise la classe créée par ClasseSeeder (commencée il y a 2 jours)
-        $enCours = Classe::where('nom', 'Initiation - Session en cours')->firstOrFail();
+        $enCours = Classe::where('cours_id', $initiation->id)
+            ->where('nom', 'Session en cours')
+            ->firstOrFail();
         $enCours->update(['formateur_id' => $formateur->id]);
 
         // TERMINÉE (par les dates, mais pas encore fermée : on peut tester la fermeture)
         $terminee = Classe::create([
-            'nom' => 'Microsoft Word - Session terminée (test formateur)',
+            'nom' => 'Session terminée',
             'capacite_max' => 10,
             'date_debut' => now()->subDays(20),
             'date_fin' => now()->subDays(10),
@@ -63,7 +65,7 @@ class FormateurSeeder extends Seeder
 
         // À VENIR
         $aVenir = Classe::create([
-            'nom' => 'Microsoft Excel - Session à venir (test formateur)',
+            'nom' => 'Session à venir',
             'capacite_max' => 8,
             'date_debut' => now()->addDays(10),
             'date_fin' => now()->addDays(14),
@@ -180,7 +182,7 @@ class FormateurSeeder extends Seeder
             'note_materiel' => 3, 'note_support_cours' => 3,
             'note_info_prealable' => 3, 'note_contenu_adapte' => 4, 'note_contenu_conforme' => 4,
             'note_groupe_homogene' => 2, 'note_correspond_besoin' => 4,
-            'points_faibles' => 'Niveau du groupe trop différent.',
+            'points_faibles' => 'Écarts de connaissances entre les participants.',
         ]);
 
         // ---------------------------------------------------------------
