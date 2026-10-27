@@ -81,19 +81,28 @@
                             </td>
                             <td>{{ $categorie->cours_count }}</td>
                             <td class="text-end text-nowrap">
-                                <button type="submit" form="modifier-categorie-{{ $categorie->id }}"
-                                        class="btn btn-sm btn-outline-primary">Modifier</button>
-                                @if ($categorie->cours_count === 0)
-                                    <form method="POST" action="{{ route('admin.categories.destroy', $categorie) }}"
-                                          class="d-inline" onsubmit="return confirm('Supprimer cette catégorie ?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Supprimer</button>
-                                    </form>
-                                @else
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled
-                                            title="Des cours sont rattachés à cette catégorie">Supprimer</button>
-                                @endif
+                                <div class="d-flex justify-content-end gap-1">
+                                    <button type="submit" form="modifier-categorie-{{ $categorie->id }}"
+                                            class="btn btn-sm btn-soft-secondary" title="Modifier la catégorie {{ $categorie->nom }}">
+                                        <i class="ri-edit-line"></i>
+                                    </button>
+                                    @if ($categorie->cours_count === 0)
+                                        <form method="POST" action="{{ route('admin.categories.destroy', $categorie) }}"
+                                              onsubmit="return confirm('Supprimer cette catégorie ?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-soft-danger"
+                                                    title="Supprimer la catégorie {{ $categorie->nom }}">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </form>
+                                    @else
+                                        <button type="button" class="btn btn-sm btn-soft-danger disabled" disabled
+                                                title="Des cours sont rattachés à cette catégorie">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty

@@ -132,13 +132,20 @@
                                     @endif
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <a href="{{ route('admin.quiz.show', $quiz) }}" class="btn btn-sm btn-soft-primary">Voir</a>
-                                    <form action="{{ route('admin.quiz.destroy', $quiz) }}" method="POST" class="d-inline"
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="{{ route('admin.quiz.show', $quiz) }}"
+                                           class="btn btn-sm btn-soft-primary" title="Voir la tentative">
+                                            <i class="ri-eye-line"></i>
+                                        </a>
+                                        <form action="{{ route('admin.quiz.destroy', $quiz) }}" method="POST"
                                           onsubmit="return confirm('Supprimer cette tentative et son résultat définitivement ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-soft-danger">Supprimer</button>
-                                    </form>
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer la tentative">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

@@ -127,11 +127,11 @@
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
                                     {{-- Voir : classes affectées + avis --}}
-                                    <a href="{{ route('admin.formateurs.show', $formateur) }}" class="btn btn-sm btn-soft-primary" title="Classes et avis">
+                                    <a href="{{ route('admin.formateurs.show', $formateur) }}" class="btn btn-sm btn-soft-primary" title="Voir les classes et avis du formateur">
                                         <i class="ri-eye-line"></i>
                                     </a>
                                     {{-- Modifier --}}
-                                    <a href="{{ route('admin.formateurs.edit', $formateur) }}" class="btn btn-sm btn-soft-secondary" title="Modifier">
+                                    <a href="{{ route('admin.formateurs.edit', $formateur) }}" class="btn btn-sm btn-soft-secondary" title="Modifier le formateur">
                                         <i class="ri-edit-line"></i>
                                     </a>
                                     {{-- Supprimer (confirmation JS ; le contrôleur refuse si des classes ouvertes lui sont affectées) --}}
@@ -139,7 +139,7 @@
                                           onsubmit="return confirm('Supprimer ce formateur ? Ses classes fermées seront conservées sans formateur.');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer">
+                                        <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer le formateur">
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
                                     </form>

@@ -63,34 +63,36 @@
                                 @endif
                             </div>
                         </div>
-                        <div class="d-flex flex-wrap gap-2">
+                        <div class="d-flex justify-content-end gap-1">
                             @if ($resource->type === 'fichier')
-                                <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
-                                   class="btn btn-soft-primary btn-sm" target="_blank" rel="noopener noreferrer">
-                                    <i class="ri-eye-line me-1"></i>Consulter
-                                </a>
                                 <a href="{{ route('cours.resources.download', [$cours, $resource]) }}"
-                                   class="btn btn-soft-secondary btn-sm">
-                                    <i class="ri-download-line me-1"></i>Télécharger
+                                   class="btn btn-sm btn-soft-secondary" title="Télécharger la ressource">
+                                    <i class="ri-download-line"></i>
+                                </a>
+                                <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
+                                   class="btn btn-sm btn-soft-primary" target="_blank" rel="noopener noreferrer"
+                                   title="Consulter la ressource">
+                                    <i class="ri-eye-line"></i>
                                 </a>
                             @elseif ($resource->type === 'video')
-                                <button type="button" class="btn btn-soft-primary btn-sm"
-                                        data-bs-toggle="modal" data-bs-target="#videoModal{{ $resource->id }}">
-                                    <i class="ri-eye-line me-1"></i>Consulter
+                                <button type="button" class="btn btn-sm btn-soft-primary"
+                                        data-bs-toggle="modal" data-bs-target="#videoModal{{ $resource->id }}"
+                                        title="Consulter la vidéo">
+                                    <i class="ri-eye-line"></i>
                                 </button>
                             @elseif ($resource->url)
-                                <a href="{{ $resource->url }}" class="btn btn-soft-primary btn-sm"
-                                   target="_blank" rel="noopener noreferrer">
-                                    <i class="ri-external-link-line me-1"></i>Ouvrir
+                                <a href="{{ $resource->url }}" class="btn btn-sm btn-soft-primary"
+                                   target="_blank" rel="noopener noreferrer" title="Ouvrir la ressource">
+                                    <i class="ri-external-link-line"></i>
                                 </a>
                             @endif
 
                             <form action="{{ route('admin.cours.resources.destroy', [$cours, $resource]) }}"
-                                  method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer cette ressource ?');">
+                                  method="POST" onsubmit="return confirm('Supprimer cette ressource ?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-soft-danger btn-sm">
-                                    <i class="ri-delete-bin-line me-1"></i>Supprimer
+                                <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer la ressource">
+                                    <i class="ri-delete-bin-line"></i>
                                 </button>
                             </form>
                         </div>

@@ -165,18 +165,24 @@
                             <td>{{ $classe->lieu }}</td>
                             <td>{{ $classe->inscriptions_count }} / {{ $classe->capacite_max }}</td>
                             <td><span class="badge {{ $badge[0] }}">{{ $badge[1] }}</span></td>
-                            <td>
-                                <div class="d-flex justify-content-end gap-2">
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{{ route('admin.cours.classes.show', [$cours, $classe]) }}"
+                                       class="btn btn-sm btn-soft-primary" title="Voir la classe">
+                                        <i class="ri-eye-line"></i>
+                                    </a>
                                     <a href="{{ route('admin.cours.classes.edit', [$cours, $classe]) }}"
-                                       class="btn btn-sm btn-soft-primary">
-                                        Gérer
+                                       class="btn btn-sm btn-soft-secondary" title="Modifier la classe">
+                                        <i class="ri-edit-line"></i>
                                     </a>
                                     <form action="{{ route('admin.cours.classes.destroy', [$cours, $classe]) }}"
                                           method="POST"
                                           onsubmit="return confirm('Supprimer cette classe ?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-soft-danger">Supprimer</button>
+                                        <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer la classe">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
                                     </form>
                                 </div>
                             </td>

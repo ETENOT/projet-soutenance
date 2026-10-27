@@ -92,15 +92,15 @@
                             <td>{{ rtrim(rtrim(number_format($attestation->taux_presence, 2, ',', ''), '0'), ',') }} %</td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
-                                    {{-- Voir dans un nouvel onglet --}}
-                                    <a href="{{ route('attestations.voir', $attestation) }}" target="_blank" rel="noopener"
-                                       class="btn btn-sm btn-soft-primary" title="Voir">
-                                        <i class="ri-eye-line"></i>
-                                    </a>
                                     {{-- Télécharger le PDF --}}
                                     <a href="{{ route('attestations.telecharger', $attestation) }}"
-                                       class="btn btn-sm btn-soft-success" title="Télécharger">
+                                       class="btn btn-sm btn-soft-success" title="Télécharger l’attestation">
                                         <i class="ri-download-2-line"></i>
+                                    </a>
+                                    {{-- Voir dans un nouvel onglet --}}
+                                    <a href="{{ route('attestations.voir', $attestation) }}" target="_blank" rel="noopener"
+                                       class="btn btn-sm btn-soft-primary" title="Voir l’attestation">
+                                        <i class="ri-eye-line"></i>
                                     </a>
                                 </div>
                             </td>

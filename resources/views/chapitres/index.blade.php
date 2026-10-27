@@ -91,16 +91,16 @@
                                 <span class="badge bg-primary-subtle text-primary mb-2">Chapitre {{ $chapitreSelectionne->ordre }}</span>
                                 <h5 class="card-title mb-1">{{ $chapitreSelectionne->titre }}</h5>
                             </div>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex justify-content-end gap-1">
                                 <a href="{{ route('admin.cours.chapitres.edit', [$cours, $chapitreSelectionne]) }}"
-                                   class="btn btn-soft-secondary btn-sm" title="Modifier le chapitre">
+                                   class="btn btn-sm btn-soft-secondary" title="Modifier le chapitre">
                                     <i class="ri-edit-line"></i>
                                 </a>
                                 <form action="{{ route('admin.cours.chapitres.destroy', [$cours, $chapitreSelectionne]) }}"
                                       method="POST" onsubmit="return confirm('Voulez-vous vraiment supprimer ce chapitre ?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer le chapitre">
+                                    <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer le chapitre">
                                         <i class="ri-delete-bin-line"></i>
                                     </button>
                                 </form>
@@ -135,19 +135,19 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="d-flex gap-2">
+                                    <div class="d-flex justify-content-end gap-1">
                                         @if ($resource->type === 'fichier')
-                                            <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}" target="_blank"
-                                               class="btn btn-soft-primary btn-sm" title="Consulter">
-                                                <i class="ri-eye-line"></i>
-                                            </a>
                                             <a href="{{ route('cours.resources.download', [$cours, $resource]) }}"
-                                               class="btn btn-soft-secondary btn-sm" title="Télécharger">
+                                               class="btn btn-sm btn-soft-secondary" title="Télécharger la ressource">
                                                 <i class="ri-download-line"></i>
+                                            </a>
+                                            <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}" target="_blank"
+                                               class="btn btn-sm btn-soft-primary" title="Consulter la ressource">
+                                                <i class="ri-eye-line"></i>
                                             </a>
                                         @elseif ($resource->url)
                                             <a href="{{ $resource->url }}" target="_blank" rel="noopener noreferrer"
-                                               class="btn btn-soft-primary btn-sm" title="Ouvrir">
+                                               class="btn btn-sm btn-soft-primary" title="Ouvrir la ressource">
                                                 <i class="ri-external-link-line"></i>
                                             </a>
                                         @endif
@@ -155,7 +155,7 @@
                                               method="POST" onsubmit="return confirm('Voulez-vous supprimer cette ressource ?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-soft-danger btn-sm" title="Supprimer">
+                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer la ressource">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
                                         </form>

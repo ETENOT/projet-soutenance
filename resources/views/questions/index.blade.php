@@ -231,7 +231,7 @@
                                 <td class="text-end">
                                     <div class="d-flex justify-content-end gap-1">
                                         <a href="{{ route('admin.questions.edit', $question) }}"
-                                           class="btn btn-sm btn-soft-secondary" title="Modifier">
+                                           class="btn btn-sm btn-soft-secondary" title="Modifier la question">
                                             <i class="ri-edit-line"></i>
                                         </a>
 
@@ -239,7 +239,7 @@
                                               onsubmit="return confirm(@js($texteSuppression));">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer">
+                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer la question">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
                                         </form>

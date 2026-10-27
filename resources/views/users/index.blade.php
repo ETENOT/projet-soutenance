@@ -280,21 +280,22 @@
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
                                     <a href="{{ route('admin.users.edit', $utilisateur) }}"
-                                       class="btn btn-sm btn-soft-secondary" title="Modifier">
+                                       class="btn btn-sm btn-soft-secondary" title="Modifier l’utilisateur">
                                         <i class="ri-edit-line"></i>
                                     </a>
 
                                     @if($protege)
-                                        <span class="btn btn-sm btn-soft-secondary disabled"
-                                              title="Compte protégé : suppression impossible">
-                                            <i class="ri-lock-line"></i>
-                                        </span>
+                                        <button type="button" class="btn btn-sm btn-soft-danger disabled"
+                                                title="Compte protégé : suppression impossible" disabled>
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
                                     @else
                                         <form action="{{ route('admin.users.destroy', $utilisateur) }}" method="POST"
                                               onsubmit="return confirm('Supprimer cet utilisateur définitivement ?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer">
+                                            <button type="submit" class="btn btn-sm btn-soft-danger"
+                                                    title="Supprimer l’utilisateur">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
                                         </form>

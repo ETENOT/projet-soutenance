@@ -510,8 +510,8 @@
                                             <i class="ri-eye-line"></i>
                                         </a>
                                         <a href="{{ route('admin.cours.classes.edit', [$classe->cours, $classe]) }}"
-                                           class="btn btn-sm btn-soft-secondary" title="Gérer la classe et ses inscrits">
-                                            <i class="ri-settings-3-line"></i>
+                                           class="btn btn-sm btn-soft-secondary" title="Modifier la classe">
+                                            <i class="ri-edit-line"></i>
                                         </a>
 
                                         <form action="{{ route('admin.cours.classes.destroy', [$classe->cours, $classe]) }}"
@@ -519,7 +519,7 @@
                                               onsubmit="return confirm('Supprimer cette classe ?');">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer">
+                                            <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer la classe">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
                                         </form>

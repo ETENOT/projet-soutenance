@@ -187,22 +187,10 @@
 
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
-                                    {{-- Fiche de l'inscription --}}
-                                    <a href="{{ route('admin.inscriptions.show', $inscription) }}"
-                                       class="btn btn-sm btn-soft-primary" title="Voir la fiche">
-                                        <i class="ri-eye-line"></i>
-                                    </a>
-
-                                    {{-- Modifier (classe, date) --}}
-                                    <a href="{{ route('admin.inscriptions.edit', $inscription) }}"
-                                       class="btn btn-sm btn-soft-secondary" title="Modifier">
-                                        <i class="ri-edit-line"></i>
-                                    </a>
-
                                     {{-- Encaisser au comptoir : réutilise PaiementController::store (notification + email inclus) --}}
                                     @unless ($payee)
                                         <form action="{{ route('paiements.store', $inscription) }}" method="POST"
-                                              data-confirmer="Enregistrer le paiement au comptoir de {{ $inscription->user->name }} ?">
+                                              onsubmit="return confirm('Enregistrer le paiement au comptoir de {{ $inscription->user->name }} ?');">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-soft-success" title="Encaisser le paiement">
                                                 <i class="ri-money-dollar-circle-line"></i>
@@ -210,14 +198,26 @@
                                         </form>
                                     @endunless
 
+                                    {{-- Fiche de l'inscription --}}
+                                    <a href="{{ route('admin.inscriptions.show', $inscription) }}"
+                                       class="btn btn-sm btn-soft-primary" title="Voir la fiche de l’inscription">
+                                        <i class="ri-eye-line"></i>
+                                    </a>
+
+                                    {{-- Modifier (classe, date) --}}
+                                    <a href="{{ route('admin.inscriptions.edit', $inscription) }}"
+                                       class="btn btn-sm btn-soft-secondary" title="Modifier l’inscription">
+                                        <i class="ri-edit-line"></i>
+                                    </a>
+
                                     {{-- Supprimer : confirmation renforcée si l'inscription est payée (son paiement disparaît avec elle) --}}
                                     <form action="{{ route('admin.inscriptions.destroy', $inscription) }}" method="POST"
-                                          data-confirmer="{{ $payee
+                                          onsubmit="return confirm(@js($payee
                                               ? 'Cette inscription est PAYÉE : son paiement sera supprimé définitivement avec elle. Continuer ?'
-                                              : 'Supprimer cette inscription définitivement ?' }}">
+                                              : 'Supprimer cette inscription définitivement ?'));">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer">
+                                        <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer l’inscription">
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
                                     </form>

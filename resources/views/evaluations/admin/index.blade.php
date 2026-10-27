@@ -61,8 +61,12 @@
                                             <span class="ms-1">{{ number_format($ligne['moyennes']['globale'], 1, ',', '') }}</span>
                                         </td>
                                         <td class="text-end">
-                                            <a href="{{ route('admin.evaluations.index', ['formateur' => $ligne['formateur']->id]) }}"
-                                               class="btn btn-soft-primary btn-sm">Voir ses avis</a>
+                                            <div class="d-flex justify-content-end gap-1">
+                                                <a href="{{ route('admin.evaluations.index', ['formateur' => $ligne['formateur']->id]) }}"
+                                                   class="btn btn-sm btn-soft-primary" title="Voir les avis du formateur">
+                                                    <i class="ri-eye-line"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -148,8 +152,12 @@
                                             <span class="ms-1">{{ number_format($ligne['moyennes']['globale'], 1, ',', '') }}</span>
                                         </td>
                                         <td class="text-end">
-                                            <a href="{{ route('admin.evaluations.index', ['classe' => $ligne['classe']->id]) }}"
-                                               class="btn btn-soft-primary btn-sm">Voir les fiches</a>
+                                            <div class="d-flex justify-content-end gap-1">
+                                                <a href="{{ route('admin.evaluations.index', ['classe' => $ligne['classe']->id]) }}"
+                                                   class="btn btn-sm btn-soft-primary" title="Voir les fiches d’évaluation">
+                                                    <i class="ri-eye-line"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -203,9 +211,12 @@
                                             <span class="ms-1">{{ number_format($evaluation->note, 1, ',', '') }}</span>
                                         </td>
                                         <td class="text-end">
-                                            <a href="{{ route('admin.evaluations.show', $evaluation) }}" class="btn btn-primary btn-sm">
-                                                <i class="ri-eye-line me-1"></i>Voir la fiche
-                                            </a>
+                                            <div class="d-flex justify-content-end gap-1">
+                                                <a href="{{ route('admin.evaluations.show', $evaluation) }}"
+                                                   class="btn btn-sm btn-soft-primary" title="Voir la fiche d’évaluation">
+                                                    <i class="ri-eye-line"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
