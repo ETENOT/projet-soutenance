@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Classe;
+use App\Models\Cours;
+use App\Models\Inscription;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -281,27 +285,102 @@ class DashboardController extends Controller
 
     private function admin($utilisateur)
     {
-        // Compteurs du tableau de bord administrateur.
         $totalUtilisateurs = User::count();
+        $totalCours = Cours::count();
+        $totalClasses = Classe::count();
+        $totalInscriptions = Inscription::count();
+        $nombreInscriptionsPayees = Inscription::payees()->count();
+        $nombreInscriptionsEnAttente = $totalInscriptions - $nombreInscriptionsPayees;
 
-        $totalCours = \App\Models\Cours::count();
+        $debutPeriode = today()->startOfMonth()->subMonths(8);
+        $finPeriode = today()->endOfMonth();
+        $comptesParJour = Inscription::query()
+            ->whereBetween('date_inscription', [$debutPeriode, $finPeriode])
+            ->selectRaw('date_inscription, COUNT(*) as total')
+            ->groupBy('date_inscription')
+            ->get()
+            ->keyBy(fn ($ligne) => Carbon::parse($ligne->date_inscription)->format('Y-m-d'));
+        $comptesPayesParJour = Inscription::payees()
+            ->whereBetween('date_inscription', [$debutPeriode, $finPeriode])
+            ->selectRaw('date_inscription, COUNT(*) as total')
+            ->groupBy('date_inscription')
+            ->get()
+            ->keyBy(fn ($ligne) => Carbon::parse($ligne->date_inscription)->format('Y-m-d'));
 
-        $totalClasses = \App\Models\Classe::count();
+        $inscriptionsParMois = ['labels' => [], 'inscriptions' => [], 'payees' => []];
+        $mois = $debutPeriode->copy();
+        while ($mois->lte($finPeriode)) {
+            $debutMois = $mois->copy()->startOfMonth();
+            $finMois = $mois->copy()->endOfMonth();
+            $totalMois = 0;
+            $totalPayeMois = 0;
 
-        $totalQuiz = \App\Models\Quiz::count();
+            for ($jour = $debutMois->copy(); $jour->lte($finMois); $jour->addDay()) {
+                $cleJour = $jour->format('Y-m-d');
+                $totalMois += (int) ($comptesParJour->get($cleJour)->total ?? 0);
+                $totalPayeMois += (int) ($comptesPayesParJour->get($cleJour)->total ?? 0);
+            }
 
+            $inscriptionsParMois['labels'][] = $mois->format('m/Y');
+            $inscriptionsParMois['inscriptions'][] = $totalMois;
+            $inscriptionsParMois['payees'][] = $totalPayeMois;
+            $mois->addMonth();
+        }
+
+        $classesEnCours = Classe::query()
+            ->whereNull('fermee_le')
+            ->whereDate('date_debut', '<=', today())
+            ->whereDate('date_fin', '>=', today())
+            ->count();
+        $classesAVenir = Classe::nonTerminees()
+            ->whereDate('date_debut', '>', today())
+            ->count();
+
+        $inscriptionsEnAttente = Inscription::query()
+            ->whereDoesntHave('paiement', fn ($query) => $query->where('statut', 'valide'))
+            ->with(['user:id,name', 'classe.cours:id,titre'])
+            ->orderByDesc('date_inscription')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
+
+        $prochainesClasses = Classe::with(['cours:id,titre', 'formateur:id,name'])
+            ->withCount('inscriptions')
+            ->nonTerminees()
+            ->whereDate('date_debut', '>', today())
+            ->orderBy('date_debut')
+            ->limit(5)
+            ->get();
+
+        $dernieresInscriptions = Inscription::with([
+            'user:id,name',
+            'classe.cours:id,titre',
+            'paiement:id,inscription_id,statut',
+        ])
+            ->orderByDesc('date_inscription')
+            ->orderByDesc('id')
+            ->limit(5)
+            ->get();
 
         return view('dashboards.admin', [
             'utilisateur' => $utilisateur,
-
             'totalUtilisateurs' => $totalUtilisateurs,
-
             'totalCours' => $totalCours,
-
             'totalClasses' => $totalClasses,
-
-            'totalQuiz' => $totalQuiz,
+            'totalInscriptions' => $totalInscriptions,
+            'nombreInscriptionsEnAttente' => $nombreInscriptionsEnAttente,
+            'nombreInscriptionsPayees' => $nombreInscriptionsPayees,
+            'pourcentageInscriptionsPayees' => $totalInscriptions > 0
+                ? (int) round($nombreInscriptionsPayees / $totalInscriptions * 100)
+                : 0,
+            'inscriptionsParMois' => $inscriptionsParMois,
+            'inscriptionsSurPeriode' => array_sum($inscriptionsParMois['inscriptions']),
+            'classesEnCours' => $classesEnCours,
+            'classesAVenir' => $classesAVenir,
+            'inscriptionsEnAttente' => $inscriptionsEnAttente,
+            'prochainesClasses' => $prochainesClasses,
+            'dernieresInscriptions' => $dernieresInscriptions,
+            'evenementsCalendrier' => Classe::evenementsAVenir(),
         ]);
     }
 }
-

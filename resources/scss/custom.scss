@@ -1149,3 +1149,15 @@ html[data-sidebar="dark"] {
 .nv-file-video-warning {
     font-size: 40px;
 }
+
+.nv-dash {
+    background: #eff2f7;
+    border-radius: 6px;
+    padding: 1.25rem;
+}
+
+@media (max-width: 575.98px) {
+    .nv-dash {
+        padding: .75rem;
+    }
+}

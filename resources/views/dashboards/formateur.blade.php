@@ -60,6 +60,7 @@
             @include('partials.calendrier-classes', [
                 'evenements' => $evenementsCalendrier,
                 'titre' => 'Calendrier de mes classes',
+                'simple' => true,
                 'legende' => [['nv-cal-a-venir', 'À venir'], ['nv-cal-en-cours', 'En cours']],
             ])
         </div>

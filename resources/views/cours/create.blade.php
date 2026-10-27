@@ -16,28 +16,6 @@
 @endcomponent
 
     {{-- ==========================================
-         EN-TÊTE DE LA PAGE
-    =========================================== --}}
-    <div class="row">
-        <div class="col-12">
-
-            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-
-                <div>
-                    <h4 class="mb-sm-0">Créer un cours</h4>
-
-                    <p class="text-muted mb-0 mt-1">
-                        Créez un nouveau cours et définissez son contenu ainsi que ses tarifs.
-                    </p>
-                </div>
-
-            </div>
-
-        </div>
-    </div>
-
-
-    {{-- ==========================================
          FORMULAIRE
     =========================================== --}}
     <form action="{{ route('admin.cours.store') }}" method="POST" enctype="multipart/form-data">
