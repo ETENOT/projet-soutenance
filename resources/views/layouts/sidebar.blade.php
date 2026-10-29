@@ -94,6 +94,17 @@
                         </a>
                     </li>
 
+                    {{-- ================================
+                         ENTREPRISES
+                    ================================= --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.entreprises.*') ? 'active' : '' }}"
+                        href="{{ route('admin.entreprises.index') }}">
+                            <i class="ri-building-2-line"></i>
+                            <span>Gestion des entreprises</span>
+                        </a>
+                    </li>
+
                      {{-- ================================
                          FORMATEURS (CRUD, affectations, avis anonymes)
                     ================================= --}}
@@ -106,6 +117,30 @@
                         </a>
                     </li>
 
+
+                    {{-- ================================
+                         COURS
+                    ================================= --}}
+
+                    <li class="nav-item">
+
+                        <a
+                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
+                            href="{{ route('admin.cours.index') }}"
+                        >
+                            <i class="ri-book-open-line"></i>
+                            <span>Gestion des cours</span>
+                        </a>
+
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
+                           href="{{ route('admin.categories.index') }}">
+                            <i class="ri-price-tag-3-line"></i>
+                            <span>Catégories</span>
+                        </a>
+                    </li>
 
                     {{-- ================================
                          CLASSES
@@ -122,19 +157,28 @@
                     </li>
 
                     {{-- ================================
-                         COURS
+                        INSCRIPTIONS
                     ================================= --}}
 
                     <li class="nav-item">
-
                         <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
-                            href="{{ route('admin.cours.index') }}"
+                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
+                            href="{{ route('admin.inscriptions.index') }}"
                         >
-                            <i class="ri-book-open-line"></i>
-                            <span>Gestion des cours</span>
+                            <i class="ri-user-add-line"></i>
+                            <span>Gestion des inscriptions</span>
                         </a>
+                    </li>
 
+                    {{-- ================================
+                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
+                    ================================= --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
+                        href="{{ route('admin.attestations.index') }}">
+                            <i class="ri-award-line"></i>
+                            <span>Attestations</span>
+                        </a>
                     </li>
 
                     {{-- ================================
@@ -189,28 +233,6 @@
                     </li>
 
                     {{-- ================================
-                        INSCRIPTIONS
-                    ================================= --}}
-
-                    <li class="nav-item">
-                        <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
-                            href="{{ route('admin.inscriptions.index') }}"
-                        >
-                            <i class="ri-user-add-line"></i>
-                            <span>Gestion des inscriptions</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
-                           href="{{ route('admin.categories.index') }}">
-                            <i class="ri-price-tag-3-line"></i>
-                            <span>Catégories</span>
-                        </a>
-                    </li>
-
-                    {{-- ================================
                          ÉVALUATIONS (formateurs + cours)
                     ================================= --}}
 
@@ -218,17 +240,6 @@
                         <a class="nav-link menu-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}" href="{{ route('admin.evaluations.index') }}">
                             <i class="ri-star-smile-line"></i>
                             <span>Évaluations</span>
-                        </a>
-                    </li>
-
-                    {{-- ================================
-                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
-                    ================================= --}}
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
-                        href="{{ route('admin.attestations.index') }}">
-                            <i class="ri-award-line"></i>
-                            <span>Attestations</span>
                         </a>
                     </li>
 
@@ -346,6 +357,51 @@
                             <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
                         </a>
                     </li>
+
+                    {{-- ENTREPRISE : consulter ses membres (gérés par l'administrateur) --}}
+                    @if (Auth::user()?->role?->nom === 'entreprise')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.membres.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.membres.index') }}">
+                                <i class="ri-team-line"></i>
+                                <span>Membres entreprises</span>
+                            </a>
+                        </li>
+                    @endif
+
+                    {{-- PARTICULIER : voir l'entreprise dont il est membre --}}
+                    @if (Auth::user()?->role?->nom === 'particulier')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('particulier.entreprise.*') ? 'active' : '' }}"
+                            href="{{ route('particulier.entreprise.index') }}">
+                                <i class="ri-building-line"></i>
+                                <span>Entreprise</span>
+                            </a>
+                        </li>
+                    @endif
+
+
+                    {{-- ENTREPRISE : consulter ses membres (gérés par l'administrateur) --}}
+                    @if (Auth::user()?->role?->nom === 'entreprise')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.membres.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.membres.index') }}">
+                                <i class="ri-team-line"></i>
+                                <span>Membres entreprises</span>
+                            </a>
+                        </li>
+                    @endif
+
+                    {{-- PARTICULIER : voir l'entreprise dont il est membre --}}
+                    @if (Auth::user()?->role?->nom === 'particulier')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('particulier.entreprise.*') ? 'active' : '' }}"
+                            href="{{ route('particulier.entreprise.index') }}">
+                                <i class="ri-building-line"></i>
+                                <span>Entreprise</span>
+                            </a>
+                        </li>
+                    @endif
 
                     <li class="nav-item">
                         <a

@@ -482,6 +482,65 @@ Route::middleware(['auth', 'role:admin'])
             ->name('classes.actions');
 
         // ------------------------------------------------------------------
+        // ENTREPRISES ET LEURS MEMBRES
+        // (les routes fixes « create » et « suppression-multiple » passent AVANT les routes à {entreprise})
+        // ------------------------------------------------------------------
+
+        Route::get('/entreprises', [App\Http\Controllers\AdminEntrepriseController::class, 'index'])
+            ->name('entreprises.index');
+
+        Route::get('/entreprises/create', [App\Http\Controllers\AdminEntrepriseController::class, 'create'])
+            ->name('entreprises.create');
+
+        Route::post('/entreprises', [App\Http\Controllers\AdminEntrepriseController::class, 'store'])
+            ->name('entreprises.store');
+
+        // Suppression multiple des entreprises cochées dans la liste
+        Route::post('/entreprises/suppression-multiple', [App\Http\Controllers\AdminEntrepriseController::class, 'destroyMultiple'])
+            ->name('entreprises.destroy-multiple');
+
+        Route::get('/entreprises/{entreprise}', [App\Http\Controllers\AdminEntrepriseController::class, 'show'])
+            ->name('entreprises.show');
+
+        Route::get('/entreprises/{entreprise}/edit', [App\Http\Controllers\AdminEntrepriseController::class, 'edit'])
+            ->name('entreprises.edit');
+
+        Route::put('/entreprises/{entreprise}', [App\Http\Controllers\AdminEntrepriseController::class, 'update'])
+            ->name('entreprises.update');
+
+        Route::delete('/entreprises/{entreprise}', [App\Http\Controllers\AdminEntrepriseController::class, 'destroy'])
+            ->name('entreprises.destroy');
+
+        // Membres d'une entreprise
+        Route::get('/entreprises/{entreprise}/membres/create', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'create'])
+            ->name('entreprises.membres.create');
+
+        // Recherche en direct des particuliers inscrits (JSON)
+        Route::get('/entreprises/{entreprise}/membres/rechercher', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'rechercher'])
+            ->name('entreprises.membres.rechercher');
+
+        // Ajouter des particuliers déjà inscrits
+        Route::post('/entreprises/{entreprise}/membres', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'store'])
+            ->name('entreprises.membres.store');
+
+        // Créer un nouveau particulier directement membre de l'entreprise
+        Route::post('/entreprises/{entreprise}/membres/nouveau', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'storeNouveau'])
+            ->name('entreprises.membres.store-nouveau');
+
+        // Retirer plusieurs membres cochés dans la liste
+        Route::post('/entreprises/{entreprise}/membres/retrait-multiple', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'destroyMultiple'])
+            ->name('entreprises.membres.destroy-multiple');
+
+        Route::get('/entreprises/{entreprise}/membres/{user}/edit', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'edit'])
+            ->name('entreprises.membres.edit');
+
+        Route::put('/entreprises/{entreprise}/membres/{user}', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'update'])
+            ->name('entreprises.membres.update');
+
+        Route::delete('/entreprises/{entreprise}/membres/{user}', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'destroy'])
+            ->name('entreprises.membres.destroy');
+
+        // ------------------------------------------------------------------
         // CLASSES
         // ------------------------------------------------------------------
 
