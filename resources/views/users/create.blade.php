@@ -95,28 +95,14 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                <div class="position-relative auth-pass-inputgroup">
-                                    <input type="password" name="password" id="password"
-                                           class="form-control password-input pe-5 @error('password') is-invalid @enderror" required>
-                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                            type="button" aria-label="Afficher ou masquer le mot de passe">
-                                        <i class="ri-eye-fill align-middle"></i>
-                                    </button>
-                                    @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                                </div>
-                                <div class="form-text">8 caractères minimum.</div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="password_confirmation" class="form-label">Confirmer le mot de passe <span class="text-danger">*</span></label>
-                                <div class="position-relative auth-pass-inputgroup">
-                                    <input type="password" name="password_confirmation" id="password_confirmation"
-                                           class="form-control password-input pe-5" required>
-                                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                            type="button" aria-label="Afficher ou masquer la confirmation du mot de passe">
-                                        <i class="ri-eye-fill align-middle"></i>
-                                    </button>
+                                {{-- Mot de passe : attribué automatiquement, à changer à la première connexion --}}
+                                <div class="alert alert-info d-flex align-items-start gap-2 mt-3 mb-0">
+                                    <i class="ri-key-2-line fs-4"></i>
+                                    <div>
+                                        Le mot de passe est attribué automatiquement :
+                                        <code class="fs-14">{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</code>.
+                                        L'utilisateur devra le remplacer lors de sa première connexion.
+                                    </div>
                                 </div>
                             </div>
                         </div>

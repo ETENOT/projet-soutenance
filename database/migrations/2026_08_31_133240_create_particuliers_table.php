@@ -12,6 +12,15 @@ return new class extends Migration
             $table->id();
             $table->string('telephone');
             $table->date('date_de_naissance')->nullable();
+
+             // Entreprise dont le particulier est membre. Une seule colonne = un particulier ne peut être
+            // membre que d'UNE entreprise à la fois (aucun statut : c'est l'administrateur qui gère les membres).
+            $table->foreignId('entreprise_id')
+                ->nullable()
+                ->constrained('entreprises')
+                // Entreprise supprimée : ses membres restent des particuliers, simplement sans entreprise.
+                ->nullOnDelete();
+
             $table->timestamps();
         });
     }

@@ -27,10 +27,15 @@ class User extends Authenticatable implements MustVerifyEmail
         // Délai minimum entre deux demandes de code : 2 minutes.
     private const RESEND_COOLDOWN_SECONDS = 120;
 
+    // Mot de passe attribué automatiquement aux comptes créés par un administrateur.
+    // L'utilisateur est obligé de le changer à sa première connexion (colonne must_change_password).
+    public const MOT_DE_PASSE_PAR_DEFAUT = 'Default1234?';
+
     protected $fillable = [
         'name',
         'email',
         'password',
+        'must_change_password',
         'avatar',
         'role_id',
         'particulier_id',
@@ -51,6 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'must_change_password' => 'boolean',   // ← ajouté
     ];
 
     // La table "utilisateurs" contient la colonne role_id (clé étrangère)

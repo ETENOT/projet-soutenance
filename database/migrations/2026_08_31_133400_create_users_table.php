@@ -22,6 +22,10 @@ class CreateUsersTable extends Migration
             //pour enregistrer la date et l'heure auxquelles l'adresse e-mail d'un utilisateur a été vérifiée.
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // true = le compte a été créé par un administrateur avec le mot de passe par défaut :
+            // l'utilisateur doit en choisir un nouveau à sa première connexion.
+            // false (par défaut) = inscription normale, ou mot de passe déjà changé.
+            $table->boolean('must_change_password')->default(false);
             $table->text('avatar')->nullable();
             $table->foreignId('role_id')
                 ->constrained('roles')
@@ -57,7 +61,7 @@ class CreateUsersTable extends Migration
     // Supprime la table "users" si elle existe.
     // Cette méthode est appelée lorsque l'on annule (rollback)
     // la migration avec : php artisan migrate:rollback
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('users');
     }

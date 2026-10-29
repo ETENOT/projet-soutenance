@@ -84,7 +84,7 @@ class RegisteredUserController extends Controller
 
             // Même logique inversée pour les champs "entreprise"
             'raison_sociale' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
-            'adresse' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'adresse' => ['nullable', 'string', 'max:255'],
             'contact_principal' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
             'secteur_activite' => ['nullable', 'string', 'max:255'],
         ],

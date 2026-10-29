@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
         $entreprise = Entreprise::create([
             'raison_sociale' => 'BICIG',
             'adresse' => 'Boulevard Triomphal, Libreville',
-            'contact_principal' => 'Service Formation',
+            'contact_principal' => '77242325',
             'secteur_activite' => 'Banque',
         ]);
 

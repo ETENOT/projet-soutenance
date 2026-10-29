@@ -21,4 +21,18 @@ class Entreprise extends Model
     {
         return $this->hasMany(Devis::class);
     }
+
+    // Les profils « particulier » rattachés à cette entreprise
+    public function particuliers()
+    {
+        return $this->hasMany(Particulier::class);
+    }
+
+    // Les MEMBRES de l'entreprise (comptes utilisateurs des particuliers rattachés).
+    // Particulier.entreprise_id -> Particulier.id <- User.particulier_id
+    // Liste que le futur module Devis proposera pour inscrire un membre.
+    public function membres()
+    {
+        return $this->hasManyThrough(User::class, Particulier::class, 'entreprise_id', 'particulier_id');
+    }
 }

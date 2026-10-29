@@ -41,6 +41,8 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\VerifyCsrfToken::class,
             \App\Http\Middleware\Localization::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // Compte créé par un admin : changement du mot de passe par défaut obligatoire
+            \App\Http\Middleware\ForcePasswordChange::class,
 
         ],
 
