@@ -18,25 +18,26 @@ class AdminFormateurController extends Controller
 {
     /**
      * Liste des formateurs avec, pour chacun : nombre de classes, classes en cours,
-     * nombre d'avis reçus et note moyenne.
+     * note moyenne ; et, pour la fenêtre « Voir », ses classes et ses avis anonymes.
      */
     public function index(Request $request)
     {
+        $enCours = fn ($q) => $q
+            ->whereNull('fermee_le')
+            ->whereDate('date_debut', '<=', today())
+            ->whereDate('date_fin', '>=', today());
+
         $query = $this->formateurs()
             ->withCount([
                 'classesAnimes',
                 // Classe "en cours" = non fermée, commencée, pas encore terminée
-                'classesAnimes as classes_en_cours_count' => fn ($q) => $q
-                    ->whereNull('fermee_le')
-                    ->whereDate('date_debut', '<=', today())
-                    ->whereDate('date_fin', '>=', today()),
+                'classesAnimes as classes_en_cours_count' => $enCours,
+                // Classes non fermées : elles empêchent la suppression du compte
+                'classesAnimes as classes_ouvertes_count' => fn ($q) => $q->whereNull('fermee_le'),
             ]);
 
         if ($request->input('situation') === 'classes_en_cours') {
-            $query->whereHas('classesAnimes', fn ($q) => $q
-                ->whereNull('fermee_le')
-                ->whereDate('date_debut', '<=', today())
-                ->whereDate('date_fin', '>=', today()));
+            $query->whereHas('classesAnimes', $enCours);
         } elseif ($request->input('situation') === 'sans_classe') {
             $query->whereDoesntHave('classesAnimes');
         }
@@ -49,7 +50,8 @@ class AdminFormateurController extends Controller
             });
         }
 
-        $formateurs = $query->orderBy('name')->paginate(10)->withQueryString();
+        // Le dernier formateur créé s'affiche en haut de la liste
+        $formateurs = $query->orderByDesc('id')->paginate(10)->withQueryString();
 
         // Avis par formateur : une seule requête groupée pour toute la page (évite N requêtes)
         $statsAvis = AvisFormateur::query()
@@ -60,17 +62,48 @@ class AdminFormateurController extends Controller
             ->get()
             ->keyBy('formateur_id');
 
+        // Fenêtre « Voir » : classes de chaque formateur de la page (une requête), avec inscrits payés et avis reçus
+        $classesParFormateur = Classe::with('cours:id,titre')
+            ->whereIn('formateur_id', $formateurs->pluck('id'))
+            ->withCount([
+                'inscriptions as inscrits_payes_count' => fn ($q) => $q->payees(),
+                'avisFormateurs',
+            ])
+            ->orderByDesc('date_debut')
+            ->get()
+            ->groupBy('formateur_id');
+
+        // ANONYMAT : on ne sélectionne volontairement PAS la colonne user_id.
+        // Même par erreur, une vue ne pourra donc pas afficher l'auteur de l'avis.
+        $avisParFormateur = AvisFormateur::query()
+            ->select([
+                'id', 'classe_id',
+                'note_maitrise_sujet', 'note_qualites_pedagogiques', 'note_comprehension_problemes',
+                'commentaire', 'created_at',
+            ])
+            ->whereIn('classe_id', $classesParFormateur->flatten()->pluck('id'))
+            ->with('classe:id,nom,cours_id,formateur_id', 'classe.cours:id,titre')
+            ->latest()
+            ->get()
+            ->groupBy(fn ($avis) => $avis->classe->formateur_id);
+
+        // Classes que l'on peut affecter : non fermées et pas encore terminées
+        // (la vue retire, pour chaque formateur, celles qu'il anime déjà)
+        $classesAffectables = Classe::with('cours:id,titre', 'formateur:id,name')
+            ->whereNull('fermee_le')
+            ->whereDate('date_fin', '>=', today())
+            ->orderBy('date_debut')
+            ->get();
+
         return view('formateurs.index', [
             'formateurs' => $formateurs,
             'statsAvis' => $statsAvis,
+            'classesParFormateur' => $classesParFormateur,
+            'avisParFormateur' => $avisParFormateur,
+            'classesAffectables' => $classesAffectables,
             'totalFormateurs' => $this->formateurs()->count(),
             'classesSansFormateur' => Classe::whereNull('formateur_id')->whereNull('fermee_le')->count(),
         ]);
-    }
-
-    public function create()
-    {
-        return view('formateurs.create');
     }
 
     /**
@@ -81,13 +114,12 @@ class AdminFormateurController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            //'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $formateur = User::create([
+        $formateur = app(\App\Services\CompteAdminService::class)->creer([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
             'role_id' => $this->roleFormateurId(),
         ]);
 
@@ -95,68 +127,9 @@ class AdminFormateurController extends Controller
         $formateur->markEmailAsVerified();
 
         return redirect()->route('admin.formateurs.show', $formateur)
-            ->with('success', 'Formateur créé avec succès. Vous pouvez maintenant lui affecter des classes.');
-    }
-
-    /**
-     * Fiche d'un formateur : classes affectées, affectation, avis anonymes.
-     */
-    public function show(Request $request, User $formateur)
-    {
-        $this->verifierFormateur($formateur);
-
-        // Classes du formateur, avec nombre d'inscrits payés et d'avis reçus
-        $classes = $formateur->classesAnimes()
-            ->with('cours')
-            ->withCount([
-                'inscriptions as inscrits_payes_count' => fn ($q) => $q->payees(),
-                'avisFormateurs',
-            ])
-            ->orderByDesc('date_debut')
-            ->get();
-
-        // Filtre facultatif des avis par classe (doit être l'une de SES classes)
-        $classeFiltre = $request->filled('classe')
-            ? $classes->firstWhere('id', $request->integer('classe'))
-            : null;
-
-        // ANONYMAT : on ne sélectionne volontairement PAS la colonne user_id.
-        // Même par erreur, une vue ne pourra donc pas afficher l'auteur de l'avis.
-        $avis = AvisFormateur::query()
-            ->select([
-                'id', 'classe_id',
-                'note_maitrise_sujet', 'note_qualites_pedagogiques', 'note_comprehension_problemes',
-                'commentaire', 'created_at',
-            ])
-            ->whereIn('classe_id', $classeFiltre ? [$classeFiltre->id] : $classes->pluck('id'))
-            ->with('classe.cours')
-            ->latest()
-            ->get();
-
-        // Classes que l'on peut lui affecter : non fermées et pas encore terminées,
-        // qui n'ont pas de formateur ou qui en ont un autre (réaffectation directe).
-        $classesAffectables = Classe::with('cours', 'formateur')
-            ->whereNull('fermee_le')
-            ->whereDate('date_fin', '>=', today())
-            ->where(fn ($q) => $q->whereNull('formateur_id')->orWhere('formateur_id', '!=', $formateur->id))
-            ->orderBy('date_debut')
-            ->get();
-
-        return view('formateurs.show', [
-            'formateur' => $formateur,
-            'classes' => $classes,
-            'classeFiltre' => $classeFiltre,
-            'avis' => $avis,
-            'moyennes' => AvisFormateur::moyennes($avis),
-            'classesAffectables' => $classesAffectables,
-        ]);
-    }
-
-    public function edit(User $formateur)
-    {
-        $this->verifierFormateur($formateur);
-
-        return view('formateurs.edit', ['formateur' => $formateur]);
+            ->with('success', 'Formateur créé avec succès. (mot de passe temporaire : '
+                    . User::MOT_DE_PASSE_PAR_DEFAUT . ', à changer à sa première connexion). '
+                    . 'Vous pouvez maintenant maintenant lui affecter des classes.');
     }
 
     /**
@@ -181,7 +154,7 @@ class AdminFormateurController extends Controller
 
         $formateur->update($data);
 
-        return redirect()->route('admin.formateurs.show', $formateur)
+        return redirect()->route('admin.formateurs.index')
             ->with('success', 'Formateur modifié avec succès.');
     }
 
@@ -208,6 +181,53 @@ class AdminFormateurController extends Controller
 
         return redirect()->route('admin.formateurs.index')
             ->with('success', 'Formateur supprimé avec succès.');
+    }
+
+    /**
+     * Suppression groupée : un formateur qui a encore des classes non fermées est ignoré.
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ], [
+            'ids.required' => 'Sélectionnez au moins un formateur.',
+        ]);
+
+        $supprimes = 0;
+        $ignores = [];
+
+        $formateurs = $this->formateurs()
+            ->withCount(['classesAnimes as classes_ouvertes_count' => fn ($q) => $q->whereNull('fermee_le')])
+            ->whereIn('id', $data['ids'])
+            ->get();
+
+        foreach ($formateurs as $formateur) {
+            if ($formateur->classes_ouvertes_count > 0) {
+                $ignores[] = "{$formateur->name} : {$formateur->classes_ouvertes_count} classe(s) non fermée(s)";
+                continue;
+            }
+
+            try {
+                $formateur->delete();
+                $supprimes++;
+            } catch (QueryException $e) {
+                report($e);
+                $ignores[] = "{$formateur->name} : compte lié à d'autres données";
+            }
+        }
+
+        // back() : on revient sur la liste avec la même recherche
+        $retour = back();
+        if ($supprimes > 0) {
+            $retour->with('success', "{$supprimes} formateur(s) supprimé(s).");
+        }
+        if ($ignores) {
+            $retour->with('error', 'Non supprimé(s) : ' . implode(' ; ', $ignores) . '.');
+        }
+
+        return $retour;
     }
 
     /**

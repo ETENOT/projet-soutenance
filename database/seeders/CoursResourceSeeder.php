@@ -26,26 +26,28 @@ class CoursResourceSeeder extends Seeder
     {
         $chemin = 'cours_documents/' . $cours->id . '/support-' . $cours->id . '.pdf';
 
-        Storage::disk('public')->put($chemin, $this->pdfDeTest($cours->titre));
+        // Disque "local" (privé), le même que celui lu par CoursResourceController :
+        // les documents ne sont servis qu'après vérification des droits.
+        Storage::disk('local')->put($chemin, $this->pdfDeTest($cours->titre));
 
-        CoursResource::create([
-            'cours_id' => $cours->id,
-            'type' => 'fichier',
-            'titre' => 'Support de cours — ' . $cours->titre,
-            'chemin' => $chemin,
-            'extension' => 'pdf',
-            'taille' => Storage::disk('public')->size($chemin),
-        ]);
+        // updateOrCreate : relancer ce seeder met à jour la ressource existante (nouveau chemin, nouvelle taille)
+        // au lieu d'en ajouter une deuxième. Pas besoin de refaire les migrations.
+        CoursResource::updateOrCreate(
+            ['cours_id' => $cours->id, 'type' => 'fichier', 'titre' => 'Support de cours — ' . $cours->titre],
+            [
+                'chemin' => $chemin,
+                'extension' => 'pdf',
+                'taille' => Storage::disk('local')->size($chemin),
+            ]
+        );
     }
 
     private function ajouterVideoTest(Cours $cours): void
     {
-        CoursResource::create([
-            'cours_id' => $cours->id,
-            'type' => 'video',
-            'titre' => 'Vidéo de présentation — ' . $cours->titre,
-            'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        ]);
+        CoursResource::updateOrCreate(
+            ['cours_id' => $cours->id, 'type' => 'video', 'titre' => 'Vidéo de présentation — ' . $cours->titre],
+            ['url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ']
+        );
     }
 
     /**

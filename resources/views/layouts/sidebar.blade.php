@@ -108,30 +108,6 @@
 
 
                     {{-- ================================
-                         COURS
-                    ================================= --}}
-
-                    <li class="nav-item">
-
-                        <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
-                            href="{{ route('admin.cours.index') }}"
-                        >
-                            <i class="ri-book-open-line"></i>
-                            <span>Gestion des cours</span>
-                        </a>
-
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
-                           href="{{ route('admin.categories.index') }}">
-                            <i class="ri-price-tag-3-line"></i>
-                            <span>Catégories</span>
-                        </a>
-                    </li>
-
-                    {{-- ================================
                          CLASSES
                     ================================= --}}
 
@@ -146,28 +122,19 @@
                     </li>
 
                     {{-- ================================
-                        INSCRIPTIONS
+                         COURS
                     ================================= --}}
 
                     <li class="nav-item">
+
                         <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
-                            href="{{ route('admin.inscriptions.index') }}"
+                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
+                            href="{{ route('admin.cours.index') }}"
                         >
-                            <i class="ri-user-add-line"></i>
-                            <span>Gestion des inscriptions</span>
+                            <i class="ri-book-open-line"></i>
+                            <span>Gestion des cours</span>
                         </a>
-                    </li>
 
-                    {{-- ================================
-                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
-                    ================================= --}}
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
-                        href="{{ route('admin.attestations.index') }}">
-                            <i class="ri-award-line"></i>
-                            <span>Attestations</span>
-                        </a>
                     </li>
 
                     {{-- ================================
@@ -222,6 +189,28 @@
                     </li>
 
                     {{-- ================================
+                        INSCRIPTIONS
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a
+                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
+                            href="{{ route('admin.inscriptions.index') }}"
+                        >
+                            <i class="ri-user-add-line"></i>
+                            <span>Gestion des inscriptions</span>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
+                           href="{{ route('admin.categories.index') }}">
+                            <i class="ri-price-tag-3-line"></i>
+                            <span>Catégories</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
                          ÉVALUATIONS (formateurs + cours)
                     ================================= --}}
 
@@ -229,6 +218,17 @@
                         <a class="nav-link menu-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}" href="{{ route('admin.evaluations.index') }}">
                             <i class="ri-star-smile-line"></i>
                             <span>Évaluations</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
+                    ================================= --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
+                        href="{{ route('admin.attestations.index') }}">
+                            <i class="ri-award-line"></i>
+                            <span>Attestations</span>
                         </a>
                     </li>
 

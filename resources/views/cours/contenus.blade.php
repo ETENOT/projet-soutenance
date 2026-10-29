@@ -1,374 +1,497 @@
 @extends('layouts.master')
 
-@section('title', 'Contenus pédagogiques')
+@section('title', 'Chapitres et ressources')
 
 @section('content')
-    @component('components.breadcrumb')
-        @slot('li_1')
-            <a href="{{ route('admin.cours.show', $cours) }}">Cours</a>
-        @endslot
-        @slot('title')
-            {{ $cours->titre }}
-        @endslot
-    @endcomponent
 
-    <div class="container-fluid pb-4">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div>
-                <h4 class="mb-1">Contenus pédagogiques</h4>
-                <p class="text-muted mb-0">Organisez les chapitres et les ressources de ce cours.</p>
-            </div>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAjouterChapitre">
-                <i class="ri-add-line me-1"></i>Ajouter un chapitre
-            </button>
+{{-- ===== Fil d'Ariane ===== --}}
+@component('components.breadcrumb')
+    @slot('li_1')
+        <a href="{{ route('admin.cours.index') }}">Cours</a>
+    @endslot
+    @slot('title')
+        {{ $cours->titre }}
+    @endslot
+@endcomponent
+
+@php
+    // Retour d'une validation qui a échoué : "_form" dit quel formulaire rouvrir (chapitre ou ressource),
+    // "_mode" (ajout ou modification) dit dans quel mode pour le chapitre
+    $formAvecErreur = $errors->any() ? old('_form') : null;
+    $modeAvecErreur = $formAvecErreur === 'chapitre' ? old('_mode') : null;
+
+    $iconesRessource = ['video' => 'ri-video-line', 'lien' => 'ri-links-line', 'fichier' => 'ri-file-text-line'];
+    $libellesRessource = ['video' => 'Vidéo', 'lien' => 'Lien', 'fichier' => 'Document'];
+@endphp
+
+<div class="container-fluid pb-4">
+
+    {{-- ===== Erreurs d'un formulaire (la fenêtre concernée se rouvre aussi) ===== --}}
+    @if ($errors->any() && ! $formAvecErreur)
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $erreur)
+                    <li>{{ $erreur }}</li>
+                @endforeach
+            </ul>
         </div>
+    @endif
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="ri-checkbox-circle-line me-1"></i>{{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
-            </div>
-        @endif
+    {{-- ===== Onglets : une seule liste visible à la fois, chacune avec sa pagination ===== --}}
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link @if ($onglet !== 'ressources') active @endif" id="ongletChapitres"
+                    data-bs-toggle="tab" data-bs-target="#panneauChapitres" role="tab"
+                    data-onglet="chapitres">
+                Chapitres <span class="badge bg-primary-subtle text-primary ms-1">{{ $chapitres->total() }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button type="button" class="nav-link @if ($onglet === 'ressources') active @endif" id="ongletRessources"
+                    data-bs-toggle="tab" data-bs-target="#panneauRessources" role="tab"
+                    data-onglet="ressources">
+                Ressources <span class="badge bg-primary-subtle text-primary ms-1">{{ $resources->total() }}</span>
+            </button>
+        </li>
+    </ul>
 
-        @if ($errors->any())
-            <div class="alert alert-danger" role="alert">
-                <strong>Une erreur est survenue.</strong>
-                <ul class="mb-0 mt-2">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+    <div class="tab-content">
 
-        <div class="row g-4">
-            <div class="col-xl-4">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Chapitres</h5>
-                        <span class="badge bg-primary-subtle text-primary">{{ $chapitres->count() }}</span>
-                    </div>
-                    <div class="list-group list-group-flush">
-                        @forelse ($chapitres as $index => $chapitre)
-                            <button type="button"
-                                    class="list-group-item list-group-item-action d-flex align-items-center gap-3 chapitre-item {{ $index === 0 ? 'active' : '' }}"
-                                    data-chapter-id="{{ $chapitre->id }}"
-                                    data-chapter-number="{{ $chapitre->ordre }}"
-                                    data-chapter-title="{{ $chapitre->titre }}">
-                                <span class="badge {{ $index === 0 ? 'bg-light text-primary' : 'bg-primary-subtle text-primary' }}">
-                                    {{ $chapitre->ordre }}
-                                </span>
-                                <span class="flex-grow-1 text-start">
-                                    <span class="d-block fw-medium">{{ $chapitre->titre }}</span>
-                                    <small class="{{ $index === 0 ? 'text-white-50' : 'text-muted' }}">Chapitre {{ $chapitre->ordre }}</small>
-                                </span>
-                                <i class="ri-arrow-right-s-line"></i>
-                            </button>
-                        @empty
-                            <div class="card-body text-center py-5">
-                                <i class="ri-book-open-line fs-1 text-muted"></i>
-                                <p class="text-muted mb-3">Aucun chapitre n'a encore été créé.</p>
-                                <button type="button" class="btn btn-primary btn-sm"
-                                        data-bs-toggle="modal" data-bs-target="#modalAjouterChapitre">
-                                    <i class="ri-add-line me-1"></i>Ajouter un chapitre
-                                </button>
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-
-                @if ($chapitres->isNotEmpty())
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Chapitre sélectionné</h5>
-                        </div>
-                        <div class="card-body d-flex align-items-center gap-3">
-                            <span class="avatar-sm">
-                                <span class="avatar-title rounded bg-primary-subtle text-primary" id="selectedChapterNumber">
-                                    {{ $chapitres->first()->ordre }}
-                                </span>
-                            </span>
-                            <div>
-                                <div class="fw-medium" id="selectedChapterName">{{ $chapitres->first()->titre }}</div>
-                                <small class="text-muted">Chapitre sélectionné</small>
-                            </div>
-                        </div>
-                    </div>
-                @endif
+        {{-- ===================== CHAPITRES ===================== --}}
+        <div class="tab-pane fade @if ($onglet !== 'ressources') show active @endif" id="panneauChapitres" role="tabpanel">
+            <div class="d-flex justify-content-start mb-3">
+                <button type="button" class="btn btn-primary fw-semibold"
+                        data-bs-toggle="modal" data-bs-target="#modalChapitre" data-mode="ajout">
+                    <i class="ri-add-line me-1"></i>Créer un chapitre
+                </button>
             </div>
 
-            <div class="col-xl-8">
-                @forelse ($chapitres as $index => $chapitre)
-                    <div class="card chapter-panel {{ $index === 0 ? '' : 'd-none' }}"
-                         data-chapter-panel="{{ $chapitre->id }}">
-                        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                            <div>
-                                <span class="badge bg-primary-subtle text-primary mb-2">Chapitre {{ $chapitre->ordre }}</span>
-                                <h5 class="card-title mb-0">{{ $chapitre->titre }}</h5>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('admin.cours.chapitres.edit', [$cours, $chapitre]) }}"
-                                   class="btn btn-sm btn-soft-secondary" title="Modifier le chapitre">
-                                    <i class="ri-edit-line"></i>
-                                </a>
-                                <form method="POST" action="{{ route('admin.cours.chapitres.destroy', [$cours, $chapitre]) }}"
-                                      onsubmit="return confirm('Voulez-vous vraiment supprimer ce chapitre ?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer le chapitre">
-                                        <i class="ri-delete-bin-line"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <form method="POST" action="{{ route('admin.cours.chapitres.update', [$cours, $chapitre]) }}">
-                                @csrf
-                                @method('PUT')
-                                <div class="mb-3">
-                                    <label for="titre-{{ $chapitre->id }}" class="form-label">Titre du chapitre</label>
-                                    <input type="text" id="titre-{{ $chapitre->id }}" name="titre"
-                                           class="form-control" value="{{ $chapitre->titre }}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="contenu-{{ $chapitre->id }}" class="form-label">Contenu / description</label>
-                                    <textarea id="contenu-{{ $chapitre->id }}" name="contenu" class="form-control"
-                                              rows="4" placeholder="Décrivez le contenu de ce chapitre...">{{ $chapitre->contenu }}</textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="ri-save-line me-1"></i>Enregistrer les modifications
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                @empty
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class="ri-folder-open-line fs-1 text-muted"></i>
-                            <h5 class="mt-3">Aucun chapitre</h5>
-                            <p class="text-muted">Créez un chapitre pour organiser le contenu de ce cours.</p>
-                        </div>
-                    </div>
-                @endforelse
+        <div class="card border shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 table-contenus">
+                    <thead>
+                        <tr class="table-light">
+                            <th>N°</th>
+                            <th>Titre</th>
+                            <th>Description</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($chapitres as $chapitre)
+                            <tr>
+                                <td>{{ $chapitre->ordre }}</td>
+                                <td class="fw-semibold">{{ $chapitre->titre }}</td>
+                                <td class="text-muted">{{ \Illuminate\Support\Str::limit((string) $chapitre->contenu, 90) ?: '—' }}</td>
+                                <td class="text-end contenus-actions">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        {{-- Modifier : les valeurs actuelles voyagent dans les data-* du bouton --}}
+                                        <button type="button" class="btn btn-sm btn-soft-secondary" title="Modifier le chapitre"
+                                                data-bs-toggle="modal" data-bs-target="#modalChapitre"
+                                                data-mode="modif"
+                                                data-action="{{ route('admin.cours.chapitres.update', [$cours, $chapitre]) }}"
+                                                data-titre="{{ $chapitre->titre }}"
+                                                data-contenu="{{ $chapitre->contenu }}"
+                                                data-ordre="{{ $chapitre->ordre }}">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
 
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Ressources du cours</h5>
-                        <span class="badge bg-primary-subtle text-primary">{{ $resources->count() }}</span>
-                    </div>
-                    <div class="card-body">
-                        @forelse ($resources as $resource)
-                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 py-2 border-bottom">
-                                <div class="d-flex align-items-center gap-2">
-                                    @php
-                                        $resourceIcon = match ($resource->type) {
-                                            'video' => 'ri-video-line',
-                                            'lien' => 'ri-links-line',
-                                            default => 'ri-file-text-line',
-                                        };
-                                    @endphp
-                                    <span class="avatar-xs">
-                                        <span class="avatar-title rounded bg-primary-subtle text-primary">
-                                            <i class="{{ $resourceIcon }}"></i>
-                                        </span>
-                                    </span>
-                                    <div>
-                                        <div class="fw-medium">{{ $resource->titre }}</div>
-                                        <small class="text-muted text-capitalize">
-                                            {{ $resource->type }}
-                                            @if ($resource->extension) · {{ strtoupper($resource->extension) }} @endif
-                                            @if ($resource->taille_lisible) · {{ $resource->taille_lisible }} @endif
-                                        </small>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center gap-1">
-                                    <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}"
-                                       class="btn btn-sm btn-soft-primary" title="Consulter" target="_blank">
-                                        <i class="ri-eye-line"></i>
-                                    </a>
-                                    @if ($resource->chemin)
-                                        <a href="{{ route('cours.resources.download', [$cours, $resource]) }}"
-                                           class="btn btn-sm btn-soft-success" title="Télécharger">
-                                            <i class="ri-download-line"></i>
-                                        </a>
-                                    @endif
-                                    <form method="POST" action="{{ route('admin.cours.resources.destroy', [$cours, $resource]) }}"
-                                          onsubmit="return confirm('Voulez-vous supprimer cette ressource ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-soft-danger" title="Supprimer">
+                                        {{-- Supprimer : demande confirmation dans une fenêtre --}}
+                                        <button type="button" class="btn btn-sm btn-soft-danger" title="Supprimer le chapitre"
+                                                data-bs-toggle="modal" data-bs-target="#modalSuppression"
+                                                data-action="{{ route('admin.cours.chapitres.destroy', [$cours, $chapitre]) }}"
+                                                data-objet="le chapitre"
+                                                data-nom="{{ $chapitre->titre }}">
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
-                                    </form>
-                                </div>
-                            </div>
+                                    </div>
+                                </td>
+                            </tr>
                         @empty
-                            <p class="text-muted text-center py-3 mb-0">Aucune ressource dans ce cours.</p>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-5">
+                                    <i class="ri-list-check-2 display-5 d-block mb-2"></i>
+                                    Aucun chapitre pour ce cours.
+                                </td>
+                            </tr>
                         @endforelse
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Ajouter une ressource</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{{ route('admin.cours.resources.store', $cours) }}"
-                              enctype="multipart/form-data">
-                            @csrf
-                            <div class="mb-3">
-                                <label for="resourceTitre" class="form-label">Titre</label>
-                                <input type="text" id="resourceTitre" name="titre" class="form-control"
-                                       placeholder="Ex. Support du cours" value="{{ old('titre') }}" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="resourceType" class="form-label">Type</label>
-                                <select name="type" id="resourceType" class="form-select" required>
-                                    <option value="fichier" @selected(old('type', 'fichier') === 'fichier')>Document</option>
-                                    <option value="video" @selected(old('type') === 'video')>Vidéo</option>
-                                    <option value="lien" @selected(old('type') === 'lien')>Lien</option>
-                                </select>
-                            </div>
-                            <div class="mb-3 d-none" id="fileField">
-                                <label for="resourceFile" id="fileLabel" class="form-label">Fichier</label>
-                                <input type="file" id="resourceFile" name="fichier" class="form-control">
-                                <div class="form-text" id="fileHelp">PDF, DOC, DOCX, PPT, PPTX, XLS ou XLSX</div>
-                            </div>
-                            <div class="mb-3 d-none" id="videoSourceField">
-                                <label class="form-label">Source de la vidéo</label>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" id="videoUpload" name="video_source"
-                                           value="upload" @checked(old('video_source', 'upload') === 'upload')>
-                                    <label class="form-check-label" for="videoUpload">Importer une vidéo</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" id="videoUrl" name="video_source"
-                                           value="url" @checked(old('video_source') === 'url')>
-                                    <label class="form-check-label" for="videoUrl">Utiliser une URL</label>
-                                </div>
-                            </div>
-                            <div class="mb-3 d-none" id="urlField">
-                                <label for="resourceUrl" class="form-label">URL</label>
-                                <input type="url" id="resourceUrl" name="url" class="form-control"
-                                       placeholder="https://" value="{{ old('url') }}">
-                            </div>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="ri-add-line me-1"></i>Ajouter la ressource
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
+                @if ($chapitres->total() > 0)
+                <div class="card-footer bg-transparent d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <small class="text-muted">
+                        Affichage de {{ $chapitres->firstItem() }} à {{ $chapitres->lastItem() }}
+                        sur {{ $chapitres->total() }} résultat(s)
+                    </small>
+                    {{ $chapitres->links() }}
+                </div>
+            @endif
+    </div>
+        </div>
+
+        {{-- ===================== RESSOURCES ===================== --}}
+        <div class="tab-pane fade @if ($onglet === 'ressources') show active @endif" id="panneauRessources" role="tabpanel">
+            <div class="d-flex justify-content-start mb-3">
+                <button type="button" class="btn btn-primary fw-semibold"
+                        data-bs-toggle="modal" data-bs-target="#modalRessource">
+                    <i class="ri-add-line me-1"></i>Ajouter une ressource
+                </button>
+            </div>
+
+        <div class="card border shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0 table-contenus">
+                    <thead>
+                        <tr class="table-light">
+                            <th>N°</th>
+                            <th>Titre</th>
+                            <th>Type</th>
+                            <th>Détails</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($resources as $resource)
+                            <tr>
+                                <td>{{ $resources->firstItem() + $loop->index }}</td>
+                                <td class="fw-semibold">{{ $resource->titre }}</td>
+                                <td>
+                                    <i class="{{ $iconesRessource[$resource->type] ?? 'ri-file-text-line' }} text-primary me-1"></i>{{ $libellesRessource[$resource->type] ?? ucfirst($resource->type) }}
+                                </td>
+                                <td class="text-muted">
+                                    @if ($resource->extension){{ strtoupper($resource->extension) }}@endif
+                                    @if ($resource->taille_lisible) · {{ $resource->taille_lisible }}@endif
+                                    @if (! $resource->chemin && $resource->url) Adresse externe @endif
+                                </td>
+                                <td class="text-end contenus-actions">
+                                    <div class="d-flex justify-content-end gap-1">
+                                        <a href="{{ route('cours.resources.voir', [$cours, $resource]) }}" target="_blank" rel="noopener"
+                                           class="btn btn-sm btn-soft-primary" title="Consulter">
+                                            <i class="ri-eye-line"></i>
+                                        </a>
+                                        @if ($resource->chemin)
+                                            <a href="{{ route('cours.resources.download', [$cours, $resource]) }}"
+                                               class="btn btn-sm btn-soft-success" title="Télécharger">
+                                                <i class="ri-download-line"></i>
+                                            </a>
+                                        @endif
+                                        <button type="button" class="btn btn-sm btn-soft-danger" title="Supprimer la ressource"
+                                                data-bs-toggle="modal" data-bs-target="#modalSuppression"
+                                                data-action="{{ route('admin.cours.resources.destroy', [$cours, $resource]) }}"
+                                                data-objet="la ressource"
+                                                data-nom="{{ $resource->titre }}">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    <i class="ri-folder-open-line display-5 d-block mb-2"></i>
+                                    Aucune ressource pour ce cours.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+                @if ($resources->total() > 0)
+                <div class="card-footer bg-transparent d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <small class="text-muted">
+                        Affichage de {{ $resources->firstItem() }} à {{ $resources->lastItem() }}
+                        sur {{ $resources->total() }} résultat(s)
+                    </small>
+                    {{ $resources->links() }}
+                </div>
+            @endif
+    </div>
         </div>
     </div>
+</div>
 
-    <div class="modal fade" id="modalAjouterChapitre" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+{{-- ===== Fenêtre de confirmation de suppression (chapitre ou ressource) ===== --}}
+<div class="modal fade" id="modalSuppression" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formSuppression" method="POST" action="#">
+                @csrf
+                @method('DELETE')
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ri-add-circle-line me-2 text-primary"></i>Ajouter un chapitre</h5>
+                    <h5 class="modal-title" id="suppressionTitre">Supprimer</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
-                <form method="POST" action="{{ route('admin.cours.chapitres.store', $cours) }}">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="nouveauTitre" class="form-label">Titre du chapitre</label>
-                            <input type="text" id="nouveauTitre" name="titre" class="form-control" required>
-                        </div>
-                        <div>
-                            <label for="nouveauContenu" class="form-label">Contenu / description</label>
-                            <textarea id="nouveauContenu" name="contenu" class="form-control" rows="4"></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="ri-add-line me-1"></i>Créer le chapitre
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div class="modal-body">
+                    <p class="mb-2">Voulez-vous vraiment supprimer <span id="suppressionObjet"></span> <strong id="suppressionNom"></strong> ?</p>
+                    <p class="text-muted mb-0">Cette action est définitive.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
+{{-- ===== Fenêtre « Créer / Modifier un chapitre » ===== --}}
+<div class="modal fade" id="modalChapitre" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formChapitre" method="POST" action="{{ route('admin.cours.chapitres.store', $cours) }}">
+                @csrf
+                {{-- Champs techniques : _method = PUT seulement en modification ; _form, _mode et _action
+                     permettent de rouvrir la bonne fenêtre si la validation échoue --}}
+                <input type="hidden" name="_method" value="PUT" id="champMethode" disabled>
+                <input type="hidden" name="_form" value="chapitre">
+                <input type="hidden" name="_mode" id="champMode" value="{{ $modeAvecErreur }}">
+                <input type="hidden" name="_action" id="champAction" value="{{ $formAvecErreur === 'chapitre' ? old('_action') : '' }}">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="chapitreTitre">Créer un chapitre</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+
+                <div class="modal-body">
+                    @if ($formAvecErreur === 'chapitre')
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $erreur)
+                                    <li>{{ $erreur }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <label for="champTitre" class="form-label">Titre du chapitre</label>
+                        <input type="text" name="titre" id="champTitre" class="form-control"
+                               value="{{ $formAvecErreur === 'chapitre' ? old('titre') : '' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="champOrdre" class="form-label">Numéro d'ordre</label>
+                        <input type="number" name="ordre" id="champOrdre" min="1" class="form-control"
+                               value="{{ $formAvecErreur === 'chapitre' ? old('ordre') : '' }}">
+                        <div class="form-text" id="aideOrdre">Laissez vide pour placer le chapitre à la fin.</div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label for="champContenu" class="form-label">Contenu / description (facultatif)</label>
+                        <textarea name="contenu" id="champContenu" rows="4" class="form-control">{{ $formAvecErreur === 'chapitre' ? old('contenu') : '' }}</textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ===== Fenêtre « Ajouter une ressource » ===== --}}
+<div class="modal fade" id="modalRessource" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formRessource" method="POST" action="{{ route('admin.cours.resources.store', $cours) }}"
+                  enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="_form" value="ressource">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter une ressource</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+
+                <div class="modal-body">
+                    @if ($formAvecErreur === 'ressource')
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $erreur)
+                                    <li>{{ $erreur }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <label for="resourceTitre" class="form-label">Titre</label>
+                        <input type="text" id="resourceTitre" name="titre" class="form-control"
+                               placeholder="Ex. Support du cours" value="{{ $formAvecErreur === 'ressource' ? old('titre') : '' }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="resourceType" class="form-label">Type</label>
+                        <select name="type" id="resourceType" class="form-select" required>
+                            <option value="fichier" @selected(old('type', 'fichier') === 'fichier')>Document</option>
+                            <option value="video" @selected(old('type') === 'video')>Vidéo</option>
+                            <option value="lien" @selected(old('type') === 'lien')>Lien</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3 d-none" id="videoSourceField">
+                        <label class="form-label">Source de la vidéo</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="videoUpload" name="video_source"
+                                   value="upload" @checked(old('video_source', 'upload') === 'upload')>
+                            <label class="form-check-label" for="videoUpload">Importer une vidéo</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" id="videoUrl" name="video_source"
+                                   value="url" @checked(old('video_source') === 'url')>
+                            <label class="form-check-label" for="videoUrl">Utiliser une adresse (URL)</label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3 d-none" id="fileField">
+                        <label for="resourceFile" id="fileLabel" class="form-label">Document</label>
+                        <input type="file" id="resourceFile" name="fichier" class="form-control">
+                        <div class="form-text" id="fileHelp"></div>
+                    </div>
+
+                    <div class="mb-0 d-none" id="urlField">
+                        <label for="resourceUrl" class="form-label">Adresse (URL)</label>
+                        <input type="url" id="resourceUrl" name="url" class="form-control"
+                               placeholder="https://" value="{{ $formAvecErreur === 'ressource' ? old('url') : '' }}">
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('script')
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const chapitreItems = document.querySelectorAll('.chapitre-item');
-            const chapitrePanels = document.querySelectorAll('.chapter-panel');
-            const selectedChapterNumber = document.getElementById('selectedChapterNumber');
-            const selectedChapterName = document.getElementById('selectedChapterName');
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const champ = id => document.getElementById(id);
 
-            chapitreItems.forEach(function (item) {
-                item.addEventListener('click', function () {
-                    chapitreItems.forEach(function (element) {
-                        element.classList.remove('active');
-                        element.querySelector('.badge')?.classList.replace('bg-light', 'bg-primary-subtle');
-                        element.querySelector('.badge')?.classList.replace('text-primary', 'text-primary');
-                        element.querySelector('small')?.classList.replace('text-white-50', 'text-muted');
-                    });
-                    this.classList.add('active');
-                    this.querySelector('.badge')?.classList.replace('bg-primary-subtle', 'bg-light');
-                    this.querySelector('small')?.classList.replace('text-muted', 'text-white-50');
-                    chapitrePanels.forEach(function (panel) {
-                        panel.classList.toggle('d-none', panel.dataset.chapterPanel !== this.dataset.chapterId);
-                    }, this);
-                    if (selectedChapterNumber) selectedChapterNumber.textContent = this.dataset.chapterNumber;
-                    if (selectedChapterName) selectedChapterName.textContent = this.dataset.chapterTitle;
-                });
-            });
-
-            const resourceType = document.getElementById('resourceType');
-            const fileField = document.getElementById('fileField');
-            const videoSourceField = document.getElementById('videoSourceField');
-            const urlField = document.getElementById('urlField');
-            const resourceFile = document.getElementById('resourceFile');
-            const resourceUrl = document.getElementById('resourceUrl');
-            const videoUpload = document.getElementById('videoUpload');
-            const videoUrl = document.getElementById('videoUrl');
-            const fileLabel = document.getElementById('fileLabel');
-            const fileHelp = document.getElementById('fileHelp');
-
-            function mettreAJourSourceVideo() {
-                if (!resourceType || resourceType.value !== 'video') return;
-                const utiliserFichier = videoUpload.checked;
-                fileField.classList.toggle('d-none', !utiliserFichier);
-                urlField.classList.toggle('d-none', utiliserFichier);
-                resourceFile.disabled = !utiliserFichier;
-                resourceFile.required = utiliserFichier;
-                resourceUrl.disabled = utiliserFichier;
-                resourceUrl.required = !utiliserFichier;
-                if (!utiliserFichier) resourceUrl.placeholder = 'URL de la vidéo';
-            }
-
-            function mettreAJourTypeRessource() {
-                if (!resourceType) return;
-                const type = resourceType.value;
-                fileField.classList.toggle('d-none', type !== 'fichier');
-                videoSourceField.classList.toggle('d-none', type !== 'video');
-                urlField.classList.toggle('d-none', type !== 'lien');
-
-                resourceFile.disabled = type !== 'fichier';
-                resourceFile.required = type === 'fichier';
-                resourceUrl.disabled = type !== 'lien';
-                resourceUrl.required = type === 'lien';
-
-                if (type === 'fichier') {
-                    fileLabel.textContent = 'Document';
-                    fileHelp.textContent = 'PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, JPG ou PNG';
-                } else if (type === 'video') {
-                    fileLabel.textContent = 'Fichier vidéo';
-                    fileHelp.textContent = 'MP4, WebM, OGG, MOV, AVI ou MKV';
-                    mettreAJourSourceVideo();
-                }
-            }
-
-            if (resourceType) resourceType.addEventListener('change', mettreAJourTypeRessource);
-            if (videoUpload) videoUpload.addEventListener('change', mettreAJourSourceVideo);
-            if (videoUrl) videoUrl.addEventListener('change', mettreAJourSourceVideo);
-            mettreAJourTypeRessource();
+    // ---------- Onglets : on retient le dernier ouvert (utile après un ajout, qui recharge la page) ----------
+    const ongletDansAdresse = @json($onglet);
+    document.querySelectorAll('[data-onglet]').forEach(function (bouton) {
+        bouton.addEventListener('shown.bs.tab', function () {
+            try { sessionStorage.setItem('contenusOnglet', bouton.dataset.onglet); } catch (e) {}
         });
-    </script>
+    });
+    if (!ongletDansAdresse) {
+        let dernier = null;
+        try { dernier = sessionStorage.getItem('contenusOnglet'); } catch (e) {}
+        if (dernier === 'ressources') {
+            bootstrap.Tab.getOrCreateInstance(champ('ongletRessources')).show();
+        }
+    }
+
+    // ---------- Chapitre : créer / modifier ----------
+    const urlAjout = @json(route('admin.cours.chapitres.store', $cours));
+    const modeAvecErreur = @json($modeAvecErreur);
+    const modalChapitre = champ('modalChapitre');
+    const formChapitre = champ('formChapitre');
+
+    // Adapte la fenêtre au mode : "ajout" (POST) ou "modif" (PUT)
+    function preparerChapitre(mode) {
+        const modif = mode === 'modif';
+        champ('chapitreTitre').textContent = modif ? 'Modifier le chapitre' : 'Créer un chapitre';
+        champ('champMode').value = mode;
+        champ('champMethode').disabled = !modif;
+        // À la modification le numéro d'ordre est obligatoire (il est déjà rempli)
+        champ('champOrdre').required = modif;
+        champ('aideOrdre').classList.toggle('d-none', modif);
+    }
+
+    modalChapitre.addEventListener('show.bs.modal', function (e) {
+        const bouton = e.relatedTarget;
+        if (!bouton) return;
+
+        const d = bouton.dataset;
+        preparerChapitre(d.mode);
+
+        if (d.mode === 'modif') {
+            champ('champAction').value = d.action;
+            formChapitre.action = d.action;
+            champ('champTitre').value = d.titre;
+            champ('champOrdre').value = d.ordre;
+            champ('champContenu').value = d.contenu || '';
+        } else {
+            champ('champAction').value = urlAjout;
+            formChapitre.action = urlAjout;
+            champ('champTitre').value = '';
+            champ('champOrdre').value = '';
+            champ('champContenu').value = '';
+        }
+    });
+
+    // Validation refusée sur le chapitre : on rouvre la fenêtre avec ce qui avait été saisi
+    if (modeAvecErreur) {
+        preparerChapitre(modeAvecErreur);
+        formChapitre.action = champ('champAction').value || urlAjout;
+        bootstrap.Modal.getOrCreateInstance(modalChapitre).show();
+    }
+
+    // ---------- Suppression (chapitre ou ressource) ----------
+    champ('modalSuppression').addEventListener('show.bs.modal', function (e) {
+        const d = e.relatedTarget.dataset;
+        champ('suppressionTitre').textContent = 'Supprimer ' + d.objet;
+        champ('suppressionObjet').textContent = d.objet;
+        champ('suppressionNom').textContent = d.nom;
+        champ('formSuppression').action = d.action;
+    });
+
+    // ---------- Ressource : champs selon le type ----------
+    const modalRessource = champ('modalRessource');
+    const resourceType = champ('resourceType');
+    const fileField = champ('fileField');
+    const videoSourceField = champ('videoSourceField');
+    const urlField = champ('urlField');
+    const resourceFile = champ('resourceFile');
+    const resourceUrl = champ('resourceUrl');
+    const videoUpload = champ('videoUpload');
+
+    // Montre le champ utile (fichier ou adresse) et désactive l'autre pour qu'il ne soit pas envoyé
+    function majRessource() {
+        const type = resourceType.value;
+        const fichier = type === 'fichier' || (type === 'video' && videoUpload.checked);
+        const adresse = type === 'lien' || (type === 'video' && !videoUpload.checked);
+
+        videoSourceField.classList.toggle('d-none', type !== 'video');
+        fileField.classList.toggle('d-none', !fichier);
+        urlField.classList.toggle('d-none', !adresse);
+
+        resourceFile.disabled = !fichier;
+        resourceFile.required = fichier;
+        resourceUrl.disabled = !adresse;
+        resourceUrl.required = adresse;
+
+        champ('fileLabel').textContent = type === 'video' ? 'Fichier vidéo' : 'Document';
+        champ('fileHelp').textContent = type === 'video'
+            ? 'MP4, WebM, OGG, MOV, AVI ou MKV'
+            : 'PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, JPG ou PNG';
+    }
+
+    resourceType.addEventListener('change', majRessource);
+    document.querySelectorAll('input[name="video_source"]').forEach(r => r.addEventListener('change', majRessource));
+
+    // Ouverture par le bouton : formulaire remis à zéro (pas en cas de retour d'erreur, géré plus bas)
+    modalRessource.addEventListener('show.bs.modal', function (e) {
+        if (!e.relatedTarget) return;
+        champ('formRessource').reset();
+        resourceType.value = 'fichier';
+        videoUpload.checked = true;
+        majRessource();
+    });
+
+    majRessource();
+
+    @if ($formAvecErreur === 'ressource')
+        bootstrap.Modal.getOrCreateInstance(modalRessource).show();
+    @endif
+});
+</script>
 @endsection

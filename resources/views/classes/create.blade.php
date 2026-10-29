@@ -68,6 +68,7 @@
                     </div>
                     <input type="file" name="lieu_image" id="lieu_image" accept="image/*"
                            class="form-control @error('lieu_image') is-invalid @enderror">
+                    <div class="form-text">Taille maximale : 5 Mo.</div>
                     @error('lieu_image')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

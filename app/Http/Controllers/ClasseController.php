@@ -170,8 +170,12 @@ class ClasseController extends Controller
             };
         }
 
+        // La dernière classe créée apparaît en premier (puis, à égalité, la plus récente par date de début)
+        $classes = $query->orderByDesc('id')->paginate(10)->withQueryString();
+        $classes->getCollection()->load(['inscriptions.user', 'inscriptions.paiement']);
+
         return view('classes.liste', [
-            'classes' => $query->orderByDesc('date_debut')->paginate(10)->withQueryString(),
+            'classes' => $classes,
             'groupe' => $groupe,
             'cleGroupe' => $cleGroupe,
             'comptesGroupes' => $comptesGroupes,
@@ -390,7 +394,7 @@ class ClasseController extends Controller
             'lieu' => ['required', 'string', 'max:255'],
             // lien Google Maps (facultatif) et photo du lieu (facultative)
             'lieu_lien' => ['nullable', 'url', 'max:500'],
-            'lieu_image' => ['nullable', 'image', 'max:2048'],
+            'lieu_image' => ['nullable', 'image', 'max:5120'],
             'date_debut' => ['required', 'date'],
             // la date de fin ne peut pas précéder la date de début
             'date_fin' => ['required', 'date', 'after_or_equal:date_debut'],
@@ -454,7 +458,7 @@ class ClasseController extends Controller
             $classe->synchroniserJoursExclus($joursExclus);
         });
 
-        return redirect()->route('admin.cours.classes.index', $cours)
+        return redirect()->route('admin.classes.index')
             ->with('success', 'Classe créée avec succès.');
     }
 
@@ -489,7 +493,7 @@ class ClasseController extends Controller
 
         $classe->update($data);
 
-        return redirect()->route('admin.cours.classes.index', $cours)
+        return redirect()->route('admin.classes.index')
             ->with('success', 'Classe modifiée avec succès.');
     }
 
@@ -533,7 +537,7 @@ class ClasseController extends Controller
     {
         $classe->delete();
 
-        return redirect()->route('admin.classes.index', $cours)
+        return redirect()->route('admin.classes.index')
             ->with('success', 'Classe supprimée avec succès.');
     }
 
@@ -549,10 +553,10 @@ class ClasseController extends Controller
         try {
             $service->fermer($classe, Auth::user());
         } catch (DomainException $e) {
-            return redirect()->route('admin.cours.classes.edit', [$cours, $classe])->with('error', $e->getMessage());
+            return redirect()->route('admin.classes.index')->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+        return redirect()->route('admin.classes.index')
             ->with('success', 'La classe est fermée. Les taux de présence et les attestations ont été calculés.');
     }
 
@@ -572,7 +576,7 @@ class ClasseController extends Controller
         // Un jour exclu qui sort de la nouvelle période n'a plus de sens : on le retire
         $classe->purgerJoursExclusHorsPeriode();
 
-        return redirect()->route('admin.cours.classes.index', $cours)
+        return redirect()->route('admin.classes.index')
             ->with('success', 'Sessions reportées avec succès.');
     }
 

@@ -31,7 +31,7 @@ class AdminInscriptionController extends Controller
     /**
      * Liste des inscriptions : TOUJOURS du plus récent au plus ancien, quels que soient les filtres.
      */
-    public function index(Request $request)
+    public function index(Request $request, PaiementService $paiementService)
     {
         $request->validate([
             'cours' => ['nullable', 'integer', 'exists:cours,id'],
@@ -51,9 +51,11 @@ class AdminInscriptionController extends Controller
 
         $query = Inscription::with(['user.role', 'classe.cours', 'paiement']);
 
-        // --- Recherche par nom de l'utilisateur inscrit ---
+        // --- Recherche par nom ou e-mail de l'utilisateur inscrit ---
         if ($recherche = trim((string) $request->input('q'))) {
-            $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$recherche}%"));
+            $query->whereHas('user', fn ($q) => $q->where(fn ($w) => $w
+                ->where('name', 'like', "%{$recherche}%")
+                ->orWhere('email', 'like', "%{$recherche}%")));
         }
 
         // --- Filtre par cours (via la classe) ---
@@ -88,18 +90,38 @@ class AdminInscriptionController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $total = Inscription::count();
-        $payees = Inscription::payees()->count();
+        // Prix actuel de la classe pour chaque inscription (prix particulier ou entreprise selon le compte) :
+        // sert aux colonnes Montant versé / Reste de la liste quand l'inscription n'est pas encore payée
+        $inscriptions->getCollection()->each(
+            fn (Inscription $i) => $i->montant_du = $paiementService->montantDe($i)
+        );
+
+        // Classes proposées dans la fenêtre d'ajout / de modification : celles encore ouvertes aux
+        // inscriptions + celles des inscriptions affichées (pour pouvoir modifier une inscription
+        // dont la classe a déjà commencé)
+        $classesForm = $this->classesOuvertes()
+            ->concat(
+                Classe::with('cours:id,titre')
+                    ->withCount('inscriptions')
+                    ->whereIn('id', $inscriptions->pluck('classe_id'))
+                    ->get()
+            )
+            ->unique('id')
+            ->sortBy('date_debut')
+            ->values();
 
         return view('inscriptions.index', [
             'inscriptions' => $inscriptions,
             'statutsChoisis' => $statuts,
             'coursListe' => Cours::orderBy('titre')->get(['id', 'titre']),
             'classesListe' => Classe::with('cours:id,titre')->orderBy('nom')->get(['id', 'nom', 'cours_id']),
+            'utilisateurs' => $this->utilisateursInscriptibles(),
+            'classesForm' => $classesForm,
+            // Totaux sur toute la base (pas seulement la page affichée, ni les filtres)
             'stats' => [
-                'total' => $total,
-                'payees' => $payees,
-                'en_attente' => $total - $payees,
+                'total' => Inscription::count(),
+                'payees' => Inscription::payees()->count(),
+                'en_attente' => Inscription::count() - Inscription::payees()->count(),
             ],
         ]);
     }

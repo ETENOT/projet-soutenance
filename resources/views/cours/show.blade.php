@@ -1,3 +1,4 @@
+
 @extends(Auth::check() ? 'layouts.master' : 'layouts.master-without-nav')
 
 @section('title', $cours->titre)
@@ -81,7 +82,14 @@
                                 </span>
                             </div>
 
-                            <p class="text-muted mb-3">{{ $cours->description }}</p>
+                            {{-- Description conservée sous le titre --}}
+                            <p class="text-muted mb-3" style="line-height: 1.7;">
+                                @if($cours->description)
+                                    {{ $cours->description }}
+                                @else
+                                    Aucune description n'est disponible pour cette formation.
+                                @endif
+                            </p>
 
                             {{-- Note + nombre de classes --}}
                             <div class="d-flex flex-wrap align-items-center gap-4 small fw-semibold">
@@ -197,22 +205,52 @@
         <div class="tab-pane fade show active" id="presentation" role="tabpanel" aria-labelledby="presentation-tab">
             <div class="row g-3">
 
-                <div class="col-lg-8">
+                {{-- Présentation --}}
+                <div class="col-lg-5">
                     <div class="card border shadow-sm h-100">
                         <div class="card-body p-4">
+
                             <table class="table table-borderless align-middle mb-0">
                                 <tbody>
                                     <tr>
-                                        <td class="text-muted"><i class="ri-bookmark-line text-danger me-2"></i>Catégorie</td>
-                                        <td class="text-end fw-bold">{{ $cours->categorie?->nom }}</td>
+                                        <td class="text-muted">
+                                            <i class="ri-book-line text-danger me-2"></i>Titre
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            {{ $cours->titre }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="text-muted">
+                                            <i class="ri-bookmark-line text-danger me-2"></i>Catégorie
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            {{ $cours->categorie?->nom }}
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="text-muted">
+                                            <i class="ri-file-text-line text-danger me-2"></i>Description
+                                        </td>
+                                        <td class="text-end fw-bold">
+                                            @if($cours->description)
+                                                {!! nl2br(e($cours->description)) !!}
+                                            @else
+                                                Aucune description disponible.
+                                            @endif
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
+
                         </div>
                     </div>
                 </div>
 
-                <div class="col-lg-4">
+                {{-- Prochaines classes : largeur augmentée --}}
+                <div class="col-lg-7">
                     <div class="card border shadow-sm h-100">
                         <div class="card-body p-4">
                             <h5 class="fw-bold mb-4">
@@ -232,6 +270,7 @@
                                             @include('partials.lieu-classe', ['classe' => $classe])
                                         </div>
                                     </div>
+
                                     <span class="badge bg-success-subtle text-success flex-shrink-0">
                                         <i class="ri-checkbox-circle-fill me-1"></i>Disponible
                                     </span>
@@ -322,7 +361,7 @@
                                         {{ $classe->inscriptions_count ?? 0 }} / {{ $classe->capacite_max }} inscrits
                                     </div>
 
-                                    {{-- Lieu : lien Google Maps (localisation et itinéraire) avec la photo du lieu --}}
+                                    {{-- Lieu : lien Google Maps avec la photo du lieu --}}
                                     <div class="small mt-2">
                                         @include('partials.lieu-classe', ['classe' => $classe, 'image' => true])
                                     </div>
@@ -419,6 +458,7 @@
                                     </a>
                                 </div>
                             </div>
+
                             {{-- Graphique de progression du particulier sur ce cours --}}
                             @include('quiz.partials.progression', ['progression' => $progressionQuiz ?? []])
                         @endif
@@ -466,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ----- Ouvre l'onglet Avis (lien #avis, ou erreur de validation du formulaire) -----
     const erreurAvis = {{ $errors->has('note') || $errors->has('commentaire') ? 'true' : 'false' }};
     if (window.location.hash === '#avis' || erreurAvis) {
-        document.getElementById('avis-tab')?.click();  
+        document.getElementById('avis-tab')?.click();
     }
 });
 </script>

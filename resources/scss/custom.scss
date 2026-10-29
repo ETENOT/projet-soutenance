@@ -1161,3 +1161,159 @@ html[data-sidebar="dark"] {
         padding: .75rem;
     }
 }
+
+// ===== Administration : liste des classes (à coller à la fin de resources/scss/custom.scss) =====
+// Largeurs des colonnes : coche, cours, classe, formateur, période/statut, inscrits, actions
+.table-classes {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+        padding: .55rem .45rem;
+        overflow-wrap: anywhere;
+    }
+
+    thead th {
+        &:nth-child(1) { width: 4%; }
+        &:nth-child(2) { width: 18%; }
+        &:nth-child(3) { width: 18%; }
+        &:nth-child(4) { width: 15%; }
+        &:nth-child(5) { width: 20%; }
+        &:nth-child(6) { width: 11%; }
+        &:nth-child(7) { width: 14%; }
+    }
+
+    .classe-dates,
+    .classe-actions {
+        white-space: nowrap;
+    }
+}
+
+// Photo du lieu dans la fiche « Voir »
+.detail-image {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+}
+
+@media (max-width: 767.98px) {
+    .table-classes {
+        font-size: .875rem;
+
+        .classe-dates {
+            white-space: normal;
+        }
+    }
+}
+
+// ===== Administration : liste des cours (à coller à la fin de resources/scss/custom.scss) =====
+// Largeurs des colonnes : coche, cours, catégorie, prix particulier, prix entreprise, actions
+.table-cours {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+        padding: .55rem .45rem;
+        overflow-wrap: anywhere;
+    }
+
+    thead th {
+        &:nth-child(1) { width: 4%; }
+        &:nth-child(2) { width: 32%; }
+        &:nth-child(3) { width: 18%; }
+        &:nth-child(4) { width: 17%; }
+        &:nth-child(5) { width: 17%; }
+        &:nth-child(6) { width: 12%; }
+    }
+
+    .cours-actions {
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .table-cours {
+        font-size: .875rem;
+    }
+}
+
+// ===== Administration : chapitres et ressources d'un cours (à coller à la fin de resources/scss/custom.scss) =====
+.table-contenus {
+    th,
+    td {
+        padding: .55rem .45rem;
+        overflow-wrap: anywhere;
+    }
+
+    // Première colonne = numéro : étroite
+    thead th:first-child {
+        width: 6%;
+    }
+
+    .contenus-actions {
+        white-space: nowrap;
+    }
+}
+
+// ===== Champs téléphone (intl-tel-input) =====
+// Le champ occupe toute la largeur, comme les autres champs du formulaire
+.iti {
+    width: 100%;
+}
+
+// Le nom du pays ne s'étire plus sur toute la ligne : drapeau et indicatif restent à côté du nom
+.iti__country-list .iti__country-name {
+    flex-grow: 0;
+}
+
+// Espace entre le nom du pays et le drapeau (le drapeau est après le nom)
+.iti__country-list .iti__flag {
+    margin-left: var(--iti-spacer-horizontal);
+}
+
+// La coche du pays sélectionné reste à l'extrémité droite de la ligne
+.iti__country-list .iti__country-check {
+    margin-left: auto;
+    padding-left: var(--iti-spacer-horizontal);
+}
+
+// ===== Listes d'administration : cellules « façon Excel » =====
+// Le texte trop long est coupé avec « … » au lieu d'agrandir la colonne.
+// Le texte complet apparaît au survol (attribut title posé dans la vue).
+.cellule-tronquee {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Variante plus étroite (noms de cours, de classes...)
+.cellule-tronquee-sm {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Variante plus large (e-mails)
+.cellule-tronquee-lg {
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+// Pour les tableaux à colonnes fixes (.table-classes, .table-cours) :
+// la largeur vient de la colonne, on coupe simplement le texte.
+.cellule-tronquee-fixe {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.table-classes .cellule-tronquee-fixe,
+.table-cours .cellule-tronquee-fixe {
+    overflow-wrap: normal;
+}

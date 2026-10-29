@@ -262,6 +262,10 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/categories/{categorie}', [App\Http\Controllers\CategorieController::class, 'destroy'])
             ->name('categories.destroy');
 
+        // Suppression multiple des catégories cochées dans la liste
+        Route::post('/categories/suppression-multiple', [App\Http\Controllers\CategorieController::class, 'destroyMultiple'])
+            ->name('categories.destroy-multiple');
+
         // ------------------------------------------------------------------
         // ATTESTATIONS délivrées (liste, du plus récent au plus ancien)
         // ------------------------------------------------------------------
@@ -304,6 +308,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/formateurs/{formateur}/classes/{classe}', [App\Http\Controllers\AdminFormateurController::class, 'retirerClasse'])
             ->name('formateurs.classes.destroy');
 
+        Route::post('/formateurs/suppression-multiple', [App\Http\Controllers\AdminFormateurController::class, 'destroyMultiple'])
+            ->name('formateurs.destroy-multiple');
+
         // ------------------------------------------------------------------
         // COURS
         // ------------------------------------------------------------------
@@ -341,6 +348,10 @@ Route::middleware(['auth', 'role:admin'])
         // Suppression multiple des cours cochés dans la liste
         Route::post('/cours/suppression-multiple', [App\Http\Controllers\CoursController::class, 'destroyMultiple'])
             ->name('cours.destroy-multiple');
+
+        // Actions groupées sur les cours cochés (changer de catégorie, supprimer)
+        Route::post('/cours/actions', [App\Http\Controllers\CoursController::class, 'actionsGroupees'])
+            ->name('cours.actions');
 
         // Evaluation de la formation (formateur + formation) à la fin d'une classe
         Route::get('/evaluations', [App\Http\Controllers\AdminEvaluationController::class, 'index'])
@@ -393,7 +404,7 @@ Route::middleware(['auth', 'role:admin'])
         // Actions groupées sur les questions cochées (changer de cours, supprimer).
         // Déclarée AVANT la resource, comme les routes d'import.
         Route::post('/questions/actions', [App\Http\Controllers\QuestionController::class, 'actionsGroupees'])->name('questions.actions');
-        Route::resource('questions', App\Http\Controllers\QuestionController::class)->except(['show']);
+        Route::resource('questions', App\Http\Controllers\QuestionController::class)->only(['index', 'store', 'update', 'destroy']);
 
         // Suivi des quiz (tentatives des particuliers et des visiteurs) : liste
         Route::get('/quiz', [App\Http\Controllers\AdminQuizController::class, 'index'])->name('quiz.index');
@@ -404,7 +415,8 @@ Route::middleware(['auth', 'role:admin'])
         // Suivi des quiz (tentatives des particuliers et des visiteurs) : détail, suppression
         Route::get('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'show'])->name('quiz.show');
         Route::delete('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'destroy'])->name('quiz.destroy');
-
+        Route::post('/quiz/suppression-multiple', [App\Http\Controllers\AdminQuizController::class, 'destroyMultiple'])
+            ->name('quiz.destroy-multiple');
         // ------------------------------------------------------------------
         // INSCRIPTIONS (liste filtrable, création, fiche, modification, suppression)
         // ------------------------------------------------------------------

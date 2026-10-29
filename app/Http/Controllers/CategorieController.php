@@ -8,10 +8,22 @@ use Illuminate\Validation\Rule;
 
 class CategorieController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // cours_count : nombre de cours de chaque catégorie (sert à bloquer la suppression), en une seule requête SQL
+        $recherche = trim((string) $request->input('q'));
+
+        $categories = Categorie::withCount('cours')
+            ->when($recherche !== '', fn ($q) => $q->where('nom', 'like', '%' . $recherche . '%'))
+            // La dernière catégorie créée s'affiche en haut de la liste
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+
         return view('categories.index', [
-            'categories' => Categorie::withCount('cours')->orderBy('nom')->get(),
+            'categories' => $categories,
+            // Total sur toute la base (pas seulement la page ni la recherche)
+            'nombreCategories' => Categorie::count(),
         ]);
     }
 
@@ -24,7 +36,7 @@ class CategorieController extends Controller
         Categorie::create($data);
 
         return redirect()->route('admin.categories.index')
-            ->with('success', 'Catégorie ajoutée avec succès.');
+            ->with('success', 'Catégorie créée avec succès.');
     }
 
     public function update(Request $request, Categorie $categorie)
@@ -50,5 +62,44 @@ class CategorieController extends Controller
 
         return redirect()->route('admin.categories.index')
             ->with('success', 'Catégorie supprimée avec succès.');
+    }
+
+    /**
+     * Suppression multiple : supprime les catégories cochées dans la liste.
+     * Chaque catégorie est traitée séparément : celles qui ont des cours sont ignorées
+     * et expliquées dans le message, les autres sont supprimées normalement.
+     */
+    public function destroyMultiple(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:categories,id'],
+        ], [
+            'ids.required' => 'Sélectionnez au moins une catégorie.',
+        ]);
+
+        $supprimees = 0;
+        $ignorees = [];
+
+        foreach (Categorie::withCount('cours')->whereIn('id', $data['ids'])->get() as $categorie) {
+            if ($categorie->cours_count > 0) {
+                $ignorees[] = "« {$categorie->nom} » : {$categorie->cours_count} cours rattaché(s)";
+                continue;
+            }
+
+            $categorie->delete();
+            $supprimees++;
+        }
+
+        // back() : on revient sur la liste avec la même recherche
+        $retour = back();
+        if ($supprimees > 0) {
+            $retour->with('success', "{$supprimees} catégorie(s) supprimée(s).");
+        }
+        if ($ignorees) {
+            $retour->with('error', 'Non supprimée(s) : ' . implode(' ; ', $ignorees) . '.');
+        }
+
+        return $retour;
     }
 }

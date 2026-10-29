@@ -18,7 +18,8 @@ class AdminQuizController extends Controller
     {
         $recherche = trim((string) $request->input('q'));
 
-        $quizzes = Quiz::with(['cours:id,titre', 'user:id,name,email', 'resultats'])
+        // reponses.question.options : tout ce qu'il faut pour la correction affichée dans la fenêtre « Voir »
+        $quizzes = Quiz::with(['cours:id,titre', 'user:id,name,email', 'resultats', 'reponses' => fn ($r) => $r->orderBy('ordre'), 'reponses.question.options'])
             ->withCount('reponses')
             ->when($request->filled('cours_id'), fn ($q) => $q->where('cours_id', $request->input('cours_id')))
             // "Terminé" = il existe une ligne resultats_quiz pour cette tentative
@@ -33,8 +34,8 @@ class AdminQuizController extends Controller
                           ->orWhere('email', 'like', "%{$recherche}%"));
                 });
             })
-            ->latest('id')
-            ->paginate(15)
+            ->orderByDesc('id')
+            ->paginate(10)
             ->withQueryString();
 
         // Chiffres clés affichés en haut de page
@@ -89,24 +90,28 @@ class AdminQuizController extends Controller
         return redirect()->route('admin.quiz.reglages')->with('success', 'Les réglages de notation ont été enregistrés.');
     }
 
-    // Détail d'une tentative : infos, score et correction question par question
-    public function show(Quiz $quiz)
-    {
-        $quiz->load(['cours:id,titre', 'user:id,name,email', 'resultats']);
-        $reponses = $quiz->reponses()->with(['question.options'])->orderBy('ordre')->get();
-
-        return view('quiz.admin.show', [
-            'quiz'     => $quiz,
-            'resultat' => $quiz->resultats->first(),
-            'reponses' => $reponses,
-        ]);
-    }
-
     public function destroy(Quiz $quiz)
     {
         // Les réponses (reponses_quiz) et le résultat (resultats_quiz) partent en cascade
         $quiz->delete();
 
-        return redirect()->route('admin.quiz.index')->with('success', 'La tentative de quiz a été supprimée.');
+        // back() : on revient sur la même page de la liste, avec la même recherche
+        return back()->with('success', 'La tentative de quiz a été supprimée.');
+    }
+
+    // Suppression groupée des tentatives cochées (réponses et résultats partent en cascade)
+    public function destroyMultiple(Request $request)
+    {
+        $data = $request->validate([
+            'ids'   => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ], [
+            'ids.required' => 'Sélectionnez au moins une tentative.',
+        ]);
+
+        $nombre = Quiz::whereIn('id', $data['ids'])->count();
+        Quiz::whereIn('id', $data['ids'])->delete();
+
+        return back()->with('success', "{$nombre} tentative(s) supprimée(s).");
     }
 }

@@ -279,10 +279,9 @@ class CoursController extends Controller
             $query->orderBy(Categorie::select('nom')->whereColumn('categories.id', 'cours.categorie_id'));
         }
 
+        // Le dernier cours créé s'affiche en haut de la liste
         $cours = $query
-            ->orderBy('titre')
-            // ordre stable si deux cours ont le même titre
-            ->orderBy('id')
+            ->orderByDesc('id')
             ->paginate(10)
             // conserve les filtres dans les liens de pagination
             ->withQueryString();
@@ -328,6 +327,20 @@ class CoursController extends Controller
         ];
     }
 
+        /**
+     * Messages d'erreur compréhensibles (surtout pour l'image).
+     * "uploaded" : le fichier dépasse la limite de PHP (upload_max_filesize) avant même la validation.
+     */
+    private function messagesValidation(): array
+    {
+        return [
+            'image.max'      => "L'image est trop lourde : 2 Mo maximum. Réduisez sa taille ou choisissez une image plus légère.",
+            'image.uploaded' => "L'image est trop lourde : 2 Mo maximum. Réduisez sa taille ou choisissez une image plus légère.",
+            'image.image'    => "Le fichier choisi n'est pas une image.",
+            'image.mimes'    => "Format d'image non accepté : utilisez JPG, PNG, WEBP ou GIF.",
+        ];
+    }
+
     /**
      * Valide le formulaire et range l'image sur le disque public (dossier cours/images).
      * À la modification : une nouvelle image remplace l'ancienne (supprimée du disque),
@@ -335,7 +348,7 @@ class CoursController extends Controller
      */
     private function donneesValidees(Request $request, ?Cours $cours = null): array
     {
-        $data = $request->validate($this->validationRules());
+        $data = $request->validate($this->validationRules(), $this->messagesValidation());
 
         // Ces deux champs ne sont pas des colonnes : on les retire avant l'enregistrement
         $supprimer = (bool) ($data['supprimer_image'] ?? false);
@@ -390,28 +403,29 @@ class CoursController extends Controller
      * Cette méthode est utilisée par la route :
      * admin.cours.contenus
      */
-   public function contenus(Cours $cours)
+    public function contenus(Cours $cours)
     {
-    // Tous les chapitres du cours
-    $chapitres = $cours->chapitres()
-    ->orderBy('ordre')
-    ->get();
+        // Deux listes indépendantes, chacune paginée par 10 avec son propre numéro de page
+        // (?chapitres_page=, ?ressources_page=) : une longue liste ne cache pas l'autre.
+        // Chapitres dans l'ordre du cours ; ressources : la dernière ajoutée en premier.
+        $chapitres = $cours->chapitres()
+            ->orderBy('ordre')
+            ->orderBy('id')
+            ->paginate(10, ['*'], 'chapitres_page')
+            ->appends(['onglet' => 'chapitres']);
 
-    // Premier chapitre affiché automatiquement
-    $chapitreActif = $chapitres->first();
+        $resources = $cours->resources()
+            ->orderByDesc('id')
+            ->paginate(10, ['*'], 'ressources_page')
+            ->appends(['onglet' => 'ressources']);
 
-    // Toutes les ressources directement liées au cours
-    $resources = $cours->resources()
-        ->orderBy('id')
-        ->get();
-
-    return view('cours.contenus', [
-        'cours' => $cours,
-        'chapitres' => $chapitres,
-        'chapitreActif' => $chapitreActif,
-        'resources' => $resources,
-    ]);
-
+        return view('cours.contenus', [
+            'cours' => $cours,
+            'chapitres' => $chapitres,
+            'resources' => $resources,
+            // Onglet ouvert : celui de l'adresse, sinon le script reprend le dernier utilisé
+            'onglet' => request('onglet') === 'ressources' ? 'ressources' : (request('onglet') === 'chapitres' ? 'chapitres' : null),
+        ]);
     }
 
 
@@ -486,6 +500,34 @@ class CoursController extends Controller
         }
 
         return $retour;
+    }
+
+    /**
+     * Actions groupées sur les cours cochés dans la liste : changer de catégorie | supprimer.
+     * La suppression garde ses protections (voir destroyMultiple).
+     */
+    public function actionsGroupees(Request $request)
+    {
+        $data = $request->validate([
+            'action' => ['required', 'in:changer_categorie,supprimer'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'exists:cours,id'],
+            'categorie_id' => ['required_if:action,changer_categorie', 'nullable', 'integer', 'exists:categories,id'],
+        ], [
+            'action.required' => 'Choisissez une action à appliquer.',
+            'ids.required' => 'Sélectionnez au moins un cours.',
+            'categorie_id.required_if' => 'Choisissez la catégorie de destination.',
+        ]);
+
+        if ($data['action'] === 'supprimer') {
+            return $this->destroyMultiple($request);
+        }
+
+        $nombre = Cours::whereIn('id', $data['ids'])->update(['categorie_id' => $data['categorie_id']]);
+        $categorie = Categorie::find($data['categorie_id']);
+
+        // back() : on revient sur la liste avec les mêmes filtres
+        return back()->with('success', "{$nombre} cours déplacé(s) dans la catégorie « {$categorie->nom} ».");
     }
 
     /**

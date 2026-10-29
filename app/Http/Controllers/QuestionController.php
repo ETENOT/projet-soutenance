@@ -17,7 +17,7 @@ class QuestionController extends Controller
     private const MIN_OPTIONS = 2;
     private const MAX_OPTIONS = 6;
 
-    // Liste paginée, filtrable par cours et par mot-clé dans l'énoncé
+    // Liste paginée (10 par page, la dernière créée en premier), filtrable par cours et par mot-clé dans l'énoncé
     public function index(Request $request)
     {
         $questions = Question::with(['cours:id,titre', 'options'])
@@ -25,19 +25,19 @@ class QuestionController extends Controller
             ->withCount('reponses')
             ->when($request->filled('cours_id'), fn ($q) => $q->where('cours_id', $request->input('cours_id')))
             ->when($request->filled('q'), fn ($q) => $q->where('enonce', 'like', '%' . $request->input('q') . '%'))
-            ->latest('id')
-            ->paginate(15)
+            ->orderByDesc('id')
+            ->paginate(10)
             ->withQueryString();
 
-        // questions_count sert à repérer d'un coup d'œil les cours dont la banque est vide
+        // questions_count : nombre de questions de chaque cours (menus de choix et filtre)
         $cours = Cours::withCount('questions')->orderBy('titre')->get();
 
         // Chiffres des cartes du haut de page (sur TOUTE la banque, indépendamment des filtres)
         $stats = [
             'total'         => Question::count(),
-            'cours_couverts' => Cours::has('questions')->count(),
-            'cours_vides'    => Cours::doesntHave('questions')->count(),
-            // Jamais posée = aucune ligne reponses_quiz ne la référence : on peut la modifier sans risque
+            // Un cours sans question : un particulier ne pourrait pas y passer de quiz
+            'cours_vides'   => $cours->where('questions_count', 0)->count(),
+            // Jamais posée = aucune ligne reponses_quiz ne la référence
             'jamais_posees' => Question::doesntHave('reponses')->count(),
         ];
 
@@ -87,14 +87,6 @@ class QuestionController extends Controller
         return $retour;
     }
 
-    public function create(Request $request)
-    {
-        return view('questions.create', [
-            'cours'       => Cours::orderBy('titre')->get(['id', 'titre']),
-            'coursChoisi' => $request->input('cours_id'),
-        ]);
-    }
-
     public function store(Request $request)
     {
         $data = $this->valider($request);
@@ -118,18 +110,8 @@ class QuestionController extends Controller
         });
 
         return redirect()
-            ->route('admin.questions.index', ['cours_id' => $question->cours_id])
+            ->route('admin.questions.index')
             ->with('success', 'La question a été ajoutée à la banque.');
-    }
-
-    public function edit(Question $question)
-    {
-        $question->loadCount('reponses')->load('options');
-
-        return view('questions.edit', [
-            'question' => $question,
-            'cours'    => Cours::orderBy('titre')->get(['id', 'titre']),
-        ]);
     }
 
     public function update(Request $request, Question $question)
@@ -167,20 +149,16 @@ class QuestionController extends Controller
             $question->options()->whereNotIn('id', $idsGardes)->delete();
         });
 
-        return redirect()
-            ->route('admin.questions.index', ['cours_id' => $question->cours_id])
-            ->with('success', 'La question a été modifiée.');
+        // back() : on revient sur la même page de la liste, avec la même recherche
+        return back()->with('success', 'La question a été modifiée.');
     }
 
     public function destroy(Question $question)
     {
         // Les options et les lignes reponses_quiz liées partent en cascade (clés étrangères)
-        $coursId = $question->cours_id;
         $question->delete();
 
-        return redirect()
-            ->route('admin.questions.index', ['cours_id' => $coursId])
-            ->with('success', 'La question a été supprimée.');
+        return back()->with('success', 'La question a été supprimée.');
     }
 
     // Règles communes à store() et update()
