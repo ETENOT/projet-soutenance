@@ -358,28 +358,6 @@
                         </a>
                     </li>
 
-                    {{-- ENTREPRISE : consulter ses membres (gérés par l'administrateur) --}}
-                    @if (Auth::user()?->role?->nom === 'entreprise')
-                        <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.membres.*') ? 'active' : '' }}"
-                            href="{{ route('entreprise.membres.index') }}">
-                                <i class="ri-team-line"></i>
-                                <span>Membres entreprises</span>
-                            </a>
-                        </li>
-                    @endif
-
-                    {{-- PARTICULIER : voir l'entreprise dont il est membre --}}
-                    @if (Auth::user()?->role?->nom === 'particulier')
-                        <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('particulier.entreprise.*') ? 'active' : '' }}"
-                            href="{{ route('particulier.entreprise.index') }}">
-                                <i class="ri-building-line"></i>
-                                <span>Entreprise</span>
-                            </a>
-                        </li>
-                    @endif
-
 
                     {{-- ENTREPRISE : consulter ses membres (gérés par l'administrateur) --}}
                     @if (Auth::user()?->role?->nom === 'entreprise')

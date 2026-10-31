@@ -192,10 +192,9 @@
                                        class="form-check-input case-formateur" aria-label="Sélectionner {{ $formateur->name }}">
                             </td>
                             <td class="fw-semibold cellule-tronquee" title="{{ $formateur->name }}">
-                                <a href="{{ route('admin.formateurs.show', $formateur) }}" class="text-reset">{{ $formateur->name }}</a>
+                                <a href="{{ route('admin.formateurs.index', $formateur) }}" class="text-reset">{{ $formateur->name }}</a>
                             </td>
                             <td class="text-muted cellule-tronquee-lg" title="{{ $formateur->email }}">{{ $formateur->email }}</td>
-                            <td>{{ $formateur->email }}</td>
                             <td>{{ $formateur->classes_animes_count }}</td>
                             <td>
                                 @if ($formateur->classes_en_cours_count > 0)
@@ -551,34 +550,10 @@
                         <div class="form-text" id="noteEmail">L'adresse est considérée comme vérifiée : pas de code à saisir.</div>
                     </div>
 
-                    {{-- Mots de passe, avec l'œil pour afficher ou masquer --}}
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="champMotDePasse" class="form-label">
-                                Mot de passe <span class="text-muted d-none" id="noteMotDePasse">(vide = inchangé)</span>
-                            </label>
-                            <div class="position-relative auth-pass-inputgroup">
-                                <input type="password" name="password" id="champMotDePasse"
-                                       class="form-control password-input pe-5" autocomplete="new-password">
-                                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                        type="button" aria-label="Afficher ou masquer le mot de passe">
-                                    <i class="ri-eye-fill align-middle"></i>
-                                </button>
-                            </div>
-                            <div class="form-text">8 caractères minimum.</div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label for="champConfirmation" class="form-label">Confirmer le mot de passe</label>
-                            <div class="position-relative auth-pass-inputgroup">
-                                <input type="password" name="password_confirmation" id="champConfirmation"
-                                       class="form-control password-input pe-5" autocomplete="new-password">
-                                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                        type="button" aria-label="Afficher ou masquer la confirmation">
-                                    <i class="ri-eye-fill align-middle"></i>
-                                </button>
-                            </div>
-                        </div>
+                    {{-- Création : pas de saisie, le compte reçoit le mot de passe par défaut (à changer à la 1re connexion) --}}
+                    <div class="alert alert-info py-2 small" id="noteMotDePasseDefaut">
+                        Mot de passe temporaire : <strong>{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</strong>.
+                        L'utilisateur devra le changer à sa première connexion.
                     </div>
                 </div>
 

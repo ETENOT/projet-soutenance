@@ -79,8 +79,9 @@
                                         Mot de passe à changer
                                     </span>
                                 @endif
-                                <a href="{{ route('admin.users.edit', $compte) }}" class="btn btn-sm btn-soft-secondary"
-                                   title="Modifier le compte (gestion des utilisateurs)">
+                                {{-- La page admin.users.edit n'existe plus : la modification se fait dans la fenêtre de la liste --}}
+                                <a href="{{ route('admin.users.index', ['q' => $compte->email]) }}" class="btn btn-sm btn-soft-secondary"
+                                title="Modifier le compte (gestion des utilisateurs)">
                                     <i class="ri-edit-line"></i>
                                 </a>
                             </div>

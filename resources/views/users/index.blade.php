@@ -531,31 +531,11 @@
                         </select>
                     </div>
 
-                    {{-- Mot de passe : bouton œil géré par password-addon.init.js (comme à l'inscription) --}}
-                    <div class="mb-3">
-                        <label for="champMotDePasse" class="form-label">Mot de passe</label>
-                        <div class="position-relative auth-pass-inputgroup">
-                            <input type="password" name="password" id="champMotDePasse"
-                                   class="form-control password-input pe-5" minlength="8" autocomplete="new-password">
-                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                    type="button" tabindex="-1" aria-label="Afficher ou masquer le mot de passe">
-                                <i class="ri-eye-fill align-middle"></i>
-                            </button>
-                        </div>
-                        <div class="form-text d-none" id="noteMotDePasse">Laissez vide pour conserver le mot de passe actuel.</div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="champConfirmation" class="form-label">Confirmation du mot de passe</label>
-                        <div class="position-relative auth-pass-inputgroup">
-                            <input type="password" name="password_confirmation" id="champConfirmation"
-                                   class="form-control password-input pe-5" minlength="8" autocomplete="new-password">
-                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                    type="button" tabindex="-1" aria-label="Afficher ou masquer la confirmation">
-                                <i class="ri-eye-fill align-middle"></i>
-                            </button>
-                        </div>
-                    </div>
+                    {{-- Création : pas de saisie, le compte reçoit le mot de passe par défaut (à changer à la 1re connexion) --}}
+                    <div class="alert alert-info py-2 small" id="noteMotDePasseDefaut">
+                        Mot de passe temporaire : <strong>{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</strong>.
+                        L'utilisateur devra le changer à sa première connexion.
+                    </div>              
 
                     {{-- Particulier : affiché seulement si le type de compte est "particulier".
                          Le téléphone n'a pas de "name" : intl-tel-input crée à l'envoi un champ caché

@@ -80,6 +80,13 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/paiement/error', [App\Http\Controllers\PaiementController::class, 'error'])
         ->name('paiements.error');
+
+    // Première connexion d'un compte créé par l'admin : changement obligatoire du mot de passe par défaut.
+    // Noms en « password.force.* » : le middleware ForcePasswordChange laisse passer ces routes.
+    Route::get('/premier-mot-de-passe', [App\Http\Controllers\PremierMotDePasseController::class, 'edit'])
+        ->name('password.force.edit');
+    Route::put('/premier-mot-de-passe', [App\Http\Controllers\PremierMotDePasseController::class, 'update'])
+        ->name('password.force.update');
 });
 
 // Paiement direct au comptoir — réservé à l'admin
@@ -206,6 +213,10 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
 
     Route::post('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'store'])
         ->name('evaluations.store');
+
+    // Onglet « Entreprise » : entreprise dont le particulier est membre (lecture seule)
+    Route::get('/mon-entreprise', [App\Http\Controllers\MonEntrepriseController::class, 'index'])
+        ->name('particulier.entreprise.index');
 });
 
 
@@ -245,6 +256,16 @@ Route::get('/cours/{cours}/resources/{resource}/telecharger', [App\Http\Controll
 
 
 // ==========================================================================
+// ESPACE PARTICULIER
+// ==========================================================================
+
+Route::middleware(['auth', 'role:entreprise'])->group(function () {
+    // Onglet « Membres entreprises » : membres gérés par l'admin (lecture seule)
+    Route::get('/entreprise/membres', [App\Http\Controllers\EntrepriseMembreController::class, 'index'])
+        ->name('entreprise.membres.index');
+});
+
+// ==========================================================================
 // ADMINISTRATION
 // ==========================================================================
 
@@ -281,18 +302,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/formateurs', [App\Http\Controllers\AdminFormateurController::class, 'index'])
             ->name('formateurs.index');
 
-        Route::get('/formateurs/create', [App\Http\Controllers\AdminFormateurController::class, 'create'])
-            ->name('formateurs.create');
-
         Route::post('/formateurs', [App\Http\Controllers\AdminFormateurController::class, 'store'])
             ->name('formateurs.store');
-
-        // Fiche : classes affectées + avis anonymes
-        Route::get('/formateurs/{formateur}', [App\Http\Controllers\AdminFormateurController::class, 'show'])
-            ->name('formateurs.show');
-
-        Route::get('/formateurs/{formateur}/edit', [App\Http\Controllers\AdminFormateurController::class, 'edit'])
-            ->name('formateurs.edit');
 
         Route::put('/formateurs/{formateur}', [App\Http\Controllers\AdminFormateurController::class, 'update'])
             ->name('formateurs.update');
@@ -412,8 +423,6 @@ Route::middleware(['auth', 'role:admin'])
         // serait pris pour l'id d'un quiz.
         Route::get('/quiz/reglages', [App\Http\Controllers\AdminQuizController::class, 'reglages'])->name('quiz.reglages');
         Route::put('/quiz/reglages', [App\Http\Controllers\AdminQuizController::class, 'enregistrerReglages'])->name('quiz.reglages.update');
-        // Suivi des quiz (tentatives des particuliers et des visiteurs) : détail, suppression
-        Route::get('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'show'])->name('quiz.show');
         Route::delete('/quiz/{quiz}', [App\Http\Controllers\AdminQuizController::class, 'destroy'])->name('quiz.destroy');
         Route::post('/quiz/suppression-multiple', [App\Http\Controllers\AdminQuizController::class, 'destroyMultiple'])
             ->name('quiz.destroy-multiple');

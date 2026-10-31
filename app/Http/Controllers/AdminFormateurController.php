@@ -126,7 +126,7 @@ class AdminFormateurController extends Controller
         // Compte créé par l'admin : pas de code de vérification à saisir
         $formateur->markEmailAsVerified();
 
-        return redirect()->route('admin.formateurs.show', $formateur)
+        return redirect()->route('admin.formateurs.index', $formateur)
             ->with('success', 'Formateur créé avec succès. (mot de passe temporaire : '
                     . User::MOT_DE_PASSE_PAR_DEFAUT . ', à changer à sa première connexion). '
                     . 'Vous pouvez maintenant maintenant lui affecter des classes.');
