@@ -34,7 +34,7 @@
                     <div class="text-center mt-sm-5 mb-4 text-white-50">
                         <div>
                             <a href="{{ url('/') }}" class="d-inline-block auth-logo">
-                                <img src="{{ asset('images/logo_neovision.png') }}" alt="Néovision" height="55">
+                                <img src="{{ asset('images/logo-nv-transparent.png') }}" alt="Néovision" height="55">
                             </a>
                         </div>
                         <p class="mt-3 fs-15 fw-medium">Formation NéoVision</p>

@@ -52,7 +52,7 @@
                             <a href="{{ url('/') }}"
                                class="d-inline-block auth-logo">
 
-                                <img src="{{ asset('images/logo_neovision.png') }}" alt="Néovision"
+                                <img src="{{ asset('images/logo-nv-transparent.png') }}" alt="Néovision"
                                      height="55">
 
                             </a>

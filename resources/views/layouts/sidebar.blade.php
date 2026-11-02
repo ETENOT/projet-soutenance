@@ -94,18 +94,16 @@
                         </a>
                     </li>
 
-                    {{-- ================================
+                     {{-- ================================
                          ENTREPRISES
                     ================================= --}}
                     <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.entreprises.*') ? 'active' : '' }}"
-                        href="{{ route('admin.entreprises.index') }}">
-                            <i class="ri-building-2-line"></i>
-                            <span>Gestion des entreprises</span>
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.sessions.*') ? 'active' : '' }}"
+                        href="{{ route('admin.sessions.index') }}">
+                            <i class="ri-calendar-schedule-line"></i>
+                            <span>Gestion des sessions</span>
                         </a>
                     </li>
-
-                     {{-- ================================
                          FORMATEURS (CRUD, affectations, avis anonymes)
                     ================================= --}}
 
@@ -114,31 +112,6 @@
                         href="{{ route('admin.formateurs.index') }}">
                             <i class="ri-user-star-line"></i>
                             <span>Gestion des formateurs</span>
-                        </a>
-                    </li>
-
-
-                    {{-- ================================
-                         COURS
-                    ================================= --}}
-
-                    <li class="nav-item">
-
-                        <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
-                            href="{{ route('admin.cours.index') }}"
-                        >
-                            <i class="ri-book-open-line"></i>
-                            <span>Gestion des cours</span>
-                        </a>
-
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
-                           href="{{ route('admin.categories.index') }}">
-                            <i class="ri-price-tag-3-line"></i>
-                            <span>Catégories</span>
                         </a>
                     </li>
 
@@ -157,27 +130,31 @@
                     </li>
 
                     {{-- ================================
-                        INSCRIPTIONS
+                         COURS
                     ================================= --}}
 
                     <li class="nav-item">
+
                         <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
-                            href="{{ route('admin.inscriptions.index') }}"
+                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
+                            href="{{ route('admin.cours.index') }}"
                         >
-                            <i class="ri-user-add-line"></i>
-                            <span>Gestion des inscriptions</span>
+                            <i class="ri-book-open-line"></i>
+                            <span>Gestion des cours</span>
                         </a>
+
                     </li>
 
+                    
+
                     {{-- ================================
-                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
+                         ENTREPRISES
                     ================================= --}}
                     <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
-                        href="{{ route('admin.attestations.index') }}">
-                            <i class="ri-award-line"></i>
-                            <span>Attestations</span>
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.entreprises.*') ? 'active' : '' }}"
+                        href="{{ route('admin.entreprises.index') }}">
+                            <i class="ri-building-2-line"></i>
+                            <span>Gestion des entreprises</span>
                         </a>
                     </li>
 
@@ -233,6 +210,32 @@
                     </li>
 
                     {{-- ================================
+                        INSCRIPTIONS
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a
+                            class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
+                            href="{{ route('admin.inscriptions.index') }}"
+                        >
+                            <i class="ri-user-add-line"></i>
+                            <span>Gestion des inscriptions</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                         CATÉGORIES
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
+                           href="{{ route('admin.categories.index') }}">
+                            <i class="ri-price-tag-3-line"></i>
+                            <span>Catégories</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
                          ÉVALUATIONS (formateurs + cours)
                     ================================= --}}
 
@@ -240,6 +243,17 @@
                         <a class="nav-link menu-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}" href="{{ route('admin.evaluations.index') }}">
                             <i class="ri-star-smile-line"></i>
                             <span>Évaluations</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                        ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
+                    ================================= --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
+                        href="{{ route('admin.attestations.index') }}">
+                            <i class="ri-award-line"></i>
+                            <span>Attestations</span>
                         </a>
                     </li>
 
@@ -338,16 +352,27 @@
                             <span>Catalogue des cours</span>
                         </a>
                     </li>
+@if (Auth::user()?->role?->nom != 'entreprise')
+                        <li class="nav-item">
+                            <a
+                                class="nav-link menu-link {{ request()->routeIs('cours.mes') ? 'active' : '' }}"
+                                href="{{ route('cours.mes') }}"
+                            >
+                                <i class="ri-graduation-cap-line"></i>
+                                <span>Mes classes</span>
+                            </a>
+                        </li>
+                    @endif
 
-                    <li class="nav-item">
-                        <a
-                            class="nav-link menu-link {{ request()->routeIs('cours.mes') ? 'active' : '' }}"
-                            href="{{ route('cours.mes') }}"
-                        >
-                            <i class="ri-graduation-cap-line"></i>
-                            <span>Mes classes</span>
-                        </a>
-                    </li>
+                    @if (Auth::user()?->role?->nom === 'entreprise')
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.sessions.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.sessions.index') }}">
+                                <i class="ri-calendar-schedule-line"></i>
+                                <span>Mes sessions</span>
+                            </a>
+                        </li>
+                    @endif
 
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->routeIs('forum.*') ? 'active' : '' }}" href="{{ route('forum.index') }}">

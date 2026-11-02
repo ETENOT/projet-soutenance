@@ -85,22 +85,32 @@
     @include('layouts.vendor-scripts')
 
     <script>
+    document.addEventListener('DOMContentLoaded', function () {
+
         // Ferme automatiquement les messages : 5 secondes pour un succès, 8 pour une erreur
         // (plus longtemps, pour laisser le temps de la lire). On simule un clic sur la croix
         // pour réutiliser la fermeture animée de Bootstrap.
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.flash-toast').forEach(function (toast) {
-                var delai = toast.classList.contains('text-bg-danger') ? 8000 : 5000;
+        document.querySelectorAll('.flash-toast').forEach(function (toast) {
+            var delai = toast.classList.contains('text-bg-danger') ? 8000 : 5000;
 
-                setTimeout(function () {
-                    var croix = toast.querySelector('.btn-close');
-                    if (croix) croix.click();
-                    // Filet de sécurité : si la fermeture animée n'a pas eu lieu, on retire le message.
-                    setTimeout(function () { toast.remove(); }, 600);
-                }, delai);
-            });
+            setTimeout(function () {
+                var croix = toast.querySelector('.btn-close');
+                if (croix) croix.click();
+                // Filet de sécurité : si la fermeture animée n'a pas eu lieu, on retire le message.
+                setTimeout(function () { toast.remove(); }, 600);
+            }, delai);
         });
-    </script>
+
+        // Listes d'administration : le texte complet d'une cellule coupée (« … ») s'affiche au survol
+        document.querySelectorAll('.table-liste td').forEach(function (td) {
+            if (td.scrollWidth > td.clientWidth && !td.title) {
+                td.title = td.textContent.trim();
+            }
+        });
+    });
+</script>
+
+    
 </body>
 
 </html>

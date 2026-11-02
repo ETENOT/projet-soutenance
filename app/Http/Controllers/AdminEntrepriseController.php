@@ -50,22 +50,24 @@ class AdminEntrepriseController extends Controller
             $query->doesntHave('membres');
         }
 
+        $entreprises = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(10)->withQueryString();
+
+        // Entreprises de la page qu'on ne peut pas supprimer d'un clic : e-mail du compte qui a des inscriptions payées
+        // (la fenêtre de suppression l'explique au lieu de laisser l'administrateur découvrir l'échec après coup)
+        $bloquees = User::whereIn('entreprise_id', $entreprises->pluck('id'))
+            ->whereHas('inscriptions', fn ($q) => $q->has('paiement'))
+            ->pluck('email', 'entreprise_id');
+
         return view('entreprises.index', [
-            'entreprises' => $query->orderByDesc('created_at')->orderByDesc('id')->paginate(10)->withQueryString(),
+            'entreprises' => $entreprises,
             'avecMembres' => $avecMembres,
             'sansMembre' => $sansMembre,
+            'bloquees' => $bloquees,
             'stats' => [
                 'entreprises' => Entreprise::count(),
                 'membres' => Particulier::whereNotNull('entreprise_id')->count(),
-                'particuliers_libres' => User::whereHas('role', fn ($q) => $q->where('nom', 'particulier'))
-                    ->whereHas('particulier', fn ($q) => $q->whereNull('entreprise_id'))->count(),
             ],
         ]);
-    }
-
-    public function create()
-    {
-        return view('entreprises.create');
     }
 
     /**
@@ -105,13 +107,14 @@ class AdminEntrepriseController extends Controller
             return $entreprise;
         });
 
-        return redirect()->route('admin.entreprises.show', $entreprise)
+        // La nouvelle entreprise apparaît en haut de la liste
+        return redirect()->route('admin.entreprises.index')
             ->with('success', 'Entreprise créée. Mot de passe temporaire du compte : '
                 . User::MOT_DE_PASSE_PAR_DEFAUT . ' (à changer à la première connexion).');
     }
 
     /**
-     * Fiche de l'entreprise : informations, comptes de connexion et liste des membres.
+     * Page « Membres » d'une entreprise : ses informations, ses comptes de connexion et la liste de ses membres.
      */
     public function show(Request $request, Entreprise $entreprise)
     {
@@ -132,11 +135,6 @@ class AdminEntrepriseController extends Controller
         ]);
     }
 
-    public function edit(Entreprise $entreprise)
-    {
-        return view('entreprises.edit', ['entreprise' => $entreprise]);
-    }
-
     public function update(Request $request, Entreprise $entreprise)
     {
         $this->normaliserTelephones($request, ['contact_principal']);
@@ -150,8 +148,8 @@ class AdminEntrepriseController extends Controller
 
         $entreprise->update($data);
 
-        return redirect()->route('admin.entreprises.show', $entreprise)
-            ->with('success', 'Entreprise modifiée avec succès.');
+        // back() : on revient sur la même page de la liste, avec la même recherche
+        return back()->with('success', 'Entreprise modifiée avec succès.');
     }
 
     /**
@@ -212,9 +210,9 @@ class AdminEntrepriseController extends Controller
     private function obstacleSuppression(Entreprise $entreprise): ?string
     {
         foreach ($entreprise->users as $compte) {
-            if ($compte->inscriptions()->has('paiement')->exists()) {
-                return "« {$entreprise->raison_sociale} » : son compte {$compte->email} a des inscriptions payées "
-                    . '(supprimez-le depuis la gestion des utilisateurs, en connaissance de cause)';
+            if ($entreprise->sessions()->exists()) {
+                return "« {$entreprise->raison_sociale} » : Elle a des sessions de formation"
+                    . '(supprimez ou réaffectez-les depuis la gestion des sessions)';
             }
         }
 

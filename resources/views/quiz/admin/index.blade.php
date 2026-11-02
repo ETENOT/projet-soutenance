@@ -116,7 +116,7 @@
 
                         @foreach ($etiquettes as [$texte, $retirer, $icone])
                             <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
-                                <i class="{{ $icone }}"></i>{{ $texte }}
+                                <i class="{{ $icone }}"></i><span class="text-truncate" title="{{ $texte }}">{{ $texte }}</span>
                                 <a href="{{ $sans($retirer) }}" class="text-primary ms-1" title="Retirer ce filtre" aria-label="Retirer le filtre {{ $texte }}">
                                     <i class="ri-close-line"></i>
                                 </a>

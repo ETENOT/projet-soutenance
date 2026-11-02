@@ -172,7 +172,7 @@ class ClasseController extends Controller
 
         // La dernière classe créée apparaît en premier (puis, à égalité, la plus récente par date de début)
         $classes = $query->orderByDesc('id')->paginate(10)->withQueryString();
-        $classes->getCollection()->load(['inscriptions.user', 'inscriptions.paiement']);
+        $classes->getCollection()->load(['inscriptions.user', 'inscriptions.paiement', 'joursExclus']);
 
         return view('classes.liste', [
             'classes' => $classes,
@@ -440,8 +440,7 @@ class ClasseController extends Controller
         // Les jours exclus ne sont pas une colonne de "classes" : on les sépare avant la création
         $joursExclus = $data['jours_exclus'] ?? [];
         unset($data['jours_exclus']);
-
-        $classe = $cours->classes()->make(collect($data)->except('session_id')->all());
+        $classe = $cours->classes()->make(collect(data)->except('session_id')->all());
 
         // Les jours exclus doivent être des jours ouvrés de la période (et pas tous les jours)
         if ($erreur = Classe::erreurJoursExclus($joursExclus, $data['date_debut'], $data['date_fin'])) {
@@ -467,12 +466,14 @@ class ClasseController extends Controller
             ->exists();
 
         if (! $existe) {
+
             DB::transaction(function () use ($cours, $data, $joursExclus) {
                 // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
                 $classe = $cours->classes()->create($data);
                 $classe->synchroniserJoursExclus($joursExclus);
             });
         }
+
         return redirect()->route('admin.classes.index')
             ->with('success', 'Classe créée avec succès.');
     }
@@ -483,12 +484,14 @@ class ClasseController extends Controller
         // Sans ça, la vue ferait une requête par ligne pour retrouver l'utilisateur
         // et savoir si l'inscription est payée.
         $classe->load('inscriptions.user', 'inscriptions.paiement', 'joursExclus');
-        
-        // Classe de SESSION : uniquement les membres de l'entreprise de la session.
-        // Classe publique : tous les utilisateurs inscriptibles, comme avant.
-        $candidats = ($classe->estDeSession()
-                ? $classe->candidatsSession()->select('users.id', 'users.name', 'users.email')
-                : User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))->orderBy('name'))
+
+
+    
+        // Utilisateurs que l'on peut encore inscrire : ni admin, ni formateur, pas déjà inscrits
+        $candidats = ($classe->estDeSession)
+            ? classe->candidatsSession()->select('users.id', 'users.name', 'users.email')
+            : User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))
+            ->orderBy('name')
             ->whereNotIn('users.id', $classe->inscriptions->pluck('user_id'))
             ->get(['users.id', 'users.name', 'users.email']);
 
@@ -509,9 +512,10 @@ class ClasseController extends Controller
         unset($data['jours_exclus']);
 
         if (array_key_exists('session_id', $data)) {
-            $classe->session_id = $data['session_id'];
+            $classe->session_id = $data ['session_id'];
             unset($data['session_id']);
         }
+
         $classe->update($data);
 
         return redirect()->route('admin.classes.index')
@@ -522,7 +526,9 @@ class ClasseController extends Controller
     // La liste envoyée REMPLACE l'ancienne. Modifiable à tout moment tant que la classe n'est pas fermée.
     public function updateJoursExclus(Request $request, Cours $cours, Classe $classe)
     {
-        $retour = redirect()->route('admin.cours.classes.edit', [$cours, $classe]);
+        // back() : on revient sur la page d'où l'on vient (liste des classes avec ses filtres),
+        // et la fenêtre de gestion de cette classe se rouvre sur l'onglet des jours
+        $retour = back()->with('reouvrir', $classe->id . ':jours');
 
         // Une classe fermée est figée (taux déjà calculés)
         if ($classe->estFermee()) {
@@ -614,12 +620,16 @@ class ClasseController extends Controller
             'user_ids.required' => "Vous n'avez pas choisi d'utilisateur à ajouter",
         ]);
 
+        if ($classe->estFermee()) {
+            return back()->with('error', 'La classe est fermée : on ne peut plus y ajouter d\'utilisateur.');
+        }
+
         $inscritsIds = $classe->inscriptions()->pluck('user_id');
         $nouveauxIds = collect($data['user_ids'])->diff($inscritsIds);
 
         // Vérifie la capacité en tenant compte uniquement des nouveaux inscrits.
         if ($inscritsIds->count() + $nouveauxIds->count() > $classe->capacite_max) {
-            return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+            return back()->with('reouvrir', $classe->id . ':inscrits')
                 ->with('error', 'Impossible d\'ajouter ces utilisateurs : la capacité maximale de la classe serait dépassée.');
         }
 
@@ -647,17 +657,37 @@ class ClasseController extends Controller
             }
         }
 
-        // Retourne sur la page de gestion pour conserver le contexte de la classe.
-        return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+        // On revient sur la liste, et la fenêtre de gestion de la classe se rouvre sur ses inscrits
+        return back()->with('reouvrir', $classe->id . ':inscrits')
             ->with('success', 'Utilisateurs ajoutés à la classe.');
+    }
+
+    /**
+     * Liste (JSON) des utilisateurs qu'on peut encore inscrire dans la classe :
+     * ni admin, ni formateur, pas déjà inscrits. Tous d'un coup (500 au maximum) :
+     * la page les filtre ensuite par nom ou e-mail sans rappeler le serveur.
+     */
+    public function candidats(Cours $cours, Classe $classe)
+    {
+        $utilisateurs = User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))
+            ->whereNotIn('id', $classe->inscriptions()->pluck('user_id'))
+            ->orderBy('name')
+            ->limit(500)
+            ->get(['id', 'name', 'email']);
+
+        return response()->json($utilisateurs);
     }
 
     public function retirerUtilisateur(Cours $cours, Classe $classe, User $user)
     {
+        if ($classe->estFermee()) {
+            return back()->with('error', 'La classe est fermée : on ne peut plus en retirer d\'utilisateur.');
+        }
+
         Inscription::where('classe_id', $classe->id)->where('user_id', $user->id)->delete();
 
-        // Après le retrait, reste sur la même page pour gérer la classe sans navigation inutile.
-        return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
+        // Après le retrait, la fenêtre de gestion de la classe se rouvre sur ses inscrits
+        return back()->with('reouvrir', $classe->id . ':inscrits')
             ->with('success', 'Utilisateur retiré de la classe.');
     }
 }

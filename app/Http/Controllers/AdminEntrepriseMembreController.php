@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 // Gestion, par l'administrateur, des MEMBRES d'une entreprise :
-//  - ajouter des particuliers déjà inscrits (recherche + sélection) ;
+//  - ajouter des particuliers déjà inscrits (recherche + sélection, dans une fenêtre) ;
 //  - créer directement un nouveau particulier, ajouté automatiquement comme membre ;
 //  - modifier un membre ; le retirer de l'entreprise (son compte est conservé).
 // Un particulier n'est membre que d'UNE entreprise : l'ajouter à une autre le transfère.
@@ -36,30 +36,30 @@ class AdminEntrepriseMembreController extends Controller
         return $profil;
     }
 
-    // Page « Ajouter des membres » : recherche + création
-    public function create(Entreprise $entreprise)
-    {
-        return view('entreprises.membres.create', ['entreprise' => $entreprise]);
-    }
-
-    // Recherche JSON des particuliers inscrits (nom ou e-mail)
+    // Liste JSON des particuliers : sans terme, ceux qui ne sont pas encore membres de CETTE entreprise ;
+    // avec un terme (2 caractères minimum), recherche par nom ou e-mail
     public function rechercher(Request $request, Entreprise $entreprise)
     {
         $terme = trim((string) $request->input('q'));
-        if (mb_strlen($terme) < 2) {
+        if ($terme !== '' && mb_strlen($terme) < 2) {
             return response()->json([]);
         }
 
-        // % et _ sont cherchés comme de simples caractères
-        $motif = '%' . addcslashes($terme, '%_\\') . '%';
-
-        $utilisateurs = User::with('particulier.entreprise')
+        $requete = User::with('particulier.entreprise')
             ->whereHas('role', fn ($q) => $q->where('nom', 'particulier'))
-            ->whereNotNull('particulier_id') // sans profil particulier, impossible de le rattacher
-            ->where(fn ($q) => $q->where('name', 'like', $motif)->orWhere('email', 'like', $motif))
-            ->orderBy('name')
-            ->limit(10)
-            ->get();
+            ->whereNotNull('particulier_id'); // sans profil particulier, impossible de le rattacher
+
+        if ($terme === '') {
+            $requete->whereHas('particulier', fn ($q) => $q->where(
+                fn ($w) => $w->whereNull('entreprise_id')->orWhere('entreprise_id', '!=', $entreprise->id)
+            ));
+        } else {
+            // % et _ sont cherchés comme de simples caractères
+            $motif = '%' . addcslashes($terme, '%_\\') . '%';
+            $requete->where(fn ($q) => $q->where('name', 'like', $motif)->orWhere('email', 'like', $motif));
+        }
+
+        $utilisateurs = $requete->orderBy('name')->limit(50)->get();
 
         return response()->json($utilisateurs->map(function (User $u) use ($entreprise) {
             $actuelle = $u->particulier?->entreprise;
@@ -68,19 +68,16 @@ class AdminEntrepriseMembreController extends Controller
                 'id' => $u->id,
                 'name' => $u->name,
                 'email' => $u->email,
-                // Déjà membre de CETTE entreprise : non sélectionnable
                 'deja' => $actuelle?->id === $entreprise->id,
-                // Membre d'une AUTRE entreprise : sélectionnable, il sera transféré
                 'autre_entreprise' => ($actuelle && $actuelle->id !== $entreprise->id) ? $actuelle->raison_sociale : null,
             ];
         }));
     }
-
     // Ajoute à l'entreprise les particuliers sélectionnés (déjà inscrits sur la plateforme)
     public function store(Request $request, Entreprise $entreprise)
     {
         $data = $request->validate([
-            'user_ids' => ['required', 'array', 'min:1', 'max:50'],
+            'user_ids' => ['required', 'array', 'min:1', 'max:200'],
             'user_ids.*' => ['integer', 'exists:users,id'],
         ], [
             'user_ids.required' => 'Sélectionnez au moins un utilisateur à ajouter.',
@@ -156,16 +153,6 @@ class AdminEntrepriseMembreController extends Controller
         return redirect()->route('admin.entreprises.show', $entreprise)
             ->with('success', "{$data['name']} a été créé et ajouté comme membre. Mot de passe temporaire : "
                 . User::MOT_DE_PASSE_PAR_DEFAUT . ' (à changer à sa première connexion).');
-    }
-
-    public function edit(Entreprise $entreprise, User $user)
-    {
-        $this->verifierMembre($entreprise, $user);
-
-        return view('entreprises.membres.edit', [
-            'entreprise' => $entreprise,
-            'membre' => $user->load('particulier'),
-        ]);
     }
 
     public function update(Request $request, Entreprise $entreprise, User $user)

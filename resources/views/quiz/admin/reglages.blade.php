@@ -32,16 +32,16 @@
                     <table class="table align-middle mb-3">
                         <thead class="table-light">
                             <tr>
-                                <th>Cours</th>
+                                <th class="w-25">Cours</th>
                                 <th class="text-center">Questions dans la banque</th>
                                 <th class="nv-score-column">Noté sur</th>
-                                <th>Quiz obtenu</th>
+                                <th class="w-25">Quiz obtenu</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($cours as $c)
                                 <tr data-banque="{{ $c->questions_count }}">
-                                    <td>{{ $c->titre }}</td>
+                                    <td class="text-break">{{ $c->titre }}</td>
                                     <td class="text-center">{{ $c->questions_count }}</td>
                                     <td>
                                         {{-- old() garde la saisie en cas d'erreur de validation --}}
@@ -53,7 +53,7 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </td>
-                                    <td class="resume-quiz small"></td>
+                                    <td class="resume-quiz small text-break"></td>
                                 </tr>
                             @empty
                                 <tr><td colspan="4" class="text-center text-muted py-4">Aucun cours.</td></tr>

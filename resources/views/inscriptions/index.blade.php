@@ -143,7 +143,7 @@
 
                         @foreach ($etiquettes as [$texte, $retirer, $icone])
                             <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
-                                <i class="{{ $icone }}"></i>{{ $texte }}
+                                <i class="{{ $icone }}"></i><span class="text-truncate" title="{{ $texte }}">{{ $texte }}</span>
                                 <a href="{{ $sans($retirer) }}" class="text-primary ms-1"
                                    title="Retirer ce filtre"
                                    aria-label="Retirer le filtre {{ $texte }}">
@@ -271,18 +271,18 @@
     {{-- ===== Tableau des inscriptions ===== --}}
     <div class="card border shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle table-nowrap mb-0">
+            <table class="table table-sm table-hover align-middle mb-0 table-liste table-liste-large">
                 <thead>
                     <tr class="table-light">
-                        <th><input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner"></th>
+                        <th class="col-coche"><input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner"></th>
                         <th>Utilisateur</th>
                         <th>E-mail</th>
                         <th>Cours</th>
                         <th>Classe</th>
-                        <th>Montant versé</th>
-                        <th>Reste</th>
-                        <th>Statut</th>
-                        <th class="text-end">Actions</th>
+                        <th class="col-montant">Montant versé</th>
+                        <th class="col-montant">Reste</th>
+                        <th class="col-badge">Statut</th>
+                        <th class="text-end col-actions-4">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -442,7 +442,7 @@
 
 {{-- ===== Fenêtre « Voir » ===== --}}
 <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="detailTitre"></h5>

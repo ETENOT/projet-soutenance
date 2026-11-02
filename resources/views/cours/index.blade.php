@@ -158,7 +158,7 @@
 
                     @foreach ($etiquettes as [$texte, $retirer, $icone])
                         <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
-                            <i class="{{ $icone }}"></i>{{ $texte }}
+                            <i class="{{ $icone }}"></i><span class="text-truncate" title="{{ $texte }}">{{ $texte }}</span>
                             <a href="{{ $sans($retirer) }}" class="text-primary ms-1" title="Retirer ce filtre" aria-label="Retirer le filtre {{ $texte }}">
                                 <i class="ri-close-line"></i>
                             </a>
@@ -299,7 +299,7 @@
     {{-- ===== Tableau des cours : le dernier créé en premier ===== --}}
     <div class="card border shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0 table-cours">
+            <table class="table table-sm table-hover align-middle mb-0 table-cours table-liste">
                 <thead>
                     <tr class="table-light">
                         <th>
@@ -434,7 +434,7 @@
 
 {{-- ===== Fenêtre « Voir » ===== --}}
 <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="detailTitre"></h5>

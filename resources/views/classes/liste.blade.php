@@ -192,7 +192,7 @@
 
                     @foreach ($etiquettes as [$texte, $retirer, $icone])
                         <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
-                            <i class="{{ $icone }}"></i>{{ $texte }}
+                            <i class="{{ $icone }}"></i><span class="text-truncate" title="{{ $texte }}">{{ $texte }}</span>
                             <a href="{{ $sans($retirer) }}" class="text-primary ms-1" title="Retirer ce filtre" aria-label="Retirer le filtre {{ $texte }}">
                                 <i class="ri-close-line"></i>
                             </a>
@@ -377,7 +377,7 @@
     {{-- ===== Tableau des classes ===== --}}
     <div class="card border shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0 table-classes">
+            <table class="table table-sm table-hover align-middle mb-0 table-classes table-liste">
                 <thead>
                     <tr class="table-light">
                         <th>
@@ -476,6 +476,13 @@
                                                 data-detail="detail-{{ $classe->id }}"
                                                 data-titre="{{ $classe->nom }}">
                                             <i class="ri-eye-line"></i>
+                                        </button>
+
+                                        <button type="button" class="btn btn-sm btn-soft-success" title="Gérer les inscrits et les jours non comptabilisés"
+                                                data-bs-toggle="modal" data-bs-target="#modalGestion"
+                                                data-gestion="gestion-{{ $classe->id }}"
+                                                data-titre="{{ $classe->nom }}">
+                                            <i class="ri-group-line"></i>
                                         </button>
 
                                         <button type="button" class="btn btn-sm btn-soft-secondary" title="Modifier la classe"
@@ -809,6 +816,9 @@
         </div>
     </div>
 </div>
+
+{{-- ===== Fenêtre « Gérer la classe » : inscrits et jours non comptabilisés ===== --}}
+@include('classes.gestion')
 @endsection
 
 @section('script')

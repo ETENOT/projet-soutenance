@@ -146,7 +146,7 @@
 
                     @foreach ($etiquettes as [$texte, $retirer, $icone])
                         <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
-                            <i class="{{ $icone }}"></i>{{ $texte }}
+                            <i class="{{ $icone }}"></i><span class="text-truncate" title="{{ $texte }}">{{ $texte }}</span>
                             <a href="{{ $sans($retirer) }}" class="text-primary ms-1" title="Retirer ce filtre" aria-label="Retirer le filtre {{ $texte }}">
                                 <i class="ri-close-line"></i>
                             </a>
@@ -262,16 +262,14 @@
     {{-- ===== Tableau des utilisateurs : le dernier créé en premier (tri fait par le contrôleur) ===== --}}
     <div class="card border shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle table-nowrap mb-0">
+            <table class="table table-sm table-hover align-middle mb-0 table-liste">
                 <thead>
                     <tr class="table-light">
-                        <th>
-                            <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
-                        </th>
+                        <th class="col-coche"><input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner"></th>
                         <th>Nom</th>
                         <th>E-mail</th>
-                        <th>Rôle</th>
-                        <th class="text-end">Actions</th>
+                        <th class="col-badge">Rôle</th>
+                        <th class="text-end col-actions-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -430,7 +428,7 @@
 
 {{-- ===== Fenêtre « Voir » ===== --}}
 <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="detailTitre"></h5>
@@ -756,15 +754,15 @@ document.addEventListener('DOMContentLoaded', function () {
         champ('champAdresse').required = entreprise;
     }
 
-    // Adapte la fenêtre au mode : "ajout" (POST, mot de passe obligatoire) ou "modif" (PUT, mot de passe facultatif)
+    // Adapte la fenêtre au mode : "ajout" (POST) ou "modif" (PUT).
+    // Plus de champs mot de passe : à la création, le serveur impose le mot de passe par défaut.
     function preparer(mode) {
         const modif = mode === 'modif';
         champ('utilisateurTitre').textContent = modif ? 'Modifier un utilisateur' : 'Créer un utilisateur';
         champ('champMode').value = mode;
         champ('champMethode').disabled = !modif;
-        champ('champMotDePasse').required = !modif;
-        champ('champConfirmation').required = !modif;
-        champ('noteMotDePasse').classList.toggle('d-none', !modif);
+        // Le rappel du mot de passe temporaire ne concerne que la création
+        champ('noteMotDePasseDefaut').classList.toggle('d-none', modif);
         majChampsRole();
     }
 

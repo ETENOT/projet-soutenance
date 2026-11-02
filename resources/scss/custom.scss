@@ -1279,41 +1279,210 @@ html[data-sidebar="dark"] {
     padding-left: var(--iti-spacer-horizontal);
 }
 
-// ===== Listes d'administration : cellules « façon Excel » =====
-// Le texte trop long est coupé avec « … » au lieu d'agrandir la colonne.
-// Le texte complet apparaît au survol (attribut title posé dans la vue).
-.cellule-tronquee {
-    max-width: 220px;
+// ===== Listes d'administration : colonnes fixes, texte coupé « … » =====
+.table-liste {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 720px; // en dessous, le tableau défile (mobile) au lieu d'écraser les colonnes
+
+    th,
+    td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    // Dernière colonne (boutons d'actions) : jamais coupée
+    td:last-child {
+        overflow: visible;
+    }
+
+    // Largeurs fixes ; les colonnes sans classe se partagent la place restante
+    .col-coche { width: 3rem; }
+    .col-badge { width: 8rem; }
+    .col-nombre { width: 6rem; }
+    .col-montant { width: 9rem; }
+    .col-date { width: 8rem; }
+    .col-actions-3 { width: 8.5rem; }
+    .col-actions-4 { width: 11rem; }
+}
+
+// ===== Fenêtres : rien ne dépasse =====
+.modal-body {
+    overflow-wrap: anywhere;
+
+    img,
+    .form-control,
+    .form-select {
+        max-width: 100%;
+    }
+
+    dd {
+        overflow-wrap: anywhere;
+    }
+
+    .table-responsive {
+        max-width: 100%;
+    }
+}
+
+// Titre des fenêtres : un nom très long passe à la ligne au lieu de dépasser
+.modal-title {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+// ===== Administration : fenêtre « Gérer la classe » (à coller à la fin de resources/scss/custom.scss) =====
+// Liste des inscrits d'une classe : colonnes fixes, texte long coupé (visible au survol)
+.table-inscrits {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+        padding: .55rem .45rem;
+    }
+
+    thead th {
+        &:nth-child(1) { width: 45%; }
+        &:nth-child(2) { width: 33%; }
+        &:nth-child(3) { width: 22%; }
+    }
+
+    .inscrit-actions {
+        white-space: nowrap;
+    }
+}
+
+// Croix de retrait dans un badge (jour exclu)
+.badge-fermable .btn-close {
+    font-size: .6rem;
+}
+
+// Permet à un texte long de se couper dans un bloc flex au lieu d'élargir la fenêtre
+.min-w-0 {
+    min-width: 0;
+}
+
+// ===== Administration : liste des entreprises et de leurs membres (à coller à la fin de resources/scss/custom.scss) =====
+// Colonnes fixes : le texte trop long est coupé (.cellule-tronquee-fixe) et visible en entier au survol.
+// Entreprises : coche, raison sociale, secteur, responsable, membres, créée le, actions
+.table-entreprises {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+        padding: .55rem .45rem;
+    }
+
+    thead th {
+        &:nth-child(1) { width: 4%; }
+        &:nth-child(2) { width: 22%; }
+        &:nth-child(3) { width: 15%; }
+        &:nth-child(4) { width: 24%; }
+        &:nth-child(5) { width: 8%; }
+        &:nth-child(6) { width: 11%; }
+        &:nth-child(7) { width: 16%; }
+    }
+
+    .entreprise-actions {
+        white-space: nowrap;
+    }
+}
+
+// Membres : coche, nom, e-mail, téléphone, statut, inscrit le, actions
+.table-membres {
+    table-layout: fixed;
+    width: 100%;
+
+    th,
+    td {
+        padding: .55rem .45rem;
+    }
+
+    thead th {
+        &:nth-child(1) { width: 4%; }
+        &:nth-child(2) { width: 20%; }
+        &:nth-child(3) { width: 26%; }
+        &:nth-child(4) { width: 15%; }
+        &:nth-child(5) { width: 12%; }
+        &:nth-child(6) { width: 11%; }
+        &:nth-child(7) { width: 12%; }
+    }
+
+    .membre-actions {
+        white-space: nowrap;
+    }
+}
+
+// Listes d'une fenêtre qui s'allongent (résultats de recherche, sélection) : elles défilent
+// au lieu d'agrandir la fenêtre.
+.liste-defilante {
+    max-height: 14rem;
+    overflow-y: auto;
+}
+
+// ===== Texte long coupé « … » (visible en entier au survol grâce à l'attribut title) =====
+// À coller à la fin de resources/scss/custom.scss, puis yarn build.
+// Les tableaux .table-liste coupent déjà leurs cellules ; cette classe sert pour un texte
+// placé dans un bloc (fenêtre, carte, liste à cocher).
+.texte-coupe {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-// Variante plus étroite (noms de cours, de classes...)
-.cellule-tronquee-sm {
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+// ===== Fil d'Ariane et étiquettes de filtres : un texte très long ne casse plus la mise en page =====
+// (à coller à la fin de resources/scss/custom.scss, puis yarn build ;
+//  si tu avais collé la version précédente de ce bloc, remplace-la)
+
+// Titre de page et fil d'Ariane : toujours sur une seule ligne, comme un fil d'Ariane normal.
+// Un texte trop long est coupé avec « … » (complet au survol, grâce aux attributs title du composant).
+.page-title-box {
+    gap: 1rem;
+
+    // Titre à gauche : prend la place restante
+    h4 {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    // Fil d'Ariane à droite : jamais plus de 55 % de la largeur
+    .page-title-right {
+        flex: 0 1 auto;
+        min-width: 0;
+        max-width: 55%;
+    }
+
+    .breadcrumb-item {
+        min-width: 0;
+
+        // Premier élément (ex. « Entreprises ») : lisible en entier tant qu'il est raisonnable
+        &:first-child {
+            flex-shrink: 0;
+            max-width: 16rem;
+        }
+
+        // Dernier élément (le nom de la page) : c'est lui qui se raccourcit en premier
+        &.active {
+            flex: 0 1 auto;
+        }
+    }
 }
 
-// Variante plus large (e-mails)
-.cellule-tronquee-lg {
-    max-width: 280px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+@media (max-width: 575.98px) {
+    .page-title-box .page-title-right {
+        max-width: 100%;
+    }
 }
 
-// Pour les tableaux à colonnes fixes (.table-classes, .table-cours) :
-// la largeur vient de la colonne, on coupe simplement le texte.
-.cellule-tronquee-fixe {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+// Étiquettes des filtres actifs (dans la barre de recherche) : texte coupé avec « … »
+.form-control.h-auto .badge {
+    min-width: 0;
+    max-width: 16rem;
 
-.table-classes .cellule-tronquee-fixe,
-.table-cours .cellule-tronquee-fixe {
-    overflow-wrap: normal;
+    > a {
+        flex-shrink: 0;
+    }
 }
