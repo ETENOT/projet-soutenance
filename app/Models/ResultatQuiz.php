@@ -33,11 +33,15 @@ class ResultatQuiz extends Model
      * tirées, voir QuizAttemptController::demarrer), donc la courbe est tracée en
      * pourcentage (score / barème) pour que les tentatives restent comparables.
      * Le score brut et le barème sont aussi renvoyés pour l'infobulle du graphique.
-     */
-    public static function progressionPour(int $userId, int $coursId): array
+     *
+     *$du / $au (facultatifs, format Y-m-d) : limite la courbe aux tentatives passées dans
+     * cette période (utilisé par le suivi entreprise : période de la classe uniquement).
+     * */
+    public static function progressionPour(int $userId, int $coursId, ?string $du = null, ?string $au = null): array
     {
         return static::where('user_id', $userId)
-            ->whereHas('quiz', fn ($q) => $q->where('cours_id', $coursId))
+            ->whereHas('quiz', fn ($q) => $q->where('cours_id', $coursId)
+                ->when($du && $au, fn ($q) => $q->whereBetween('date', [$du, $au])))
             ->with('quiz')
             ->orderBy('created_at')
             ->orderBy('id')

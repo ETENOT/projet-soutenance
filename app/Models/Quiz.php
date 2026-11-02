@@ -37,4 +37,22 @@ class Quiz extends Model
     {
         return $this->hasMany(ReponseQuiz::class);
     }
+
+    /**
+     * Tentatives qu'une ENTREPRISE peut suivre pour une inscription faite par elle :
+     *  - le membre inscrit (user_id de l'inscription) ;
+     *  - le quiz du cours de la classe uniquement (cours_id de la classe) ;
+     *  - passées pendant la période de la classe (date_debut → date_fin, bornes incluses) :
+     *    les quiz faits avant ou après, à titre personnel, ne regardent pas l'entreprise ;
+     *  - terminées seulement (une tentative a un résultat quand elle est finie).
+     */
+    public function scopeSuivisPourInscription($query, Inscription $inscription)
+    {
+        $classe = $inscription->classe;
+
+        return $query->where('user_id', $inscription->user_id)
+            ->where('cours_id', $classe->cours_id)
+            ->whereBetween('date', [$classe->date_debut->toDateString(), $classe->date_fin->toDateString()])
+            ->whereHas('resultats');
+    }
 }

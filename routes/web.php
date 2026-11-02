@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\MonEntrepriseController;
+use App\Http\Controllers\EntrepriseQuizController;
+use App\Http\Controllers\EntreprisePresenceController;
 use App\Http\Controllers\AdminSessionController;
 use App\Http\Controllers\AdminSessionClasseController;
 use App\Http\Controllers\EntrepriseSessionController;
 use App\Http\Controllers\EntrepriseMembreController;
-use App\Http\Controllers\MonEntrepriseController;
 use App\Http\Controllers\PremierMotDePasseController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
@@ -267,6 +269,14 @@ Route::get('/cours/{cours}/resources/{resource}/telecharger', [App\Http\Controll
 // ==========================================================================
 
 Route::middleware(['auth', 'role:entreprise'])->group(function () {
+    // Suivi des quiz des membres inscrits PAR l'entreprise (quiz du cours, pendant la classe)
+    Route::get('/entreprise/suivi-quiz', [EntrepriseQuizController::class, 'index'])->name('entreprise.quiz.index');
+    Route::get('/entreprise/suivi-quiz/{inscription}', [EntrepriseQuizController::class, 'show'])->name('entreprise.quiz.show');
+
+    // Présences des membres inscrits par l'entreprise, une fois la classe fermée (page + PDF)
+    Route::get('/entreprise/presences', [EntreprisePresenceController::class, 'index'])->name('entreprise.presences.index');
+    Route::get('/entreprise/presences/{classe}', [EntreprisePresenceController::class, 'show'])->name('entreprise.presences.show');
+    Route::get('/entreprise/presences/{classe}/pdf', [EntreprisePresenceController::class, 'pdf'])->name('entreprise.presences.pdf');
     Route::get('/entreprise/membres', [EntrepriseMembreController::class, 'index'])->name('entreprise.membres.index');
     Route::delete('/entreprise/membres/{user}', [EntrepriseMembreController::class, 'destroy'])->name('entreprise.membres.destroy');
     Route::get('/entreprise/sessions', [EntrepriseSessionController::class, 'index'])->name('entreprise.sessions.index');
@@ -553,6 +563,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/sessions/{sessionFormation}/edit', [AdminSessionController::class, 'edit'])->name('sessions.edit');
         Route::put('/sessions/{sessionFormation}', [AdminSessionController::class, 'update'])->name('sessions.update');
         Route::delete('/sessions/{sessionFormation}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
+        Route::post('/sessions/suppression-multiple', [AdminSessionController::class, 'destroyMultiple']) ->name('sessions.destroy-multiple');
 
         // Classes d'une session et inscriptions des membres
         Route::get('/sessions/{sessionFormation}/classes/create', [AdminSessionClasseController::class, 'create'])->name('sessions.classes.create');

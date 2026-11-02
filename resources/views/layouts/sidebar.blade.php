@@ -94,17 +94,6 @@
                         </a>
                     </li>
 
-                     {{-- ================================
-                         ENTREPRISES
-                    ================================= --}}
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.sessions.*') ? 'active' : '' }}"
-                        href="{{ route('admin.sessions.index') }}">
-                            <i class="ri-calendar-schedule-line"></i>
-                            <span>Gestion des sessions</span>
-                        </a>
-                    </li>
-
                     {{-- ================================
                         FORMATEURS (CRUD, affectations, avis anonymes)
                     ================================= --}}
@@ -128,6 +117,17 @@
                         >
                             <i class="ri-group-line"></i>
                             <span>Gestion des Classes</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                         ENTREPRISES
+                    ================================= --}}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ request()->routeIs('admin.sessions.*') ? 'active' : '' }}"
+                        href="{{ route('admin.sessions.index') }}">
+                            <i class="ri-calendar-schedule-line"></i>
+                            <span>Gestion des sessions</span>
                         </a>
                     </li>
 
@@ -354,7 +354,7 @@
                             <span>Catalogue des cours</span>
                         </a>
                     </li>
-@if (Auth::user()?->role?->nom != 'entreprise')
+                    @if (Auth::user()?->role?->nom != 'entreprise')
                         <li class="nav-item">
                             <a
                                 class="nav-link menu-link {{ request()->routeIs('cours.mes') ? 'active' : '' }}"
@@ -374,6 +374,31 @@
                                 <span>Mes sessions</span>
                             </a>
                         </li>
+                        {{-- ENTREPRISE : consulter ses membres (gérés par l'administrateur) --}}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.membres.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.membres.index') }}">
+                                <i class="ri-team-line"></i>
+                                <span>Membres entreprises</span>
+                            </a>
+                        </li>
+
+                        {{-- Suivi des quiz des membres inscrits par l'entreprise --}}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.quiz.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.quiz.index') }}">
+                                <i class="ri-line-chart-line"></i>
+                                <span>Suivi des quiz</span>
+                            </a>
+                        </li>
+                        {{-- Présences des classes fermées (consultation + PDF) --}}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.presences.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.presences.index') }}">
+                                <i class="ri-calendar-check-line"></i>
+                                <span>Présences</span>
+                            </a>
+                        </li>
                     @endif
 
                     <li class="nav-item">
@@ -384,18 +409,6 @@
                             <span class="badge badge-pill bg-danger js-forum-badge {{ $forumsNonLus > 0 ? '' : 'd-none' }}">{{ $forumsNonLus }}</span>
                         </a>
                     </li>
-
-
-                    {{-- ENTREPRISE : consulter ses membres (gérés par l'administrateur) --}}
-                    @if (Auth::user()?->role?->nom === 'entreprise')
-                        <li class="nav-item">
-                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.membres.*') ? 'active' : '' }}"
-                            href="{{ route('entreprise.membres.index') }}">
-                                <i class="ri-team-line"></i>
-                                <span>Membres entreprises</span>
-                            </a>
-                        </li>
-                    @endif
 
                     {{-- PARTICULIER : voir l'entreprise dont il est membre --}}
                     @if (Auth::user()?->role?->nom === 'particulier')

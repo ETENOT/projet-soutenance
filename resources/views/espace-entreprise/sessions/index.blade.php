@@ -15,6 +15,7 @@
 
 <div class="container-fluid pb-4">
 
+    {{-- Bandeau d'introduction --}}
     <div class="bg-primary bg-gradient text-white rounded-4 p-4 p-md-5 mb-4">
         <span class="badge rounded-pill bg-white bg-opacity-25 text-white px-3 py-2 mb-3">
             <i class="ri-calendar-schedule-line me-1"></i> Formations sur mesure
@@ -27,6 +28,7 @@
     </div>
 
     {{-- Les trois groupes, définis une seule fois pour les onglets et leur contenu --}}
+    {{-- $enCours, $aVenir, $terminees : envoyés par EntrepriseSessionController::index() --}}
     @php
         $groupes = [
             ['id' => 'sess-encours', 'titre' => 'En cours', 'icone' => 'ri-book-open-line', 'teinte' => 'primary', 'items' => $enCours, 'vide' => 'Aucune session en cours.'],
@@ -35,6 +37,7 @@
         ];
     @endphp
 
+    {{-- Boutons des onglets, avec le nombre de sessions de chaque groupe --}}
     <div class="card border shadow-sm mb-3">
         <div class="card-body p-2">
             <ul class="nav nav-pills flex-nowrap overflow-auto gap-1" role="tablist">
@@ -51,6 +54,7 @@
         </div>
     </div>
 
+    {{-- Contenu des onglets : une carte par session --}}
     <div class="tab-content">
         @foreach ($groupes as $g)
             <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $g['id'] }}" role="tabpanel">
@@ -67,6 +71,7 @@
                                     <div>
                                         <h5 class="fw-bold mb-1">{{ $session->nom }}</h5>
                                         <div class="text-muted small">
+                                            {{-- Dates calculées automatiquement : début de la 1re classe → fin de la dernière --}}
                                             <i class="ri-calendar-event-line text-danger me-1"></i>
                                             @if ($session->date_debut)
                                                 Du {{ $session->date_debut->format('d/m/Y') }} au {{ $session->date_fin->format('d/m/Y') }}
@@ -75,6 +80,7 @@
                                             @endif
                                         </div>
                                         <div class="text-muted small">
+                                            {{-- $inscrits[id] = nombre de membres inscrits VIA l'entreprise dans cette session --}}
                                             <i class="ri-graduation-cap-line text-danger me-1"></i>
                                             {{ $session->classes_count }} classe(s) ·
                                             <i class="ri-team-line text-danger mx-1"></i>

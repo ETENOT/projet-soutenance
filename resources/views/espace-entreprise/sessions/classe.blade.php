@@ -58,7 +58,13 @@
                                     <span class="badge bg-secondary-subtle text-secondary ms-1">N'est plus membre</span>
                                 @endif
                             </td>
-                            <td>{{ $inscription->user->email }}</td>
+                            {{-- E-mail du membre + lien vers l'évolution de ses quiz dans cette classe --}}
+                            <td>
+                                {{ $inscription->user->email }}
+                                <a href="{{ route('entreprise.quiz.show', $inscription) }}" class="ms-2 small" title="Évolution des quiz de ce membre">
+                                    <i class="ri-line-chart-line"></i> Quiz
+                                </a>
+                            </td>
                             <td>{{ \Illuminate\Support\Carbon::parse($inscription->date_inscription)->format('d/m/Y') }}</td>
                             <td>
                                 {{-- Taux et attestation figés à la fermeture de la classe --}}

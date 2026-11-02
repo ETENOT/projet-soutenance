@@ -61,10 +61,23 @@
                                     <th class="ps-0" scope="row">Email :</th>
                                     <td class="text-muted">{{ Auth::user()->email }}</td>
                                 </tr>
-                                <tr>
-                                    <th class="ps-0" scope="row">Téléphone :</th>
-                                    <td class="text-muted">{{ Auth::user()->particulier->telephone ?? 'Non renseigné' }}</td>
-                                </tr>
+                                @if (Auth::user()?->role?->nom === 'particulier')
+                                    <tr>
+                                        <th class="ps-0" scope="row">Adresse :</th>
+                                        <td class="text-muted">{{ Auth::user()->particulier->adresse ?? 'Non renseigné' }}</td>
+                                    </tr>
+                                @endif
+                                @if (Auth::user()?->role?->nom === 'particulier') 
+                                    <tr>
+                                        <th class="ps-0" scope="row">Téléphone :</th>
+                                        <td class="text-muted">{{ Auth::user()->particulier->telephone ?? 'Non renseigné' }}</td>
+                                    </tr>
+                                @elseif (Auth::user()?->role?->nom === 'entreprise') 
+                                    <tr>
+                                        <th class="ps-0" scope="row">Contact principal :</th>
+                                        <td class="text-muted">{{ Auth::user()->entreprise->contact_principal ?? 'Non renseigné' }}</td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <th class="ps-0" scope="row">Rôle :</th>
                                     <td class="text-muted">{{ Auth::user()->role->nom }}</td>
