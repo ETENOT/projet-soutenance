@@ -19,7 +19,7 @@ class Classe extends Model
     protected $fillable = [
         'nom', 'capacite_max', 'date_debut', 'date_fin', 'lieu',
         'lieu_lien', 'lieu_image', 'cours_id',
-        'formateur_id', 'fermee_le', 'fermee_par',
+        'formateur_id', 'fermee_le', 'fermee_par', 'session_id',
     ];
     // Force Laravel à traiter ces colonnes comme des objets Carbon
     // plutôt que de simples chaînes de caractères, pour pouvoir utiliser
@@ -33,6 +33,81 @@ class Classe extends Model
     // Taux de présence minimal (en %) pour avoir droit à l'attestation.
     // En dessous de ce seuil (strictement), le stagiaire n'a pas d'attestation.
     public const SEUIL_ATTESTATION = 50;
+
+    /**
+     * Garde les dates de la session à jour : quand une classe est créée, modifiée (dates ou
+     * rattachement) ou supprimée, la session (et l'ancienne session si la classe en a changé)
+     * recalcule sa date de début (1re classe) et sa date de fin (dernière classe).
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Classe $classe) {
+            if ($classe->wasChanged(['date_debut', 'date_fin', 'session_id']) || $classe->wasRecentlyCreated) {
+                $classe->session?->recalculerDates();
+
+                // la classe vient de quitter une autre session : celle-ci doit aussi se recalculer
+                $ancienneId = $classe->getOriginal('session_id');
+                if ($classe->wasChanged('session_id') && $ancienneId) {
+                    SessionFormation::find($ancienneId)?->recalculerDates();
+                }
+            }
+        });
+
+        static::deleted(function (Classe $classe) {
+            if ($classe->session_id) {
+                SessionFormation::find($classe->session_id)?->recalculerDates();
+            }
+        });
+    }
+
+    // Session de formation (entreprise) dont fait partie la classe ; null = classe publique
+    public function session()
+    {
+        return $this->belongsTo(SessionFormation::class, 'session_id');
+    }
+
+    // Classes PUBLIQUES (catalogue, accueil, calendriers, compteurs) : celles qui ne font pas partie
+    // d'une session. Les classes de session ne sont attribuées qu'à une entreprise, par l'admin.
+    public function scopePubliques($query)
+    {
+        return $query->whereNull($query->getModel()->getTable() . '.session_id');
+    }
+
+    // La classe appartient-elle à une session (donc réservée à une entreprise) ?
+    public function estDeSession(): bool
+    {
+        return $this->session_id !== null;
+    }
+
+    /**
+     * Règle d'inscription d'une classe de SESSION : seul un particulier MEMBRE de l'entreprise
+     * propriétaire de la session peut y être inscrit (jamais un autre particulier, une autre
+     * entreprise, un compte entreprise ou un visiteur anonyme).
+     * Retourne le message d'erreur, ou null si l'utilisateur peut être inscrit.
+     * Une classe publique n'a pas cette restriction.
+     */
+    public function erreurAppartenance(User $user): ?string
+    {
+        if (! $this->estDeSession()) {
+            return null;
+        }
+
+        $entrepriseId = $this->session()->value('entreprise_id');
+        $user->loadMissing('particulier');
+
+        $estMembre = $user->particulier?->entreprise_id !== null
+            && (int) $user->particulier->entreprise_id === (int) $entrepriseId;
+
+        return $estMembre
+            ? null
+            : $user->name . " n'est pas membre de l'entreprise de cette session : seuls ses membres peuvent être inscrits à cette classe.";
+    }
+
+    // Candidats à l'inscription d'une classe de session : les membres actuels de l'entreprise de la session
+    public function candidatsSession()
+    {
+        return $this->session->entreprise->membres()->orderBy('users.name');
+    }
 
     // La table "classes" a la colonne cours_id -> belongsTo
     public function cours()
@@ -245,10 +320,21 @@ class Classe extends Model
 
    // Évènements de toutes les classes à venir ou en cours (accueil et dashboards).
    // $mesClassesIds : ids des classes de l'utilisateur, affichées avec la classe "nv-cal-inscrit".
-   public static function evenementsAVenir(array $mesClassesIds = []): Collection
+   // Les classes de session n'apparaissent PAS dans le calendrier public : seulement
+   // - dans celui de l'utilisateur inscrit ($mesClassesIds) ;
+   // - dans celui de l'entreprise propriétaire de la session ($entrepriseId) ;
+   // - partout si $toutes est vrai (administrateur).
+   public static function evenementsAVenir(array $mesClassesIds = [], ?int $entrepriseId = null, bool $toutes = false): Collection
    {
        return static::with('cours')
            ->nonTerminees()
+           ->when(! $toutes, function ($q) use ($mesClassesIds, $entrepriseId) {
+               $q->where(function ($q) use ($mesClassesIds, $entrepriseId) {
+                   $q->whereNull('session_id')
+                       ->orWhereIn('id', $mesClassesIds)
+                       ->when($entrepriseId, fn ($q) => $q->orWhereHas('session', fn ($s) => $s->where('entreprise_id', $entrepriseId)));
+               });
+           })
            ->orderBy('date_debut')
            ->get()
            ->map(fn (Classe $classe) => $classe->versEvenementCalendrier(

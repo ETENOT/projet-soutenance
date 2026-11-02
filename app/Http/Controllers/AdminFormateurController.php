@@ -126,10 +126,15 @@ class AdminFormateurController extends Controller
         // Compte créé par l'admin : pas de code de vérification à saisir
         $formateur->markEmailAsVerified();
 
-        return redirect()->route('admin.formateurs.index', $formateur)
+        // Retour à la liste des formateurs.
+        // AVANT : route('admin.formateurs.index', $formateur). Cette route n'a pas de paramètre {formateur} :
+        // Laravel ajoutait donc l'id en query string, ce qui donnait une URL du type /admin/formateurs?5.
+        // La fiche « show » n'existe plus : classes et avis s'ouvrent avec le bouton « œil » de la liste.
+        return redirect()->route('admin.formateurs.index')
             ->with('success', 'Formateur créé avec succès. (mot de passe temporaire : '
                     . User::MOT_DE_PASSE_PAR_DEFAUT . ', à changer à sa première connexion). '
-                    . 'Vous pouvez maintenant maintenant lui affecter des classes.');
+                    // « maintenant maintenant » corrigé, et on indique où se fait l'affectation
+                    . 'Vous pouvez maintenant lui affecter des classes (bouton « œil » de sa ligne).');
     }
 
     /**
@@ -145,8 +150,10 @@ class AdminFormateurController extends Controller
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 
-        // Mot de passe vide = on garde l'ancien
-        if (blank($data['password'])) {
+        // Mot de passe vide OU absent = on garde l'ancien.
+        // « ?? null » est indispensable : la fenêtre n'envoie plus de champ « password », et validate()
+        // ne renvoie pas les clés absentes. Sans « ?? null », Laravel lève « Undefined array key "password" » (500).
+        if (blank($data['password'] ?? null)) {
             unset($data['password']);
         } else {
             $data['password'] = Hash::make($data['password']);

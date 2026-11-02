@@ -441,6 +441,8 @@ class ClasseController extends Controller
         $joursExclus = $data['jours_exclus'] ?? [];
         unset($data['jours_exclus']);
 
+        $classe = $cours->classes()->make(collect($data)->except('session_id')->all());
+
         // Les jours exclus doivent être des jours ouvrés de la période (et pas tous les jours)
         if ($erreur = Classe::erreurJoursExclus($joursExclus, $data['date_debut'], $data['date_fin'])) {
             return back()->withInput()->withErrors(['jours_exclus' => $erreur]);
@@ -452,12 +454,25 @@ class ClasseController extends Controller
             unset($data['lieu_image']);
         }
 
-        DB::transaction(function () use ($cours, $data, $joursExclus) {
-            // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
-            $classe = $cours->classes()->create($data);
-            $classe->synchroniserJoursExclus($joursExclus);
-        });
+        $classe->session_id = $data['session_id'] ?? null;   // affecté explicitement
+        $classe->save();
 
+        // Anti-doublon : si la MÊME classe publique (cours, nom, dates) existe déjà
+        // (double clic, 2e envoi du formulaire, rechargement de la page...), on ne la recrée pas.
+        $existe = $cours->classes()
+            ->whereNull('session_id')
+            ->where('nom', $data['nom'])
+            ->whereDate('date_debut', $data['date_debut'])
+            ->whereDate('date_fin', $data['date_fin'])
+            ->exists();
+
+        if (! $existe) {
+            DB::transaction(function () use ($cours, $data, $joursExclus) {
+                // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
+                $classe = $cours->classes()->create($data);
+                $classe->synchroniserJoursExclus($joursExclus);
+            });
+        }
         return redirect()->route('admin.classes.index')
             ->with('success', 'Classe créée avec succès.');
     }
@@ -469,11 +484,13 @@ class ClasseController extends Controller
         // et savoir si l'inscription est payée.
         $classe->load('inscriptions.user', 'inscriptions.paiement', 'joursExclus');
         
-        // Utilisateurs que l'on peut encore inscrire : ni admin, ni formateur, pas déjà inscrits
-        $candidats = User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))
-            ->whereNotIn('id', $classe->inscriptions->pluck('user_id'))
-            ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+        // Classe de SESSION : uniquement les membres de l'entreprise de la session.
+        // Classe publique : tous les utilisateurs inscriptibles, comme avant.
+        $candidats = ($classe->estDeSession()
+                ? $classe->candidatsSession()->select('users.id', 'users.name', 'users.email')
+                : User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))->orderBy('name'))
+            ->whereNotIn('users.id', $classe->inscriptions->pluck('user_id'))
+            ->get(['users.id', 'users.name', 'users.email']);
 
         return view('classes.edit', [
             'cours' => $cours,
@@ -491,6 +508,10 @@ class ClasseController extends Controller
         // voir updateJoursExclus) : on ne touche donc surtout pas à la liste enregistrée ici.
         unset($data['jours_exclus']);
 
+        if (array_key_exists('session_id', $data)) {
+            $classe->session_id = $data['session_id'];
+            unset($data['session_id']);
+        }
         $classe->update($data);
 
         return redirect()->route('admin.classes.index')
@@ -600,6 +621,15 @@ class ClasseController extends Controller
         if ($inscritsIds->count() + $nouveauxIds->count() > $classe->capacite_max) {
             return redirect()->route('admin.cours.classes.edit', [$cours, $classe])
                 ->with('error', 'Impossible d\'ajouter ces utilisateurs : la capacité maximale de la classe serait dépassée.');
+        }
+
+        // Classe de session : seuls les membres de l'entreprise de la session peuvent être ajoutés
+        if ($classe->estDeSession()) {
+            foreach (User::whereIn('id', $nouveauxIds)->get() as $candidat) {
+                if ($erreur = $classe->erreurAppartenance($candidat)) {
+                    return redirect()->route('admin.cours.classes.edit', [$cours, $classe])->with('error', $erreur);
+                }
+            }
         }
 
         foreach ($nouveauxIds as $userId) {

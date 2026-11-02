@@ -32,7 +32,10 @@ class CoursController extends Controller
     {
         $search = trim($request->input('search', ''));
 
-        $cours = Cours::with('categorie')->withCount(['classes', 'quizzes', 'chapitres', 'avis'])
+        $cours = Cours::with('categorie')->withCount([
+        'classes' => fn ($q) => $q->publiques(),
+        'quizzes', 'chapitres', 'avis',
+        ])
             ->withAvg('avis', 'note')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
@@ -66,7 +69,19 @@ class CoursController extends Controller
             },
 
             'classes' => function ($query) {
-                $query->withCount('inscriptions')->orderBy('date_debut');
+                // Une ENTREPRISE ne voit aucune classe d'un cours : ses classes sont créées sur mesure
+                // par l'administrateur (voir « Mes sessions »).
+                if (Auth::user()?->role?->nom === 'entreprise') {
+                    $query->whereRaw('1 = 0');
+                    return;
+                }
+                // classes publiques + celles où l'utilisateur est inscrit
+                $query->where(function ($q) {
+                        $q->whereNull('session_id')
+                        ->orWhereHas('inscriptions', fn ($i) => $i->where('user_id', Auth::id()));
+                    })
+                    ->withCount('inscriptions')
+                    ->orderBy('date_debut');
             },
 
             'quizzes' => function ($query) {
@@ -538,10 +553,11 @@ class CoursController extends Controller
         //Seulement les inscriptions dont le paiement est validé (sinon pas d'accès aux contenus)
         //(même règle que l'évaluation de fin de formation et l'accès aux cours)
         $inscriptions = Auth::user()
-            ->inscriptions()
-            ->payees()
-            ->with('classe.cours', 'paiement', 'attestation')
-            ->get();
+        ->inscriptions()
+        ->personnelles()   // uniquement les inscriptions faites par le particulier lui-même (via_entreprise_id = null)
+        ->payees()
+        ->with('classe.cours', 'paiement', 'attestation')
+        ->get();
 
         // =========================================================
         // FORMATIONS EN COURS

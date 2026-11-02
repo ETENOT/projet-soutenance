@@ -98,9 +98,11 @@
                                     <span class="ms-1">{{ $moyenneAvis ? number_format($moyenneAvis, 1, ',', '') : '—' }}</span>
                                     <span class="fw-normal text-muted">({{ $nombreAvis }} avis)</span>
                                 </span>
+                                @unless ($role === 'entreprise')
                                 <span>
                                     <i class="ri-group-line text-danger fs-5 align-middle me-1"></i>{{ $cours->classes->count() }} classes
                                 </span>
+                                @endunless
                             </div>
                         </div>
 
@@ -256,31 +258,34 @@
                             <h5 class="fw-bold mb-4">
                                 <i class="ri-calendar-event-line text-danger me-2"></i>Prochaines classes
                             </h5>
+                            @if ($role === 'entreprise')
+                                @include('cours.partials.classes-entreprise')
+                            @else
+                                @forelse($prochainesSessions as $classe)
+                                    <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center gap-2">
+                                        <div>
+                                            <div class="fw-bold">{{ $cours->titre }} — {{ $classe->nom }}</div>
+                                            <div class="text-muted small mt-1">
+                                                <i class="ri-calendar-line text-danger me-1"></i>
+                                                Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
+                                                au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
+                                            </div>
+                                            <div class="small mt-1">
+                                                @include('partials.lieu-classe', ['classe' => $classe])
+                                            </div>
+                                        </div>
 
-                            @forelse($prochainesSessions as $classe)
-                                <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center gap-2">
-                                    <div>
-                                        <div class="fw-bold">{{ $cours->titre }} — {{ $classe->nom }}</div>
-                                        <div class="text-muted small mt-1">
-                                            <i class="ri-calendar-line text-danger me-1"></i>
-                                            Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
-                                            au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
-                                        </div>
-                                        <div class="small mt-1">
-                                            @include('partials.lieu-classe', ['classe' => $classe])
-                                        </div>
+                                        <span class="badge bg-success-subtle text-success flex-shrink-0">
+                                            <i class="ri-checkbox-circle-fill me-1"></i>Disponible
+                                        </span>
                                     </div>
-
-                                    <span class="badge bg-success-subtle text-success flex-shrink-0">
-                                        <i class="ri-checkbox-circle-fill me-1"></i>Disponible
-                                    </span>
-                                </div>
-                            @empty
-                                <div class="text-center text-muted py-4">
-                                    <i class="ri-calendar-close-line fs-2 d-block mb-2"></i>
-                                    Aucune prochaine classe programmée.
-                                </div>
-                            @endforelse
+                                @empty
+                                    <div class="text-center text-muted py-4">
+                                        <i class="ri-calendar-close-line fs-2 d-block mb-2"></i>
+                                        Aucune prochaine classe programmée.
+                                    </div>
+                                @endforelse
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -343,91 +348,96 @@
                         <i class="ri-calendar-line text-danger me-2"></i>Classes disponibles
                     </h5>
 
-                    @forelse($cours->classes as $classe)
-                        <div class="border rounded-3 p-3 mb-3">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
+                    {{-- Entreprise : message à la place de la liste des classes --}}
+                    @if ($role === 'entreprise')
+                        @include('cours.partials.classes-entreprise')
+                    @else
+                        @forelse($cours->classes as $classe)
+                            <div class="border rounded-3 p-3 mb-3">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
 
-                                <div>
-                                    <h6 class="fw-bold mb-2"><i class="ri-graduation-cap-line text-danger me-1"></i>{{ $cours->titre }} — {{ $classe->nom }}</h6>
+                                    <div>
+                                        <h6 class="fw-bold mb-2"><i class="ri-graduation-cap-line text-danger me-1"></i>{{ $cours->titre }} — {{ $classe->nom }}</h6>
 
-                                    <div class="text-muted small mb-1">
-                                        <i class="ri-calendar-event-line text-danger me-1"></i>
-                                        Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
-                                        au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
+                                        <div class="text-muted small mb-1">
+                                            <i class="ri-calendar-event-line text-danger me-1"></i>
+                                            Du {{ \Carbon\Carbon::parse($classe->date_debut)->format('d/m/Y') }}
+                                            au {{ \Carbon\Carbon::parse($classe->date_fin)->format('d/m/Y') }}
+                                        </div>
+
+                                        <div class="text-muted small mb-1">
+                                            <i class="ri-group-line me-1"></i>
+                                            {{ $classe->inscriptions_count ?? 0 }} / {{ $classe->capacite_max }} inscrits
+                                        </div>
+
+                                        {{-- Lieu : lien Google Maps avec la photo du lieu --}}
+                                        <div class="small mt-2">
+                                            @include('partials.lieu-classe', ['classe' => $classe, 'image' => true])
+                                        </div>
                                     </div>
 
-                                    <div class="text-muted small mb-1">
-                                        <i class="ri-group-line me-1"></i>
-                                        {{ $classe->inscriptions_count ?? 0 }} / {{ $classe->capacite_max }} inscrits
-                                    </div>
+                                    <div>
+                                        @auth
+                                            @if($mesInscriptions->contains($classe->id))
 
-                                    {{-- Lieu : lien Google Maps avec la photo du lieu --}}
-                                    <div class="small mt-2">
-                                        @include('partials.lieu-classe', ['classe' => $classe, 'image' => true])
-                                    </div>
-                                </div>
-
-                                <div>
-                                    @auth
-                                        @if($mesInscriptions->contains($classe->id))
-
-                                            @if($mesInscriptionsPayees->contains($classe->id))
-                                                <span class="badge bg-success-subtle text-success fs-6 px-3 py-2">
-                                                    <i class="ri-checkbox-circle-line me-1"></i>
-                                                    Inscription confirmée
-                                                </span>
-                                            @else
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
-                                                        <i class="ri-time-line me-1"></i>
-                                                        Inscription en attente de paiement
+                                                @if($mesInscriptionsPayees->contains($classe->id))
+                                                    <span class="badge bg-success-subtle text-success fs-6 px-3 py-2">
+                                                        <i class="ri-checkbox-circle-line me-1"></i>
+                                                        Inscription confirmée
                                                     </span>
+                                                @else
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
+                                                            <i class="ri-time-line me-1"></i>
+                                                            Inscription en attente de paiement
+                                                        </span>
 
-                                                    <form method="POST" action="{{ route('classes.inscription.destroy', $classe) }}">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-danger">Annuler</button>
-                                                    </form>
-                                                </div>
+                                                        <form method="POST" action="{{ route('classes.inscription.destroy', $classe) }}">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-sm btn-danger">Annuler</button>
+                                                        </form>
+                                                    </div>
+                                                @endif
+
+                                            @elseif(! $classe->inscriptionsOuvertes())
+                                                <span class="badge bg-secondary-subtle text-secondary fs-6 px-3 py-2">
+                                                    <i class="ri-lock-line me-1"></i> Inscriptions closes
+                                                </span>
+
+                                            @elseif($classe->inscriptions_count >= $classe->capacite_max)
+                                                <span class="badge bg-secondary">Complet</span>
+
+                                            @else
+                                                <form method="POST" action="{{ route('classes.inscription.store', $classe) }}">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="ri-add-circle-line me-1"></i> S'inscrire
+                                                    </button>
+                                                </form>
                                             @endif
-
-                                        @elseif(! $classe->inscriptionsOuvertes())
-                                            <span class="badge bg-secondary-subtle text-secondary fs-6 px-3 py-2">
-                                                <i class="ri-lock-line me-1"></i> Inscriptions closes
-                                            </span>
-
-                                        @elseif($classe->inscriptions_count >= $classe->capacite_max)
-                                            <span class="badge bg-secondary">Complet</span>
-
                                         @else
-                                            <form method="POST" action="{{ route('classes.inscription.store', $classe) }}">
-                                                @csrf
-                                                <button type="submit" class="btn btn-danger">
-                                                    <i class="ri-add-circle-line me-1"></i> S'inscrire
-                                                </button>
-                                            </form>
-                                        @endif
-                                    @else
-                                        @if($classe->inscriptionsOuvertes())
-                                            <a href="{{ route('login') }}" class="btn btn-primary">
-                                                Se connecter pour s'inscrire
-                                            </a>
-                                        @else
-                                            <span class="badge bg-secondary-subtle text-secondary fs-6 px-3 py-2">
-                                                <i class="ri-lock-line me-1"></i> Inscriptions closes
-                                            </span>
-                                        @endif
-                                    @endauth
+                                            @if($classe->inscriptionsOuvertes())
+                                                <a href="{{ route('login') }}" class="btn btn-primary">
+                                                    Se connecter pour s'inscrire
+                                                </a>
+                                            @else
+                                                <span class="badge bg-secondary-subtle text-secondary fs-6 px-3 py-2">
+                                                    <i class="ri-lock-line me-1"></i> Inscriptions closes
+                                                </span>
+                                            @endif
+                                        @endauth
+                                    </div>
+
                                 </div>
-
                             </div>
-                        </div>
-                    @empty
-                        <div class="text-center text-muted py-5">
-                            <i class="ri-calendar-close-line fs-1 d-block mb-2"></i>
-                            Aucune classe n'est disponible pour le moment.
-                        </div>
-                    @endforelse
+                        @empty
+                            <div class="text-center text-muted py-5">
+                                <i class="ri-calendar-close-line fs-1 d-block mb-2"></i>
+                                Aucune classe n'est disponible pour le moment.
+                            </div>
+                        @endforelse
+                    @endif
                 </div>
             </div>
         </div>

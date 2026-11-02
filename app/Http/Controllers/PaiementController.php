@@ -49,6 +49,8 @@ class PaiementController extends Controller
                 ->with('error', 'Cette classe est déjà complète.');
         }
 
+        if ($classe->estDeSession()) return back()->with('error', 'Cette classe est réservée à une entreprise.');
+
         $classe->load('cours');
 
         $montant = $this->montantDePourUtilisateur(
@@ -99,6 +101,8 @@ class PaiementController extends Controller
 
                 return false;
             }
+
+            if ($classe->estDeSession()) return back()->with('error', 'Cette classe est réservée à une entreprise.');
 
             // Création de l'inscription.
             $inscription = Inscription::create([

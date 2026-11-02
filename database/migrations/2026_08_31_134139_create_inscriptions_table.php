@@ -29,6 +29,9 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
 
+            // create_inscriptions_table : NULL = le particulier s'est inscrit lui-même
+            $table->foreignId('via_entreprise_id')->nullable()->constrained('entreprises')->nullOnDelete();
+
             // Classe choisie
             $table->foreignId('classe_id')
                 ->constrained('classes')

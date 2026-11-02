@@ -37,8 +37,8 @@ class DashboardController extends Controller
 
     private function particulier($utilisateur)
     {
-        // Nombre total de sessions auxquelles l'utilisateur est inscrit.
-        $sessionsInscrites = $utilisateur->inscriptions()->count();
+        // Compteur de sessions : inscriptions personnelles seulement
+        $sessionsInscrites = $utilisateur->inscriptions()->personnelles()->count();
 
         // Nombre total de quiz terminés par le particulier.
         $totalQuizEffectues = $utilisateur->resultatsQuiz()->count();
@@ -53,13 +53,11 @@ class DashboardController extends Controller
         // date_fin >= aujourd'hui
         //
         // On vérifie également que la session est payée.
-        $SessionEnCours = $utilisateur->inscriptions()
-            ->whereHas('paiement')
-            ->whereHas('classe', function ($q) {
-                $q->where('date_debut', '<=', now())
-                  ->where('date_fin', '>=', now());
-            })
-            ->count();
+        $SessionEnCours = $utilisateur->inscriptions()->personnelles()
+        ->whereHas('paiement')
+        ->whereHas('classe', fn ($q) => $q->where('date_debut', '<=', now())->where('date_fin', '>=', now()))
+        ->count();
+
 
 
         // =====================================================
@@ -69,11 +67,11 @@ class DashboardController extends Controller
         // Recherche la prochaine classe à venir
         // parmi celles auxquelles l'utilisateur est inscrit.
         $prochaineClasse = \App\Models\Classe::whereHas('inscriptions', function ($q) use ($utilisateur) {
-                $q->where('user_id', $utilisateur->id);
-            })
-            ->where('date_debut', '>', now())
-            ->orderBy('date_debut')
-            ->first();
+            $q->where('user_id', $utilisateur->id)->personnelles(); // exclut celles de l'entreprise
+        })
+        ->where('date_debut', '>', now())
+        ->orderBy('date_debut')
+        ->first();
 
 
         // =====================================================
@@ -95,7 +93,7 @@ class DashboardController extends Controller
         // Classe
         //      ↓
         // Cours
-        $anciensCours = $utilisateur->inscriptions()
+        $anciensCours = $utilisateur->inscriptions()->personnelles()
             ->whereHas('paiement')
             ->whereHas('classe', function ($q) {
                 $q->where('date_fin', '<', now());
@@ -136,12 +134,12 @@ class DashboardController extends Controller
 
         // Une inscription est considérée comme payée
         // lorsqu'elle possède un paiement associé.
-        $sessionsPayees = $utilisateur->inscriptions()
+        $sessionsPayees = $utilisateur->inscriptions()->personnelles()
             ->whereHas('paiement')
             ->count();
 
         // Inscriptions sans paiement.
-        $sessionsImpayees = $utilisateur->inscriptions()
+        $sessionsImpayees = $utilisateur->inscriptions()->personnelles()
             ->whereDoesntHave('paiement')
             ->count();
 
@@ -170,7 +168,7 @@ class DashboardController extends Controller
             'totalQuizEffectues' => $totalQuizEffectues, // <-- à ajouter
             // Calendrier : toutes les classes à venir, les siennes en rouge
             'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir(
-                $utilisateur->inscriptions()->pluck('classe_id')->all()
+                $utilisateur->inscriptions()->personnelles()->pluck('classe_id')->all()
             ),
         ]);
     }
@@ -244,7 +242,7 @@ class DashboardController extends Controller
                 'employesInscrits' => 0,
                 'sessionsReservees' => 0,
                 'budgetFormation' => 0,
-                'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir(),
+                'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir([], $entreprise->id),
             ]);
         }
 
@@ -256,17 +254,16 @@ class DashboardController extends Controller
 
 
         // Sessions réservées par les employés de l'entreprise.
-        $sessionsReservees = \App\Models\Inscription::whereHas('user', function ($q) use ($entreprise) {
-            $q->where('entreprise_id', $entreprise->id);
-        })
-        ->count();
+        $sessionsReservees = $entreprise->sessions()->count();
 
 
-        // Total dépensé en formation par l'entreprise.
-        $budgetFormation = \App\Models\Paiement::whereHas('inscription.user', function ($q) use ($entreprise) {
-            $q->where('entreprise_id', $entreprise->id);
-        })
-        ->sum('montant');
+        // Membres inscrits à au moins une classe PAR L'ENTREPRISE (hors inscriptions personnelles)
+        $employesInscrits = \App\Models\Inscription::faitesParEntreprise($entreprise->id)->distinct()->count('user_id');
+
+        // Dépenses : paiements des inscriptions faites via l'entreprise
+        $budgetFormation = \App\Models\Paiement::whereHas('inscription', function ($q) use ($entreprise) {
+            $q->where('via_entreprise_id', $entreprise->id);
+        })->sum('montant');
 
 
         return view('dashboards.entreprise', [
@@ -274,7 +271,7 @@ class DashboardController extends Controller
             'devisEnCours' => $devisEnCours,
             'sessionsReservees' => $sessionsReservees,
             'budgetFormation' => $budgetFormation,
-            'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir(),
+            'evenementsCalendrier' => \App\Models\Classe::evenementsAVenir([], $entreprise->id),
         ]);
     }
 
@@ -380,7 +377,7 @@ class DashboardController extends Controller
             'inscriptionsEnAttente' => $inscriptionsEnAttente,
             'prochainesClasses' => $prochainesClasses,
             'dernieresInscriptions' => $dernieresInscriptions,
-            'evenementsCalendrier' => Classe::evenementsAVenir(),
+            'evenementsCalendrier' => Classe::evenementsAVenir([], null, true),
         ]);
     }
 }

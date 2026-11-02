@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Controllers\AdminSessionController;
+use App\Http\Controllers\AdminSessionClasseController;
+use App\Http\Controllers\EntrepriseSessionController;
+use App\Http\Controllers\EntrepriseMembreController;
+use App\Http\Controllers\MonEntrepriseController;
+use App\Http\Controllers\PremierMotDePasseController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\CoursController;
@@ -87,6 +93,8 @@ Route::middleware('auth')->group(function () {
         ->name('password.force.edit');
     Route::put('/premier-mot-de-passe', [App\Http\Controllers\PremierMotDePasseController::class, 'update'])
         ->name('password.force.update');
+    Route::get('/premiere-connexion/mot-de-passe', [PremierMotDePasseController::class, 'edit'])->name('password.force.edit');
+    Route::put('/premiere-connexion/mot-de-passe', [PremierMotDePasseController::class, 'update'])->name('password.force.update');
 });
 
 // Paiement direct au comptoir — réservé à l'admin
@@ -215,8 +223,8 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
         ->name('evaluations.store');
 
     // Onglet « Entreprise » : entreprise dont le particulier est membre (lecture seule)
-    Route::get('/mon-entreprise', [App\Http\Controllers\MonEntrepriseController::class, 'index'])
-        ->name('particulier.entreprise.index');
+    Route::get('/mon-entreprise', [MonEntrepriseController::class, 'index'])->name('particulier.entreprise.index');
+    Route::delete('/mon-entreprise/quitter', [MonEntrepriseController::class, 'quitter'])->name('particulier.entreprise.quitter');
 });
 
 
@@ -256,13 +264,15 @@ Route::get('/cours/{cours}/resources/{resource}/telecharger', [App\Http\Controll
 
 
 // ==========================================================================
-// ESPACE PARTICULIER
+// ESPACE ENTREPRISE
 // ==========================================================================
 
 Route::middleware(['auth', 'role:entreprise'])->group(function () {
-    // Onglet « Membres entreprises » : membres gérés par l'admin (lecture seule)
-    Route::get('/entreprise/membres', [App\Http\Controllers\EntrepriseMembreController::class, 'index'])
-        ->name('entreprise.membres.index');
+    Route::get('/entreprise/membres', [EntrepriseMembreController::class, 'index'])->name('entreprise.membres.index');
+    Route::delete('/entreprise/membres/{user}', [EntrepriseMembreController::class, 'destroy'])->name('entreprise.membres.destroy');
+    Route::get('/entreprise/sessions', [EntrepriseSessionController::class, 'index'])->name('entreprise.sessions.index');
+    Route::get('/entreprise/sessions/{sessionFormation}', [EntrepriseSessionController::class, 'show'])->name('entreprise.sessions.show');
+    Route::get('/entreprise/sessions/{sessionFormation}/classes/{classe}', [EntrepriseSessionController::class, 'classe'])->name('entreprise.sessions.classes.show');
 });
 
 // ==========================================================================
@@ -464,14 +474,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/utilisateurs', [App\Http\Controllers\UserController::class, 'index'])
             ->name('users.index');
 
-        Route::get('/utilisateurs/create', [App\Http\Controllers\UserController::class, 'create'])
-            ->name('users.create');
-
         Route::post('/utilisateurs', [App\Http\Controllers\UserController::class, 'store'])
             ->name('users.store');
-
-        Route::get('/utilisateurs/{user}/edit', [App\Http\Controllers\UserController::class, 'edit'])
-            ->name('users.edit');
 
         Route::put('/utilisateurs/{user}', [App\Http\Controllers\UserController::class, 'update'])
             ->name('users.update');
@@ -550,6 +554,25 @@ Route::middleware(['auth', 'role:admin'])
             ->name('entreprises.membres.destroy');
 
         // ------------------------------------------------------------------
+        // SESSIONS
+        // ------------------------------------------------------------------
+
+        Route::get('/sessions', [AdminSessionController::class, 'index'])->name('sessions.index');
+        Route::get('/sessions/create', [AdminSessionController::class, 'create'])->name('sessions.create');
+        Route::post('/sessions', [AdminSessionController::class, 'store'])->name('sessions.store');
+        Route::get('/sessions/{sessionFormation}', [AdminSessionController::class, 'show'])->name('sessions.show');
+        Route::get('/sessions/{sessionFormation}/edit', [AdminSessionController::class, 'edit'])->name('sessions.edit');
+        Route::put('/sessions/{sessionFormation}', [AdminSessionController::class, 'update'])->name('sessions.update');
+        Route::delete('/sessions/{sessionFormation}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
+
+        // Classes d'une session et inscriptions des membres
+        Route::get('/sessions/{sessionFormation}/classes/create', [AdminSessionClasseController::class, 'create'])->name('sessions.classes.create');
+        Route::post('/sessions/{sessionFormation}/classes', [AdminSessionClasseController::class, 'store'])->name('sessions.classes.store');
+        Route::delete('/sessions/{sessionFormation}/classes/{classe}', [AdminSessionClasseController::class, 'destroy'])->name('sessions.classes.destroy');
+        Route::post('/sessions/{sessionFormation}/classes/{classe}/inscriptions', [AdminSessionClasseController::class, 'inscrire'])->name('sessions.classes.inscrire');
+        Route::delete('/sessions/{sessionFormation}/classes/{classe}/inscriptions/{user}', [AdminSessionClasseController::class, 'desinscrire'])->name('sessions.classes.desinscrire');
+
+        // ------------------------------------------------------------------
         // CLASSES
         // ------------------------------------------------------------------
 
@@ -600,6 +623,10 @@ Route::middleware(['auth', 'role:admin'])
                 // Retirer un utilisateur d'une classe
                 Route::delete('/{classe}/inscrits/{user}', [App\Http\Controllers\ClasseController::class, 'retirerUtilisateur'])
                     ->name('inscrits.destroy');
+
+                // Recherche en direct des utilisateurs qu'on peut encore inscrire dans la classe (JSON)
+                Route::get('/{classe}/candidats', [App\Http\Controllers\ClasseController::class, 'candidats'])
+                    ->name('candidats');
             });
     });
 

@@ -17,7 +17,7 @@
 
     <p class="text-muted mb-3">
         Particuliers membres de <strong>{{ $entreprise->raison_sociale }}</strong>.
-        Les membres sont ajoutés et gérés par l'administrateur de la plateforme.
+        Les membres sont ajoutés par l'administrateur de la plateforme ; vous pouvez en retirer de votre entreprise.
     </p>
 
     {{-- Recherche --}}
@@ -41,6 +41,7 @@
                         <th>Nom</th>
                         <th>E-mail</th>
                         <th>Téléphone</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,10 +50,21 @@
                             <td class="fw-medium">{{ $membre->name }}</td>
                             <td>{{ $membre->email }}</td>
                             <td>{{ $membre->particulier?->telephone }}</td>
+                            <td class="text-end">
+                                {{-- Retirer le membre : son compte et ses inscriptions sont conservés --}}
+                                <form action="{{ route('entreprise.membres.destroy', $membre) }}" method="POST" class="d-inline"
+                                    onsubmit="return confirm('Retirer {{ addslashes($membre->name) }} de votre entreprise ?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-soft-danger" title="Retirer de l’entreprise">
+                                        <i class="ri-user-unfollow-line"></i>
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3" class="text-center text-muted py-5">
+                            <td colspan="4" class="text-center text-muted py-5">
                                 <i class="ri-team-line display-5 d-block mb-2"></i>
                                 @if (request()->filled('q'))
                                     Aucun membre ne correspond à votre recherche.

@@ -37,6 +37,9 @@ return new class extends Migration
                 ->constrained('users')
                 ->nullOnDelete();
 
+            // create_classes_table : NULL = classe publique ; restrictOnDelete = pas de suppression d'une session non vide
+            $table->foreignId('session_id')->nullable()->constrained('sessions_formation')->restrictOnDelete();
+
             // État de la session
             $table->string('statut')->default('a_venir');
 

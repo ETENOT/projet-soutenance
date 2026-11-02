@@ -113,8 +113,7 @@ class PaiementService
         $inscription->loadMissing('classe.cours', 'user.role');
         $cours = $inscription->classe->cours;
 
-        return $inscription->user->role?->nom === 'entreprise'
-            ? $cours->prix_entreprise
-            : $cours->prix_particulier;
+        return $inscription->user->role?->nom === 'entreprise' || $inscription->via_entreprise_id
+        ? $cours->prix_entreprise : $cours->prix_particulier;
     }
 }

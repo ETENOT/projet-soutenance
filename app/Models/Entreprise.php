@@ -35,4 +35,9 @@ class Entreprise extends Model
     {
         return $this->hasManyThrough(User::class, Particulier::class, 'entreprise_id', 'particulier_id');
     }
+
+    public function sessions() 
+    { 
+        return $this->hasMany(SessionFormation::class); 
+    }
 }

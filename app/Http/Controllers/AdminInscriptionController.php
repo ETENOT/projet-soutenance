@@ -254,6 +254,15 @@ class AdminInscriptionController extends Controller
         $inscription->load('user', 'classe.cours', 'paiement');
         $changeDeClasse = (int) $data['classe_id'] !== $inscription->classe_id;
 
+        // Une inscription ne passe jamais d'une classe publique à une classe de session (ni l'inverse) :
+        // on désinscrit puis on réinscrit depuis la session de l'entreprise
+        $nouvelleEstDeSession = Classe::whereKey($data['classe_id'])->whereNotNull('session_id')->exists();
+        if ($inscription->classe->estDeSession() || $nouvelleEstDeSession) {
+            return back()->withInput()->withErrors([
+                'classe_id' => "Une inscription liée à une session d'entreprise ne peut pas être déplacée : désinscrivez puis réinscrivez le membre depuis la session.",
+            ]);
+        }
+
         if ($changeDeClasse) {
             if ($inscription->classe->etat !== 'a_venir') {
                 return back()->withInput()->withErrors([
@@ -368,6 +377,11 @@ class AdminInscriptionController extends Controller
             return 'Cette classe est déjà complète.';
         }
 
+        // Classe de session : réservée aux membres de l'entreprise de la session
+        if ($erreur = $classe->erreurAppartenance($user)) {
+            return $erreur;
+        }
+
         return null;
     }
 
@@ -407,10 +421,8 @@ class AdminInscriptionController extends Controller
         return Classe::with('cours:id,titre')
             ->withCount('inscriptions')
             ->where(function ($q) use ($incluse) {
-                $q->where(fn ($ouverte) => $ouverte->whereNull('fermee_le')->whereDate('date_debut', '>', today()->toDateString()));
-                if ($incluse) {
-                    $q->orWhere('id', $incluse->id);
-                }
+                $q->whereNull('session_id');
+                if ($incluse) { $q->orWhere('id', $incluse->id); }
             })
             ->when($coursId, fn ($q) => $q->where('cours_id', $coursId))
             ->orderBy('date_debut')

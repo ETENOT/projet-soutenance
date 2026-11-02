@@ -123,4 +123,21 @@
             </form>
         </div>
     </div>
+    {{-- Anti double-envoi : après le 1er envoi valide, le bouton est bloqué et un 2e envoi est ignoré.
+        Ce script est placé APRÈS le formulaire : il s'exécute après la vérification des jours exclus
+        (qui peut annuler l'envoi), donc le bouton n'est jamais bloqué à tort. --}}
+    <script>
+        (function () {
+            var form = document.querySelector('form[action="{{ route('admin.cours.classes.store', $cours) }}"]');
+            if (!form) return;
+            var envoye = false;
+            form.addEventListener('submit', function (e) {
+                if (e.defaultPrevented) return;             // envoi annulé par une validation : on ne bloque rien
+                if (envoye) { e.preventDefault(); return; } // 2e clic : ignoré
+                envoye = true;
+                var bouton = form.querySelector('button[type=submit]');
+                if (bouton) { bouton.disabled = true; bouton.textContent = 'Création…'; }
+            });
+        })();
+    </script>
 @endsection

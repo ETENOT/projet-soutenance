@@ -98,7 +98,8 @@
 
                         @foreach ($etiquettes as [$texte, $retirer, $icone])
                             <span class="badge bg-primary-subtle text-primary d-inline-flex align-items-center gap-1 fs-12 py-2">
-                                <i class="{{ $icone }}"></i>{{ $texte }}
+                                <i class="{{ $icone }}"></i> 
+                                <span class="text-truncate" title="{{ $texte }}">{{ $texte }}</span>
                                 <a href="{{ $sans($retirer) }}" class="text-primary ms-1" title="Retirer ce filtre" aria-label="Retirer le filtre {{ $texte }}">
                                     <i class="ri-close-line"></i>
                                 </a>
@@ -168,18 +169,18 @@
     {{-- ===== Tableau des formateurs : le dernier créé en premier ===== --}}
     <div class="card border shadow-sm">
         <div class="table-responsive">
-            <table class="table table-sm table-hover align-middle mb-0">
+            <table class="table table-sm table-hover align-middle mb-0 table-liste">
                 <thead>
                     <tr class="table-light">
-                        <th>
+                        <th class="col cloche">
                             <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
                         </th>
                         <th>Nom</th>
                         <th>E-mail</th>
-                        <th>Classes</th>
-                        <th>En cours</th>
-                        <th>Note moyenne</th>
-                        <th class="text-end">Actions</th>
+                        <th class="col-nombre">Classes</th>
+                        <th class="col-montant">En cours</th>
+                        <th class="col-nombre">Note moyenne</th>
+                        <th class="text-end col-actions-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -192,7 +193,7 @@
                                        class="form-check-input case-formateur" aria-label="Sélectionner {{ $formateur->name }}">
                             </td>
                             <td class="fw-semibold cellule-tronquee" title="{{ $formateur->name }}">
-                                <a href="{{ route('admin.formateurs.index', $formateur) }}" class="text-reset">{{ $formateur->name }}</a>
+                                {{ $formateur->name }}
                             </td>
                             <td class="text-muted cellule-tronquee-lg" title="{{ $formateur->email }}">{{ $formateur->email }}</td>
                             <td>{{ $formateur->classes_animes_count }}</td>
@@ -553,7 +554,8 @@
                     {{-- Création : pas de saisie, le compte reçoit le mot de passe par défaut (à changer à la 1re connexion) --}}
                     <div class="alert alert-info py-2 small" id="noteMotDePasseDefaut">
                         Mot de passe temporaire : <strong>{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</strong>.
-                        L'utilisateur devra le changer à sa première connexion.
+                        {{-- Texte adapté à cette page : on crée un formateur, pas un utilisateur quelconque --}}
+                        Le formateur devra le changer à sa première connexion.
                     </div>
                 </div>
 
@@ -618,19 +620,17 @@ document.addEventListener('DOMContentLoaded', function () {
         champ('formateurTitre').textContent = modif ? 'Modifier le formateur' : 'Créer un formateur';
         champ('champMode').value = mode;
         champ('champMethode').disabled = !modif;
-        champ('noteMotDePasse').classList.toggle('d-none', !modif);
         champ('noteEmail').classList.toggle('d-none', modif);
+        // Le rappel du mot de passe temporaire ne concerne que la création
+        champ('noteMotDePasseDefaut').classList.toggle('d-none', modif);
     }
 
-    // Ouverture par un bouton : on remplit le formulaire (sauf retour d'erreur, géré plus bas)
     modalFormateur.addEventListener('show.bs.modal', function (e) {
         const bouton = e.relatedTarget;
         if (!bouton) return;
 
         const d = bouton.dataset;
         preparer(d.mode);
-        champ('champMotDePasse').value = '';
-        champ('champConfirmation').value = '';
 
         if (d.mode === 'modif') {
             champ('champAction').value = d.action;

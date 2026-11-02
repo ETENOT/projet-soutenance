@@ -31,6 +31,8 @@ class InscriptionController extends Controller
             return back()->with('error', 'Cette classe est déjà complète.');
         }
 
+        if ($classe->estDeSession()) return back()->with('error', 'Cette classe est réservée à une entreprise.');
+
         // IMPORTANT :
         // Aucune inscription n'est encore créée ici.
         // L'utilisateur doit d'abord choisir son moyen de paiement.
