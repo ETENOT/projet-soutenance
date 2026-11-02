@@ -104,7 +104,9 @@
                             <span>Gestion des sessions</span>
                         </a>
                     </li>
-                         FORMATEURS (CRUD, affectations, avis anonymes)
+
+                    {{-- ================================
+                        FORMATEURS (CRUD, affectations, avis anonymes)
                     ================================= --}}
 
                     <li class="nav-item">
