@@ -435,41 +435,47 @@ class ClasseController extends Controller
             'lieu' => $request->input('lieu', Classe::LIEU_PAR_DEFAUT),
         ]);
 
-        $data = $request->validate($this->validationRules());
+        // Les jours non comptabilisés saisis à la création doivent être validés eux aussi :
+        // sinon validate() les retire de $data et ils ne sont jamais enregistrés.
+        $data = $request->validate($this->validationRules() + [
+            'jours_exclus' => ['nullable', 'array'],
+            'jours_exclus.*' => ['nullable', 'date'],
+        ]);
 
         // Les jours exclus ne sont pas une colonne de "classes" : on les sépare avant la création
         $joursExclus = $data['jours_exclus'] ?? [];
         unset($data['jours_exclus']);
-        $classe = $cours->classes()->make(collect(data)->except('session_id')->all());
-
         // Les jours exclus doivent être des jours ouvrés de la période (et pas tous les jours)
         if ($erreur = Classe::erreurJoursExclus($joursExclus, $data['date_debut'], $data['date_fin'])) {
             return back()->withInput()->withErrors(['jours_exclus' => $erreur]);
         }
 
-        if ($request->hasFile('lieu_image')) {
-            $data['lieu_image'] = $request->file('lieu_image')->store('classes/lieux', 'public');
-        } else {
-            unset($data['lieu_image']);
-        }
+        // session_id n'est pas « fillable » : on le met de côté et on l'affecte explicitement plus bas
+        $sessionId = $data['session_id'] ?? null;
+        unset($data['session_id']);
 
-        $classe->session_id = $data['session_id'] ?? null;   // affecté explicitement
-        $classe->save();
-
-        // Anti-doublon : si la MÊME classe publique (cours, nom, dates) existe déjà
+        // Anti-doublon AVANT toute écriture : si la MÊME classe (cours, session, nom, dates) existe déjà
         // (double clic, 2e envoi du formulaire, rechargement de la page...), on ne la recrée pas.
         $existe = $cours->classes()
-            ->whereNull('session_id')
+            ->where('session_id', $sessionId)        // where(..., null) => « IS NULL » pour une classe publique
             ->where('nom', $data['nom'])
             ->whereDate('date_debut', $data['date_debut'])
             ->whereDate('date_fin', $data['date_fin'])
             ->exists();
 
         if (! $existe) {
+            if ($request->hasFile('lieu_image')) {
+                $data['lieu_image'] = $request->file('lieu_image')->store('classes/lieux', 'public');
+            } else {
+                unset($data['lieu_image']);
+            }
 
-            DB::transaction(function () use ($cours, $data, $joursExclus) {
+            // UNE seule création, dans une transaction avec les jours exclus
+            DB::transaction(function () use ($cours, $data, $sessionId, $joursExclus) {
                 // cours_id forcé depuis l'URL, jamais depuis le formulaire (sécurité)
-                $classe = $cours->classes()->create($data);
+                $classe = $cours->classes()->make($data);
+                $classe->session_id = $sessionId;   // l'évènement « saved » recalcule les dates de la session
+                $classe->save();
                 $classe->synchroniserJoursExclus($joursExclus);
             });
         }
@@ -485,14 +491,10 @@ class ClasseController extends Controller
         // et savoir si l'inscription est payée.
         $classe->load('inscriptions.user', 'inscriptions.paiement', 'joursExclus');
 
-
-    
-        // Utilisateurs que l'on peut encore inscrire : ni admin, ni formateur, pas déjà inscrits
-        $candidats = ($classe->estDeSession)
-            ? classe->candidatsSession()->select('users.id', 'users.name', 'users.email')
-            : User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))
-            ->orderBy('name')
-            ->whereNotIn('users.id', $classe->inscriptions->pluck('user_id'))
+        // Classe de SESSION : uniquement les membres de l'entreprise de la session.
+        // Classe publique : tous les utilisateurs inscriptibles (ni admin, ni formateur).
+        // Dans les deux cas, on exclut ceux qui sont déjà inscrits.
+        $candidats = $this->requeteCandidats($classe)
             ->get(['users.id', 'users.name', 'users.email']);
 
         return view('classes.edit', [
@@ -512,7 +514,7 @@ class ClasseController extends Controller
         unset($data['jours_exclus']);
 
         if (array_key_exists('session_id', $data)) {
-            $classe->session_id = $data ['session_id'];
+            $classe->session_id = $data['session_id'];
             unset($data['session_id']);
         }
 
@@ -669,13 +671,27 @@ class ClasseController extends Controller
      */
     public function candidats(Cours $cours, Classe $classe)
     {
-        $utilisateurs = User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))
-            ->whereNotIn('id', $classe->inscriptions()->pluck('user_id'))
-            ->orderBy('name')
+        // Même règle que la page de modification : membres de l'entreprise pour une classe de session
+        $utilisateurs = $this->requeteCandidats($classe)
             ->limit(500)
-            ->get(['id', 'name', 'email']);
+            ->get(['users.id', 'users.name', 'users.email']);
 
         return response()->json($utilisateurs);
+    }
+
+    /**
+     * Requête des utilisateurs qu'on peut encore inscrire dans la classe (partagée par edit() et candidats()) :
+     *  - classe de session  -> seulement les membres actuels de l'entreprise de la session ;
+     *  - classe publique    -> tout le monde sauf les admins et les formateurs ;
+     *  - dans les deux cas  -> sans ceux qui sont déjà inscrits.
+     */
+    private function requeteCandidats(Classe $classe)
+    {
+        $requete = $classe->estDeSession()
+            ? $classe->candidatsSession()
+            : User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))->orderBy('name');
+
+        return $requete->whereNotIn('users.id', $classe->inscriptions()->pluck('user_id'));
     }
 
     public function retirerUtilisateur(Cours $cours, Classe $classe, User $user)

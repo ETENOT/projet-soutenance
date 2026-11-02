@@ -89,12 +89,11 @@ Route::middleware('auth')->group(function () {
 
     // Première connexion d'un compte créé par l'admin : changement obligatoire du mot de passe par défaut.
     // Noms en « password.force.* » : le middleware ForcePasswordChange laisse passer ces routes.
+    // (le doublon /premiere-connexion/mot-de-passe portant les mêmes noms a été retiré)
     Route::get('/premier-mot-de-passe', [App\Http\Controllers\PremierMotDePasseController::class, 'edit'])
         ->name('password.force.edit');
     Route::put('/premier-mot-de-passe', [App\Http\Controllers\PremierMotDePasseController::class, 'update'])
         ->name('password.force.update');
-    Route::get('/premiere-connexion/mot-de-passe', [PremierMotDePasseController::class, 'edit'])->name('password.force.edit');
-    Route::put('/premiere-connexion/mot-de-passe', [PremierMotDePasseController::class, 'update'])->name('password.force.update');
 });
 
 // Paiement direct au comptoir — réservé à l'admin
@@ -496,14 +495,12 @@ Route::middleware(['auth', 'role:admin'])
 
         // ------------------------------------------------------------------
         // ENTREPRISES ET LEURS MEMBRES
-        // (les routes fixes « create » et « suppression-multiple » passent AVANT les routes à {entreprise})
+        // (création et modification se font dans des fenêtres de la liste : plus de pages create/edit ;
+        //  la route fixe « suppression-multiple » passe AVANT les routes à {entreprise})
         // ------------------------------------------------------------------
 
         Route::get('/entreprises', [App\Http\Controllers\AdminEntrepriseController::class, 'index'])
             ->name('entreprises.index');
-
-        Route::get('/entreprises/create', [App\Http\Controllers\AdminEntrepriseController::class, 'create'])
-            ->name('entreprises.create');
 
         Route::post('/entreprises', [App\Http\Controllers\AdminEntrepriseController::class, 'store'])
             ->name('entreprises.store');
@@ -515,9 +512,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/entreprises/{entreprise}', [App\Http\Controllers\AdminEntrepriseController::class, 'show'])
             ->name('entreprises.show');
 
-        Route::get('/entreprises/{entreprise}/edit', [App\Http\Controllers\AdminEntrepriseController::class, 'edit'])
-            ->name('entreprises.edit');
-
         Route::put('/entreprises/{entreprise}', [App\Http\Controllers\AdminEntrepriseController::class, 'update'])
             ->name('entreprises.update');
 
@@ -525,8 +519,6 @@ Route::middleware(['auth', 'role:admin'])
             ->name('entreprises.destroy');
 
         // Membres d'une entreprise
-        Route::get('/entreprises/{entreprise}/membres/create', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'create'])
-            ->name('entreprises.membres.create');
 
         // Recherche en direct des particuliers inscrits (JSON)
         Route::get('/entreprises/{entreprise}/membres/rechercher', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'rechercher'])
@@ -543,9 +535,6 @@ Route::middleware(['auth', 'role:admin'])
         // Retirer plusieurs membres cochés dans la liste
         Route::post('/entreprises/{entreprise}/membres/retrait-multiple', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'destroyMultiple'])
             ->name('entreprises.membres.destroy-multiple');
-
-        Route::get('/entreprises/{entreprise}/membres/{user}/edit', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'edit'])
-            ->name('entreprises.membres.edit');
 
         Route::put('/entreprises/{entreprise}/membres/{user}', [App\Http\Controllers\AdminEntrepriseMembreController::class, 'update'])
             ->name('entreprises.membres.update');
@@ -724,7 +713,8 @@ Route::middleware(['auth', 'role:admin'])
                 ->name('store');
 
             // Supprimer un message
-            Route::delete('/{classe}/messages/{message}', [App\Http\Controllers\ForumController::class, 'destroy'])->name('destroy');
+            Route::delete('/{classe}/messages/{message}', [App\Http\Controllers\ForumController::class, 'destroy'])
+                ->name('destroy');
 
             // Afficher une photo (réservé aux membres)
             Route::get('/{classe}/photos/{message}', [App\Http\Controllers\ForumController::class, 'photo'])->name('photo');

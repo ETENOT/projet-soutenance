@@ -98,7 +98,7 @@
                 <i class="ri-user-add-line me-1"></i>Ajouter des membres
             </button>
             <button type="button" class="btn btn-soft-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#modalNouveau">
-                <i class="ri-user-add-line me-1"></i>Créer un particulier
+                <i class="ri-user-add-line me-1"></i>Créer un membre
             </button>
         </div>
 
@@ -133,7 +133,6 @@
                         <th>Nom</th>
                         <th>E-mail</th>
                         <th>Téléphone</th>
-                        <th>Statut</th>
                         <th>Inscrit le</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -152,13 +151,6 @@
                             <td class="fw-semibold" title="{{ $membre->name }}">{{ $membre->name }}</td>
                             <td class="text-muted" title="{{ $membre->email }}">{{ $membre->email }}</td>
                             <td title="{{ $membre->particulier?->telephone }}">{{ $membre->particulier?->telephone }}</td>
-                            <td>
-                                @if ($membre->must_change_password)
-                                    <span class="badge bg-warning-subtle text-warning" title="Mot de passe par défaut : à changer à la première connexion">Provisoire</span>
-                                @else
-                                    <span class="badge bg-success-subtle text-success">Actif</span>
-                                @endif
-                            </td>
                             <td>{{ $membre->created_at?->format('d/m/Y') }}</td>
                             <td class="text-end membre-actions">
                                 <div class="d-flex justify-content-end gap-1">
@@ -285,7 +277,7 @@
                 <input type="hidden" name="_mode" value="nouveau">
 
                 <div class="modal-header">
-                    <h5 class="modal-title">Créer un particulier</h5>
+                    <h5 class="modal-title">Créer un membre</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
 

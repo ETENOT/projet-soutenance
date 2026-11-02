@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Formateur;
 
 use App\Models\Classe;
 use App\Models\Quiz;
+use App\Models\ResultatQuiz; // manquait : la page « correction » plantait
 use Illuminate\Support\Facades\Auth;
 
 // Résultats aux quiz des stagiaires d'une classe, avec TROIS restrictions cumulatives :

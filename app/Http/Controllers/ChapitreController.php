@@ -10,7 +10,10 @@ class ChapitreController extends Controller
 {
     public function create(Cours $cours)
     {
-        return view('chapitres.create', compact('cours'));
+        // Numéro proposé par défaut : le suivant du plus grand ordre déjà utilisé dans ce cours
+        $prochainOrdre = ($cours->chapitres()->max('ordre') ?? 0) + 1;
+
+        return view('chapitres.create', compact('cours', 'prochainOrdre'));
     }
 
     public function edit(Cours $cours, Chapitre $chapitre)

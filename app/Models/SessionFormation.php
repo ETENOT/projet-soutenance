@@ -34,5 +34,24 @@ class SessionFormation extends Model
         if ($etats->every(fn ($e) => $e === 'a_venir')) return 'a_venir';
         return 'en_cours';
     }
-    // + getEtatLibelleAttribute() / getEtatCouleurAttribute() (comme Classe)
+
+    // Libellé français de l'état : $session->etat_libelle (mêmes libellés que Classe)
+    public function getEtatLibelleAttribute(): string
+    {
+        return match ($this->etat) {
+            'a_venir' => 'À venir',
+            'en_cours' => 'En cours',
+            default => 'Terminée',
+        };
+    }
+
+    // Couleur du badge Bootstrap/Velzon : $session->etat_couleur (mêmes couleurs que Classe)
+    public function getEtatCouleurAttribute(): string
+    {
+        return match ($this->etat) {
+            'a_venir' => 'info',
+            'en_cours' => 'success',
+            default => 'secondary',
+        };
+    }
 }

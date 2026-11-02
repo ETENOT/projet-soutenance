@@ -41,7 +41,8 @@ class VerifyEmailWithCode extends Notification
     {
         return (new MailMessage)
             ->subject('Votre code de vérification – Formation NéoVision')
-            ->view('emails.verification-code', [
+            // « Emails » avec un E majuscule, comme le dossier : sous Linux la casse compte
+            ->view('Emails.verification-code', [
                 'code' => $this->code,
                 'name' => $notifiable->name,
             ]);
