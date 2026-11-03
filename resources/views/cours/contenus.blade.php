@@ -64,6 +64,10 @@
                         data-bs-toggle="modal" data-bs-target="#modalChapitre" data-mode="ajout">
                     <i class="ri-add-line me-1"></i>Créer un chapitre
                 </button>
+                {{-- Quiz de chaque chapitre + quiz final : « noté sur » et nombre de questions --}}
+                <a href="{{ route('admin.cours.quiz-chapitres', $cours) }}" class="btn btn-soft-primary fw-semibold ms-2">
+                    <i class="ri-route-line me-1"></i>Quiz des chapitres
+                </a>
             </div>
 
         <div class="card border shadow-sm">

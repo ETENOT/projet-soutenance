@@ -72,9 +72,16 @@
         <div class="col-lg-7">
             <div class="card border shadow-sm h-100 mb-0">
                 <div class="card-body p-4">
-                    <h5 class="fw-bold mb-4">
-                        <i class="ri-book-open-line text-danger me-2"></i>Contenu du cours
-                    </h5>
+                    {{-- Titre de la carte + bouton vers les quiz des chapitres, sur la même ligne --}}
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+                        <h5 class="fw-bold mb-0">
+                            <i class="ri-book-open-line text-danger me-2"></i>Contenu du cours
+                        </h5>
+                        {{-- Quiz de chaque chapitre, débloqués dans l'ordre, puis quiz final --}}
+                        <a href="{{ route('evaluations.parcours', $cours) }}" class="btn btn-sm btn-soft-primary">
+                            <i class="ri-route-line me-1"></i>Quiz des chapitres
+                        </a>
+                    </div>
 
                     <div class="accordion" id="chapitresAccordion">
                         @forelse($cours->chapitres as $chapitre)

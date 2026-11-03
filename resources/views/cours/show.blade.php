@@ -485,6 +485,30 @@
                     @endguest
                 </div>
             </div>
+            {{-- Quiz des chapitres + quiz final (en plus du quiz du cours ci-dessus, qui ne change pas).
+                 Réservés aux particuliers inscrits ; visiteurs et non-inscrits voient des cadenas. --}}
+            @if (($etapesQuiz ?? collect())->isNotEmpty())
+                <div class="card border shadow-sm mt-3">
+                    <div class="card-body p-4">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                            <h5 class="fw-bold mb-0">
+                                <i class="ri-route-line text-danger me-2"></i>Quiz des chapitres
+                            </h5>
+                            @auth
+                                <a href="{{ route('evaluations.parcours', $cours) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="ri-history-line me-1"></i>Historique des quiz de chapitre
+                                </a>
+                            @endauth
+                        </div>
+                        <p class="text-muted small">
+                            Terminez le quiz d'un chapitre pour débloquer le suivant, jusqu'au quiz final.
+                            Un quiz débloqué peut être repassé autant de fois que vous le souhaitez.
+                        </p>
+
+                        @include('evaluations.partials.parcours', ['cours' => $cours, 'etapes' => $etapesQuiz])
+                    </div>
+                </div>
+            @endif
         </div>
 
         {{-- ---------- Avis ---------- --}}

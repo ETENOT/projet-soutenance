@@ -207,7 +207,6 @@
                         <th>Participant</th>
                         <th>E-mail</th>
                         <th>Cours</th>
-                        <th>Statut</th>
                         <th>Note</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -240,13 +239,6 @@
                             </td>
                             <td>{{ $emailParticipant }}</td>
                             <td>{{ $quiz->cours->titre }}</td>
-                            <td>
-                                @if ($resultat)
-                                    <span class="badge bg-success-subtle text-success">Terminé</span>
-                                @else
-                                    <span class="badge bg-warning-subtle text-warning">En cours</span>
-                                @endif
-                            </td>
                             <td class="text-nowrap">
                                 @if ($resultat)
                                     {{-- Vert à partir de 50 %, rouge en dessous --}}

@@ -13,6 +13,7 @@ class Chapitre extends Model
         'contenu',
         'ordre',
         'cours_id',
+        'quiz_note_sur',   // nombre de questions du quiz de ce chapitre (NULL = toutes)
     ];
 
     /**
@@ -23,4 +24,19 @@ class Chapitre extends Model
         return $this->belongsTo(Cours::class);
     }
 
+    /**
+     * Questions de la banque rattachées à ce chapitre (quiz du chapitre).
+     */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
+    /**
+     * Tentatives des particuliers sur le quiz de ce chapitre.
+     */
+    public function tentativesEvaluation(): HasMany
+    {
+        return $this->hasMany(TentativeEvaluation::class);
+    }
 }

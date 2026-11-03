@@ -36,6 +36,7 @@
                                 <th class="text-center">Questions dans la banque</th>
                                 <th class="nv-score-column">Noté sur</th>
                                 <th class="w-25">Quiz obtenu</th>
+                                <th class="text-end">Quiz des chapitres</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,9 +55,15 @@
                                         @enderror
                                     </td>
                                     <td class="resume-quiz small text-break"></td>
+                                    {{-- Réglages des quiz de chapitre et du quiz final de ce cours --}}
+                                    <td class="text-end">
+                                        <a href="{{ route('admin.cours.quiz-chapitres', $c) }}" class="btn btn-sm btn-soft-primary text-nowrap">
+                                            <i class="ri-route-line me-1"></i>Chapitres et final
+                                        </a>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-center text-muted py-4">Aucun cours.</td></tr>
+                                <tr><td colspan="5" class="text-center text-muted py-4">Aucun cours.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

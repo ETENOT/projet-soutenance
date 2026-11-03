@@ -134,6 +134,12 @@ class CoursController extends Controller
             );
         }
 
+        // Quiz des chapitres + quiz final : affichés aux particuliers et aux visiteurs
+        // (visiteur ou particulier non inscrit = tout est verrouillé, avec un cadenas)
+        $etapesQuiz = in_array(Auth::user()?->role?->nom, [null, 'particulier'], true)
+            ? app(\App\Services\ParcoursEvaluationService::class)->etapes($cours, Auth::user())
+            : collect();
+
         // ----- Avis du cours (table avis : une par stagiaire et par cours)-----
         //Chaque stagiaire compte pour une voix, quelle que soit sa classe
         //La moyenne est donc naturellement pondérée par le nombre d'avis de chaque stagiaire.
@@ -158,6 +164,7 @@ class CoursController extends Controller
             'accesDocuments' => $accesDocuments,
             'quizEnCours' => $quizEnCours,
             'progressionQuiz' => $progressionQuiz,
+            'etapesQuiz' => $etapesQuiz,
             'nombreAvis' => $nombreAvis,
             'moyenneAvis' => $moyenneAvis,
             'repartitionAvis' => $repartitionAvis,

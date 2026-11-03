@@ -42,9 +42,17 @@ class DatabaseSeeder extends Seeder
             QuestionSeeder::class,
             OptionSeeder::class,
 
+            // Questions des quiz de chapitre (et donc des quiz finaux) + « noté sur » de démonstration
+            // (après ChapitreSeeder : les questions sont rattachées aux chapitres existants)
+            QuestionChapitreSeeder::class,
+
             // Compte formateur de test + classes, stagiaires, paiements, quiz et présences
             // (après ClasseSeeder : il affecte le formateur à une classe existante)
             FormateurSeeder::class,
+
+            // Tentatives de démonstration sur les quiz de chapitre et les quiz finaux
+            // (après FormateurSeeder : il crée les stagiaires et leurs inscriptions)
+            TentativeEvaluationSeeder::class,
 
             // Classes de test (lieu cliquable, capacité minimale, inscriptions closes)
             ClasseScenariosSeeder::class,

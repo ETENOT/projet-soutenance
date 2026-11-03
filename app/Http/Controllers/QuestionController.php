@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Validation\Rule;
+use App\Models\Chapitre;
 use App\Models\Cours;
 use App\Models\Question;
 use Illuminate\Http\Request;
@@ -20,7 +21,8 @@ class QuestionController extends Controller
     // Liste paginée (10 par page, la dernière créée en premier), filtrable par cours et par mot-clé dans l'énoncé
     public function index(Request $request)
     {
-        $questions = Question::with(['cours:id,titre', 'options'])
+        // chapitre : badge « Chapitre N » affiché sous le cours (quiz de chapitre)
+        $questions = Question::with(['cours:id,titre', 'chapitre:id,titre,ordre', 'options'])
             // reponses_count = nombre de fois où la question a été posée dans une tentative
             ->withCount('reponses')
             ->when($request->filled('cours_id'), fn ($q) => $q->where('cours_id', $request->input('cours_id')))
@@ -41,26 +43,59 @@ class QuestionController extends Controller
             'jamais_posees' => Question::doesntHave('reponses')->count(),
         ];
 
-        return view('questions.index', compact('questions', 'cours', 'stats'));
+        // Tous les chapitres, pour le menu « Chapitre » de la fenêtre Créer/Modifier
+        // et pour l'action groupée « Rattacher à un chapitre » (filtrés par cours en JavaScript)
+        $chapitres = Chapitre::orderBy('cours_id')->orderBy('ordre')->orderBy('id')->get(['id', 'titre', 'ordre', 'cours_id']);
+
+        return view('questions.index', compact('questions', 'cours', 'stats', 'chapitres'));
     }
 
     /**
      * Actions groupées sur les questions cochées dans la liste.
-     * Actions : changer_cours (rattacher les questions à un autre cours) | supprimer.
+     * Actions : changer_cours (rattacher les questions à un autre cours) | supprimer
+     *          | changer_chapitre (rattacher au quiz d'un chapitre) | retirer_chapitre (remettre dans la banque générale).
      */
     public function actionsGroupees(Request $request)
     {
         $data = $request->validate([
             'ids'         => ['required', 'array', 'min:1'],
             'ids.*'       => ['integer', 'exists:questions,id'],
-            'action'      => ['required', Rule::in(['changer_cours', 'supprimer'])],
+            'action'      => ['required', Rule::in(['changer_cours', 'supprimer', 'changer_chapitre', 'retirer_chapitre'])],
             // Le cours cible est obligatoire seulement pour "changer de cours"
             'cours_cible' => ['required_if:action,changer_cours', 'nullable', 'exists:cours,id'],
+            // Le chapitre cible est obligatoire seulement pour "rattacher à un chapitre"
+            'chapitre_cible' => ['required_if:action,changer_chapitre', 'nullable', 'exists:chapitres,id'],
         ], [
             'ids.required'            => 'Sélectionnez au moins une question.',
             'action.required'         => 'Choisissez une action à appliquer.',
             'cours_cible.required_if' => 'Choisissez le cours vers lequel déplacer les questions.',
+            'chapitre_cible.required_if' => 'Choisissez le chapitre auquel rattacher les questions.',
         ]);
+
+        // --- retirer_chapitre : les questions restent dans le cours, mais ne servent plus aux quiz de chapitre ---
+        if ($data['action'] === 'retirer_chapitre') {
+            $nombre = Question::whereIn('id', $data['ids'])->whereNotNull('chapitre_id')->update(['chapitre_id' => null]);
+
+            return back()->with('success', "{$nombre} question(s) retirée(s) de leur chapitre.");
+        }
+
+        // --- changer_chapitre : seules les questions du MÊME cours que le chapitre sont rattachées ---
+        if ($data['action'] === 'changer_chapitre') {
+            $chapitre = Chapitre::with('cours:id,titre')->findOrFail($data['chapitre_cible']);
+
+            $nombre = Question::whereIn('id', $data['ids'])
+                ->where('cours_id', $chapitre->cours_id)
+                ->update(['chapitre_id' => $chapitre->id]);
+
+            $autres = count($data['ids']) - $nombre;
+
+            $retour = back()->with('success', "{$nombre} question(s) rattachée(s) au chapitre {$chapitre->ordre} « {$chapitre->titre} ».");
+            if ($autres > 0) {
+                $retour->with('error', "{$autres} question(s) appartiennent à un autre cours que « {$chapitre->cours->titre} » : inchangées.");
+            }
+
+            return $retour;
+        }
 
         if ($data['action'] === 'supprimer') {
             // Comme pour une suppression individuelle, les options et les lignes reponses_quiz liées
@@ -75,7 +110,8 @@ class QuestionController extends Controller
 
         $nombre = Question::whereIn('id', $data['ids'])
             ->where('cours_id', '!=', $cible->id)
-            ->update(['cours_id' => $cible->id]);
+            // Le chapitre de l'ancien cours n'a plus de sens dans le nouveau : retour dans la banque générale
+            ->update(['cours_id' => $cible->id, 'chapitre_id' => null]);
 
         $dejaLa = count($data['ids']) - $nombre;
 
@@ -94,8 +130,9 @@ class QuestionController extends Controller
         // Transaction : la question et ses options sont créées ensemble ou pas du tout
         $question = DB::transaction(function () use ($data) {
             $question = Question::create([
-                'enonce'   => $data['enonce'],
-                'cours_id' => $data['cours_id'],
+                'enonce'      => $data['enonce'],
+                'cours_id'    => $data['cours_id'],
+                'chapitre_id' => $data['chapitre_id'] ?? null,   // facultatif : quiz de chapitre
             ]);
 
             foreach ($data['options'] as $cle => $option) {
@@ -120,8 +157,9 @@ class QuestionController extends Controller
 
         DB::transaction(function () use ($data, $question) {
             $question->update([
-                'enonce'   => $data['enonce'],
-                'cours_id' => $data['cours_id'],
+                'enonce'      => $data['enonce'],
+                'cours_id'    => $data['cours_id'],
+                'chapitre_id' => $data['chapitre_id'] ?? null,   // facultatif : quiz de chapitre
             ]);
 
             $existantes = $question->options()->get()->keyBy('id');
@@ -166,6 +204,9 @@ class QuestionController extends Controller
     {
         $data = $request->validate([
             'cours_id'           => ['required', 'exists:cours,id'],
+            // Chapitre facultatif, et forcément un chapitre du cours choisi
+            'chapitre_id'        => ['nullable', 'integer',
+                Rule::exists('chapitres', 'id')->where('cours_id', (int) $request->input('cours_id'))],
             'enonce'             => ['required', 'string', 'max:2000'],
             'options'            => ['required', 'array', 'min:' . self::MIN_OPTIONS, 'max:' . self::MAX_OPTIONS],
             'options.*.id'       => ['nullable', 'integer'],
@@ -176,6 +217,7 @@ class QuestionController extends Controller
             'options.max'                => 'Maximum ' . self::MAX_OPTIONS . ' options.',
             'options.*.libelle.required' => 'Chaque option doit avoir un texte.',
             'correcte.required'          => 'Indiquez quelle option est la bonne réponse.',
+            'chapitre_id.exists'         => 'Ce chapitre n\'appartient pas au cours choisi.',
         ]);
 
         // La bonne réponse doit désigner une des options envoyées

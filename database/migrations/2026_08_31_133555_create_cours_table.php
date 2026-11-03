@@ -21,6 +21,11 @@ return new class extends Migration
             // NULL = pas de limite : on pose toute la banque de questions.
             $table->unsignedSmallInteger('note_sur')->nullable();
 
+            // "Noté sur" du quiz FINAL du cours (parcours des quiz de chapitre) = nombre de questions
+            // tirées au hasard parmi les questions de TOUS les chapitres. NULL = toutes.
+            // Indépendant de note_sur ci-dessus, qui reste celui du quiz du cours.
+            $table->unsignedSmallInteger('note_sur_final')->nullable();
+
              // Crée une colonne "prix" de type décimal.
             // 10 = nombre total de chiffres maximum.
             // 2 = nombre de chiffres après la virgule.

@@ -8,12 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
-    protected $fillable = ['enonce', 'cours_id'];
+    // chapitre_id : facultatif, rattache la question au quiz d'un chapitre (NULL = banque générale)
+    protected $fillable = ['enonce', 'cours_id', 'chapitre_id'];
 
     // La table "questions" a cours_id -> belongsTo
     public function cours()
     {
         return $this->belongsTo(Cours::class);
+    }
+
+    // Chapitre auquel la question est rattachée (NULL = question générale du cours)
+    public function chapitre()
+    {
+        return $this->belongsTo(Chapitre::class);
     }
 
     // Une Question a plusieurs Options de réponse (QCM)
