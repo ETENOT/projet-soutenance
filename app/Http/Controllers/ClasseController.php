@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 
 class ClasseController extends Controller
 {
@@ -57,7 +59,8 @@ class ClasseController extends Controller
         'inscrits_max.gte'       => 'Le nombre maximum d\'inscrits doit être supérieur ou égal au minimum.',
     ]);
 
-        $query = Classe::with(['cours.categorie', 'formateur'])->withCount('inscriptions');
+        // Les classes d'ENTREPRISE (rattachées à une session) se gèrent dans « Sessions » : cette liste ne montre que les classes publiques
+        $query = Classe::publiques()->with(['cours.categorie', 'formateur'])->withCount('inscriptions');
 
         if ($recherche = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($recherche) {
@@ -172,7 +175,8 @@ class ClasseController extends Controller
 
         // La dernière classe créée apparaît en premier (puis, à égalité, la plus récente par date de début)
         $classes = $query->orderByDesc('id')->paginate(10)->withQueryString();
-        $classes->getCollection()->load(['inscriptions.user', 'inscriptions.paiement', 'joursExclus']);
+        //la liste n'a plus besoin que du nombre d'inscrits ; la page de gestion charge le reste
+         $classes->getCollection()->load('inscriptions');
 
         return view('classes.liste', [
             'classes' => $classes,
@@ -183,12 +187,12 @@ class ClasseController extends Controller
             'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
             'tousLesFormateurs' => $this->formateurs(),
             'toutesLesCategories' => Categorie::orderBy('nom')->get(),
-            'tousLesLieux' => Classe::query()->distinct()->orderBy('lieu')->pluck('lieu'),
+            'tousLesLieux' => Classe::publiques()->distinct()->orderBy('lieu')->pluck('lieu'),
             'stats' => [
-                'en_cours'   => Classe::avecEtat('en_cours')->count(),
-                'a_venir'    => Classe::avecEtat('a_venir')->count(),
-                'terminees'  => Classe::avecEtat('terminee')->count(),
-                'formations' => Classe::distinct()->count('cours_id'),
+                'en_cours'   => Classe::publiques()->avecEtat('en_cours')->count(),
+                'a_venir'    => Classe::publiques()->avecEtat('a_venir')->count(),
+                'terminees'  => Classe::publiques()->avecEtat('terminee')->count(),
+                'formations' => Classe::publiques()->distinct()->count('cours_id'),
             ],
         ]);
     }
@@ -307,6 +311,7 @@ class ClasseController extends Controller
         ]);
 
         $classes = $cours->classes()
+            ->publiques()
             ->with('formateur')
             ->withCount('inscriptions');
 
@@ -433,6 +438,7 @@ class ClasseController extends Controller
         $request->merge([
             'capacite_max' => $request->input('capacite_max', 10),
             'lieu' => $request->input('lieu', Classe::LIEU_PAR_DEFAUT),
+            'lieu_lien' => $request->input('lieu_lien') ?: Classe::LIEU_LIEN_PAR_DEFAUT,
         ]);
 
         // Les jours non comptabilisés saisis à la création doivent être validés eux aussi :
@@ -520,16 +526,14 @@ class ClasseController extends Controller
 
         $classe->update($data);
 
-        return redirect()->route('admin.classes.index')
-            ->with('success', 'Classe modifiée avec succès.');
+        return back()->with('success', 'Classe modifiée avec succès.');
     }
 
     // Enregistre les jours à NE PAS compter dans le taux de présence (formulaire dédié de la page de la classe).
     // La liste envoyée REMPLACE l'ancienne. Modifiable à tout moment tant que la classe n'est pas fermée.
     public function updateJoursExclus(Request $request, Cours $cours, Classe $classe)
     {
-        // back() : on revient sur la page d'où l'on vient (liste des classes avec ses filtres),
-        // et la fenêtre de gestion de cette classe se rouvre sur l'onglet des jours
+        // back() : on revient sur la page « Gérer la classe » ; la fenêtre des jours se rouvre en cas d'erreur
         $retour = back()->with('reouvrir', $classe->id . ':jours');
 
         // Une classe fermée est figée (taux déjà calculés)
@@ -639,7 +643,7 @@ class ClasseController extends Controller
         if ($classe->estDeSession()) {
             foreach (User::whereIn('id', $nouveauxIds)->get() as $candidat) {
                 if ($erreur = $classe->erreurAppartenance($candidat)) {
-                    return redirect()->route('admin.cours.classes.edit', [$cours, $classe])->with('error', $erreur);
+                     return back()->with('reouvrir', $classe->id . ':inscrits')->with('error', $erreur);
                 }
             }
         }
@@ -659,7 +663,7 @@ class ClasseController extends Controller
             }
         }
 
-        // On revient sur la liste, et la fenêtre de gestion de la classe se rouvre sur ses inscrits
+        // On revient sur la page « Gérer la classe »
         return back()->with('reouvrir', $classe->id . ':inscrits')
             ->with('success', 'Utilisateurs ajoutés à la classe.');
     }
@@ -677,6 +681,46 @@ class ClasseController extends Controller
             ->get(['users.id', 'users.name', 'users.email']);
 
         return response()->json($utilisateurs);
+    }
+
+    // Page « Gérer la classe » : inscrits (paiement, retrait, ajout) et jours non comptabilisés
+    public function gerer(Request $request, Cours $cours, Classe $classe)
+    {
+        abort_unless((int) $classe->cours_id === (int) $cours->id, 404);
+
+        $request->validate([
+            'date_du' => ['nullable', 'date'],
+            'date_au' => array_filter(['nullable', 'date', $request->filled('date_du') ? 'after_or_equal:date_du' : null]),
+        ], [
+            'date_au.after_or_equal' => 'La date de fin doit être postérieure ou égale à la date de début.',
+        ]);
+
+        $classe->load([
+            'cours', 'formateur', 'session', 'joursExclus',
+            'inscriptions' => fn ($q) => $q->orderByDesc('id')->with('user', 'paiement'),
+        ]);
+
+        // Recherche et filtres sur les inscrits (les statistiques gardent le total de la classe)
+        $inscriptions = $classe->inscriptions;
+
+        if ($recherche = Str::lower(trim((string) $request->input('q')))) {
+            $inscriptions = $inscriptions->filter(fn ($i) => Str::contains(Str::lower(($i->user?->name ?? '') . ' ' . ($i->user?->email ?? '')), $recherche));
+        }
+
+        // Paiement : un seul des deux coché = filtre ; les deux (ou aucun) = tous
+        $paiements = array_values(array_intersect(['paye', 'impaye'], (array) $request->input('paiement', [])));
+        if (count($paiements) === 1) {
+            $inscriptions = $inscriptions->filter(fn ($i) => $paiements[0] === 'paye' ? $i->paiement !== null : $i->paiement === null);
+        }
+
+        if ($request->filled('date_du')) {
+            $inscriptions = $inscriptions->filter(fn ($i) => $i->created_at && $i->created_at->toDateString() >= $request->input('date_du'));
+        }
+        if ($request->filled('date_au')) {
+            $inscriptions = $inscriptions->filter(fn ($i) => $i->created_at && $i->created_at->toDateString() <= $request->input('date_au'));
+        }
+
+        return view('classes.gerer', ['cours' => $cours, 'classe' => $classe, 'inscriptions' => $inscriptions->values()]);
     }
 
     /**
@@ -702,8 +746,63 @@ class ClasseController extends Controller
 
         Inscription::where('classe_id', $classe->id)->where('user_id', $user->id)->delete();
 
-        // Après le retrait, la fenêtre de gestion de la classe se rouvre sur ses inscrits
+        // Après le retrait, on reste sur la page « Gérer la classe »
         return back()->with('reouvrir', $classe->id . ':inscrits')
             ->with('success', 'Utilisateur retiré de la classe.');
+    }
+
+    /**
+     * Actions groupées sur les inscrits cochés de la page « Gérer la classe » : retirer | payer.
+     * « ids » contient des identifiants d'INSCRIPTION ; seules celles de cette classe sont traitées.
+     */
+    public function actionsInscrits(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService)
+    {
+        abort_unless((int) $classe->cours_id === (int) $cours->id, 404);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+            'action' => ['required', Rule::in(['retirer', 'payer'])],
+        ], [
+            'ids.required' => 'Sélectionnez au moins un inscrit.',
+        ]);
+
+        if ($classe->estFermee()) {
+            return back()->with('error', 'La classe est fermée : les inscrits ne sont plus modifiables.');
+        }
+
+        $reussies = 0;
+        $ignorees = 0;
+
+        if ($data['action'] === 'retirer') {
+            // Même suppression que retirerUtilisateur(), pour plusieurs inscriptions de CETTE classe
+            $reussies = Inscription::where('classe_id', $classe->id)->whereIn('id', $data['ids'])->delete();
+        } else {
+            $inscriptions = Inscription::with('paiement')
+                ->where('classe_id', $classe->id)
+                ->whereIn('id', $data['ids'])
+                ->get();
+
+            foreach ($inscriptions as $inscription) {
+                if ($inscription->paiement) {
+                    $ignorees++;   // déjà payée
+                    continue;
+                }
+                $paiementService->enregistrerAuComptoir($inscription) ? $reussies++ : $ignorees++;
+            }
+        }
+
+        $libelle = $data['action'] === 'retirer' ? 'retiré(s) de la classe' : 'payé(s)';
+
+        // Pas de "reouvrir" ici : la page se recharge simplement, aucune fenêtre ne doit se rouvrir
+        $retour = back();
+        if ($reussies > 0) {
+            $retour->with('success', "{$reussies} inscrit(s) {$libelle}.");
+        }
+        if ($ignorees > 0) {
+            $retour->with('error', "{$ignorees} inscription(s) ignorée(s) : déjà payée(s).");
+        }
+
+        return $retour;
     }
 }

@@ -172,14 +172,12 @@
             <table class="table table-sm table-hover align-middle mb-0 table-liste">
                 <thead>
                     <tr class="table-light">
-                        <th class="col cloche">
-                            <input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner">
-                        </th>
+                        <th class="col-coche"><input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner"></th>
                         <th>Nom</th>
                         <th>E-mail</th>
                         <th class="col-nombre">Classes</th>
-                        <th class="col-montant">En cours</th>
-                        <th class="col-nombre">Note moyenne</th>
+                        <th class="col-nombre">En cours</th>
+                        <th style="width: 13rem;">Note moyenne</th>
                         <th class="text-end col-actions-3">Actions</th>
                     </tr>
                 </thead>
@@ -192,10 +190,8 @@
                                 <input type="checkbox" name="ids[]" value="{{ $formateur->id }}" form="formGroupe"
                                        class="form-check-input case-formateur" aria-label="Sélectionner {{ $formateur->name }}">
                             </td>
-                            <td class="fw-semibold cellule-tronquee" title="{{ $formateur->name }}">
-                                {{ $formateur->name }}
-                            </td>
-                            <td class="text-muted cellule-tronquee-lg" title="{{ $formateur->email }}">{{ $formateur->email }}</td>
+                            <td class="fw-semibold" title="{{ $formateur->name }}">{{ $formateur->name }}</td>
+                            <td class="text-muted" title="{{ $formateur->email }}">{{ $formateur->email }}</td>
                             <td>{{ $formateur->classes_animes_count }}</td>
                             <td>
                                 @if ($formateur->classes_en_cours_count > 0)

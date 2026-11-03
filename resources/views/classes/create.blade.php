@@ -52,7 +52,7 @@
                     <label for="lieu_lien" class="form-label">Lien Google Maps du lieu <span class="text-muted">(facultatif)</span></label>
                     <input type="url" name="lieu_lien" id="lieu_lien" placeholder="https://maps.app.goo.gl/..."
                            class="form-control @error('lieu_lien') is-invalid @enderror"
-                           value="{{ old('lieu_lien') }}">
+                           value="{{ old('lieu_lien', \App\Models\Classe::LIEU_LIEN_PAR_DEFAUT) }}">
                     <div class="form-text">Sans lien, une recherche Google Maps sur le nom du lieu est utilisée.</div>
                     @error('lieu_lien')
                         <div class="invalid-feedback">{{ $message }}</div>

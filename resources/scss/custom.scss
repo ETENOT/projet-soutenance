@@ -1303,6 +1303,7 @@ html[data-sidebar="dark"] {
     .col-nombre { width: 6rem; }
     .col-montant { width: 9rem; }
     .col-date { width: 8rem; }
+    .col-periode { width: 14rem; }
     .col-actions-3 { width: 8.5rem; }
     .col-actions-4 { width: 11rem; }
 }
@@ -1486,3 +1487,26 @@ html[data-sidebar="dark"] {
         flex-shrink: 0;
     }
 }
+
+// ===== Page « Gérer la classe » =====
+// Colonnes « utilisateurs disponibles » et « sélection » : même hauteur, elles défilent dans leur cadre
+.gestion-colonne {
+    height: 20rem;
+    overflow-y: auto;
+
+    label { cursor: pointer; }
+}
+
+.gestion-ligne-haute { min-height: 38px; }
+.gestion-ligne-basse { min-height: 24px; }
+
+// Colonnes « utilisateurs disponibles » et « sélection » : même hauteur, elles défilent dans leur cadre
+.gestion-colonne {
+    height: 20rem;
+    overflow-y: auto;
+
+    label { cursor: pointer; }
+}
+
+.gestion-ligne-haute { min-height: 38px; }
+.gestion-ligne-basse { min-height: 24px; }

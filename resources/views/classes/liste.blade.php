@@ -478,12 +478,11 @@
                                             <i class="ri-eye-line"></i>
                                         </button>
 
-                                        <button type="button" class="btn btn-sm btn-soft-success" title="Gérer les inscrits et les jours non comptabilisés"
-                                                data-bs-toggle="modal" data-bs-target="#modalGestion"
-                                                data-gestion="gestion-{{ $classe->id }}"
-                                                data-titre="{{ $classe->nom }}">
+                                        <a href="{{ route('admin.cours.classes.gerer', [$classe->cours, $classe]) }}" 
+                                            class="btn btn-sm btn-soft-success"
+                                            title="Gérer les inscrits et les jours non comptabilisés">
                                             <i class="ri-group-line"></i>
-                                        </button>
+                                        </a>
 
                                         <button type="button" class="btn btn-sm btn-soft-secondary" title="Modifier la classe"
                                                 data-bs-toggle="modal" data-bs-target="#modalClasse"
@@ -798,7 +797,7 @@
                     <div class="mb-3">
                         <label for="champLien" class="form-label">Lien Google Maps (facultatif)</label>
                         <input type="url" name="lieu_lien" id="champLien" class="form-control"
-                               placeholder="https://maps.app.goo.gl/..." value="{{ old('lieu_lien') }}">
+                               placeholder="https://maps.app.goo.gl/..." value="{{ old('lieu_lien', \App\Models\Classe::LIEU_LIEN_PAR_DEFAUT) }}">
                     </div>
 
                     <div class="mb-0">
@@ -816,9 +815,6 @@
         </div>
     </div>
 </div>
-
-{{-- ===== Fenêtre « Gérer la classe » : inscrits et jours non comptabilisés ===== --}}
-@include('classes.gestion')
 @endsection
 
 @section('script')
@@ -938,6 +934,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ------------------------------------------------------------------
     const urlAjout = @json(route('admin.cours.classes.store', '__COURS__'));
     const lieuParDefaut = @json(\App\Models\Classe::LIEU_PAR_DEFAUT);
+    const lienParDefaut = @json(\App\Models\Classe::LIEU_LIEN_PAR_DEFAUT);
     const modeAvecErreur = @json($modeAvecErreur);
     const modalClasse = champ('modalClasse');
     const formClasse = champ('formClasse');
@@ -986,7 +983,7 @@ document.addEventListener('DOMContentLoaded', function () {
             champ('champFin').value = '';
             champ('champFormateur').value = '';
             champ('champLieu').value = lieuParDefaut;
-            champ('champLien').value = '';
+            champ('champLien').value = lienParDefaut;
             actionAjout();
         }
         champ('champPhoto').value = '';

@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Classe;
+use App\Models\Cours;
 use App\Models\Entreprise;
 use App\Models\SessionFormation;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -16,7 +18,14 @@ class AdminSessionController extends Controller
     // L'état étant calculé à partir des classes, il est filtré en PHP puis paginé à la main.
     public function index(Request $request)
     {
-        $query = SessionFormation::query()->with('entreprise', 'classes')->withCount('classes');
+        $request->validate([
+            'date_debut' => ['nullable', 'date'],
+        ]);
+
+        // Les classes de chaque session servent à l'état, aux dates et à la fiche « Voir » de la liste
+        $query = SessionFormation::query()
+            ->with(['entreprise', 'classes' => fn ($q) => $q->with('cours', 'formateur')->withCount('inscriptions')->orderBy('date_debut')])
+            ->withCount('classes');
 
         if ($recherche = trim((string) $request->input('q'))) {
             $query->where(function ($q) use ($recherche) {
@@ -25,7 +34,11 @@ class AdminSessionController extends Controller
             });
         }
 
-        $sessions = $query->orderByDesc('date_debut')->orderByDesc('id')->get();
+        if ($request->filled('date_debut')) {
+            $query->whereDate('date_debut', $request->input('date_debut'));
+        }
+
+        $sessions = $query->orderByDesc('created_at')->orderByDesc('id')->get();
 
         // Plusieurs états cochés = l'un OU l'autre
         $etats = array_values(array_intersect(self::ETATS, (array) $request->input('etat', [])));
@@ -43,19 +56,12 @@ class AdminSessionController extends Controller
         return view('sessions.index', [
             'sessions' => $sessionsPage,
             'etats' => $etats,
+            'entreprises' => Entreprise::orderBy('raison_sociale')->get(),
             'stats' => [
                 'sessions' => SessionFormation::count(),
                 'entreprises' => SessionFormation::distinct()->count('entreprise_id'),
                 'classes' => Classe::whereNotNull('session_id')->count(),
             ],
-        ]);
-    }
-
-    public function create(Request $request)
-    {
-        return view('sessions.create', [
-            'entreprises' => Entreprise::orderBy('raison_sociale')->get(),
-            'entrepriseId' => $request->integer('entreprise_id') ?: null,   // présélection éventuelle
         ]);
     }
 
@@ -67,29 +73,49 @@ class AdminSessionController extends Controller
             ->with('success', 'Session créée : ajoutez maintenant les classes qui la composent.');
     }
 
-    // Fiche : classes, inscrits, membres de l'entreprise, classes libres rattachables
-    public function show(SessionFormation $sessionFormation)
+    // Page de la session : ses classes (créées, modifiées, supprimées dans des fenêtres), avec recherche et filtres
+    public function show(Request $request, SessionFormation $sessionFormation)
     {
+        $request->validate([
+            'date_debut' => ['nullable', 'date'],
+            'cours_id' => ['nullable', 'integer'],
+            'formateur_id' => ['nullable', 'integer'],
+        ]);
+
+        $recherche = trim((string) $request->input('q'));
+
         $sessionFormation->load([
             'entreprise',
-            'classes' => fn ($q) => $q->orderBy('date_debut')->with('cours', 'formateur', 'inscriptions.user'),
+            'classes' => fn ($q) => $q
+                ->when($recherche !== '', fn ($q) => $q->where(function ($q) use ($recherche) {
+                    // recherche dans le nom de la classe, le cours ou le formateur
+                    $q->where('nom', 'like', "%{$recherche}%")
+                        ->orWhereHas('cours', fn ($c) => $c->where('titre', 'like', "%{$recherche}%"))
+                        ->orWhereHas('formateur', fn ($f) => $f->where('name', 'like', "%{$recherche}%"));
+                }))
+                ->when($request->filled('cours_id'), fn ($q) => $q->where('cours_id', $request->integer('cours_id')))
+                ->when($request->filled('formateur_id'), fn ($q) => $q->where('formateur_id', $request->integer('formateur_id')))
+                ->when($request->filled('date_debut'), fn ($q) => $q->whereDate('date_debut', $request->input('date_debut')))
+                ->orderByDesc('created_at')->orderByDesc('id')
+                ->with('cours', 'formateur', 'inscriptions.user', 'inscriptions.paiement'),
         ]);
+
+        // L'état est calculé (dates, fermeture) : on le filtre ici ; plusieurs états cochés = l'un OU l'autre
+        $etats = array_values(array_intersect(self::ETATS, (array) $request->input('etat', [])));
+        $classes = $sessionFormation->classes;
+        if ($etats) {
+            $classes = $classes->filter(fn ($c) => in_array($c->etat, $etats, true))->values();
+        }
 
         return view('sessions.show', [
             'session' => $sessionFormation,
-            'membres' => $sessionFormation->entreprise->membres()->orderBy('users.name')->get(),
-            // classes publiques, non terminées et sans inscrit : seules rattachables
-            'classesRattachables' => Classe::publiques()->nonTerminees()->doesntHave('inscriptions')
-                ->with('cours')->orderBy('date_debut')->get(),
-        ]);
-    }
-
-    public function edit(SessionFormation $sessionFormation)
-    {
-        return view('sessions.edit', [
-            'session' => $sessionFormation,
-            'entreprises' => Entreprise::orderBy('raison_sociale')->get(),
-            'entrepriseId' => $sessionFormation->entreprise_id,
+            'classes' => $classes,
+            'etats' => $etats,
+            // choix proposés dans la fenêtre « Filtres » : seulement ce que la session contient
+            'coursDeLaSession' => Cours::whereIn('id', $sessionFormation->classes()->select('cours_id'))->orderBy('titre')->get(['id', 'titre']),
+            'formateursDeLaSession' => User::whereIn('id', $sessionFormation->classes()->whereNotNull('formateur_id')->select('formateur_id'))->orderBy('name')->get(['id', 'name']),
+            'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
+            'tousLesFormateurs' => User::whereHas('role', fn ($q) => $q->where('nom', 'formateur'))->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -107,21 +133,55 @@ class AdminSessionController extends Controller
 
         $sessionFormation->update($data);
 
-        return redirect()->route('admin.sessions.show', $sessionFormation)->with('success', 'Session modifiée avec succès.');
+        // back() : on reste sur la page d'où vient la modification (liste ou page de la session)
+        return back()->with('success', 'Session modifiée avec succès.');
     }
 
     // Refusée tant que la session contient des classes (elles redeviendraient publiques par accident)
     public function destroy(SessionFormation $sessionFormation)
     {
         if ($sessionFormation->classes()->exists()) {
-            return redirect()->route('admin.sessions.show', $sessionFormation)
-                ->with('error', 'Cette session contient encore des classes : détachez-les ou supprimez-les avant de supprimer la session.');
+            return redirect()->route('admin.sessions.index')
+                ->with('error', 'Cette session contient encore des classes : supprimez-les avant de supprimer la session.');
         }
 
         $nom = $sessionFormation->nom;
         $sessionFormation->delete();
 
         return redirect()->route('admin.sessions.index')->with('success', "La session « {$nom} » a été supprimée.");
+    }
+
+    // Suppression multiple : une session qui contient encore des classes est ignorée et expliquée dans le message
+    public function destroyMultiple(Request $request)
+    {
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ], [
+            'ids.required' => 'Sélectionnez au moins une session.',
+        ]);
+
+        $supprimees = 0;
+        $ignorees = [];
+
+        foreach (SessionFormation::withCount('classes')->whereIn('id', $data['ids'])->get() as $session) {
+            if ($session->classes_count > 0) {
+                $ignorees[] = "« {$session->nom} »";
+                continue;
+            }
+            $session->delete();
+            $supprimees++;
+        }
+
+        $retour = back();
+        if ($supprimees > 0) {
+            $retour->with('success', "{$supprimees} session(s) supprimée(s).");
+        }
+        if ($ignorees) {
+            $retour->with('error', 'Non supprimée(s), elles contiennent encore des classes : ' . implode(' ; ', $ignorees));
+        }
+
+        return $retour;
     }
 
     private function regles(): array

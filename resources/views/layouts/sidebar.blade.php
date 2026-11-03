@@ -112,22 +112,11 @@
 
                     <li class="nav-item">
                         <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.classes.*') ? 'active' : '' }}"
+                            class="nav-link menu-link {{ (request()->routeIs('admin.classes.*') || (request()->routeIs('admin.cours.classes.*') && ! request()->route('classe')?->session_id)) ? 'active' : '' }}"
                             href="{{ route('admin.classes.index') }}"
                         >
                             <i class="ri-group-line"></i>
                             <span>Gestion des Classes</span>
-                        </a>
-                    </li>
-
-                    {{-- ================================
-                         ENTREPRISES
-                    ================================= --}}
-                    <li class="nav-item">
-                        <a class="nav-link menu-link {{ request()->routeIs('admin.sessions.*') ? 'active' : '' }}"
-                        href="{{ route('admin.sessions.index') }}">
-                            <i class="ri-calendar-schedule-line"></i>
-                            <span>Gestion des sessions</span>
                         </a>
                     </li>
 
@@ -138,7 +127,7 @@
                     <li class="nav-item">
 
                         <a
-                            class="nav-link menu-link {{ request()->routeIs('admin.cours.*') ? 'active' : '' }}"
+                            class="nav-link menu-link {{ (request()->routeIs('admin.cours.*') && ! request()->routeIs('admin.cours.classes.*')) ? 'active' : '' }}"
                             href="{{ route('admin.cours.index') }}"
                         >
                             <i class="ri-book-open-line"></i>
@@ -222,6 +211,18 @@
                         >
                             <i class="ri-user-add-line"></i>
                             <span>Gestion des inscriptions</span>
+                        </a>
+                    </li>
+
+                    {{-- ================================
+                         SESSIONS
+                    ================================= --}}
+
+                    <li class="nav-item">
+                        <a class="nav-link menu-link {{ (request()->routeIs('admin.sessions.*') || (request()->routeIs('admin.cours.classes.*') && request()->route('classe')?->session_id)) ? 'active' : '' }}"
+                        href="{{ route('admin.sessions.index') }}">
+                            <i class="ri-calendar-schedule-line"></i>
+                            <span>Gestion des sessions</span>
                         </a>
                     </li>
 

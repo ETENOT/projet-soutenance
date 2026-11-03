@@ -223,6 +223,22 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     Route::post('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'store'])
         ->name('evaluations.store');
 
+    // ----- Quiz de chapitre + quiz final (parcours type Cisco) -----
+    // Réservés aux particuliers inscrits à une classe du cours (vérifié dans ParcoursEvaluationService).
+    // Le quiz du cours ci-dessus (quiz.tentative.*) n'est pas concerné.
+
+    // Parcours : étapes (cadenas / débloqué / fait) et historique de chaque quiz
+    Route::get('/cours/{cours}/parcours-quiz', [App\Http\Controllers\EvaluationChapitreController::class, 'parcours'])
+        ->name('evaluations.parcours');
+
+    // Passer ou reprendre le quiz final (déclaré AVANT la route du chapitre)
+    Route::get('/cours/{cours}/parcours-quiz/final', [App\Http\Controllers\EvaluationChapitreController::class, 'final'])
+        ->name('evaluations.final');
+
+    // Passer ou reprendre le quiz d'un chapitre
+    Route::get('/cours/{cours}/parcours-quiz/chapitre/{chapitre}', [App\Http\Controllers\EvaluationChapitreController::class, 'chapitre'])
+        ->name('evaluations.chapitre');
+
     // Onglet « Entreprise » : entreprise dont le particulier est membre (lecture seule)
     Route::get('/mon-entreprise', [MonEntrepriseController::class, 'index'])->name('particulier.entreprise.index');
     Route::delete('/mon-entreprise/quitter', [MonEntrepriseController::class, 'quitter'])->name('particulier.entreprise.quitter');
@@ -412,6 +428,12 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/cours/{cours}/chapitres/{chapitre}', [App\Http\Controllers\ChapitreController::class, 'destroy'])
             ->name('cours.chapitres.destroy');
 
+        // Quiz des chapitres et quiz final d'un cours : « noté sur » de chaque chapitre et du final
+        Route::get('/cours/{cours}/quiz-chapitres', [App\Http\Controllers\AdminQuizChapitreController::class, 'edit'])
+            ->name('cours.quiz-chapitres');
+        Route::put('/cours/{cours}/quiz-chapitres', [App\Http\Controllers\AdminQuizChapitreController::class, 'update'])
+            ->name('cours.quiz-chapitres.update');
+
 
         // ------------------------------------------------------------------
         // RESSOURCES
@@ -557,20 +579,16 @@ Route::middleware(['auth', 'role:admin'])
         // ------------------------------------------------------------------
 
         Route::get('/sessions', [AdminSessionController::class, 'index'])->name('sessions.index');
-        Route::get('/sessions/create', [AdminSessionController::class, 'create'])->name('sessions.create');
         Route::post('/sessions', [AdminSessionController::class, 'store'])->name('sessions.store');
         Route::get('/sessions/{sessionFormation}', [AdminSessionController::class, 'show'])->name('sessions.show');
-        Route::get('/sessions/{sessionFormation}/edit', [AdminSessionController::class, 'edit'])->name('sessions.edit');
         Route::put('/sessions/{sessionFormation}', [AdminSessionController::class, 'update'])->name('sessions.update');
         Route::delete('/sessions/{sessionFormation}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
         Route::post('/sessions/suppression-multiple', [AdminSessionController::class, 'destroyMultiple']) ->name('sessions.destroy-multiple');
 
         // Classes d'une session et inscriptions des membres
-        Route::get('/sessions/{sessionFormation}/classes/create', [AdminSessionClasseController::class, 'create'])->name('sessions.classes.create');
         Route::post('/sessions/{sessionFormation}/classes', [AdminSessionClasseController::class, 'store'])->name('sessions.classes.store');
+        Route::post('/sessions/{sessionFormation}/classes/suppression-multiple', [AdminSessionClasseController::class, 'destroyMultiple'])->name('sessions.classes.destroy-multiple');
         Route::delete('/sessions/{sessionFormation}/classes/{classe}', [AdminSessionClasseController::class, 'destroy'])->name('sessions.classes.destroy');
-        Route::post('/sessions/{sessionFormation}/classes/{classe}/inscriptions', [AdminSessionClasseController::class, 'inscrire'])->name('sessions.classes.inscrire');
-        Route::delete('/sessions/{sessionFormation}/classes/{classe}/inscriptions/{user}', [AdminSessionClasseController::class, 'desinscrire'])->name('sessions.classes.desinscrire');
 
         // ------------------------------------------------------------------
         // CLASSES
@@ -600,6 +618,10 @@ Route::middleware(['auth', 'role:admin'])
 
                 Route::put('/{classe}', [App\Http\Controllers\ClasseController::class, 'update'])
                     ->name('update');
+                
+                 // Page « Gérer la classe » (inscrits + jours non comptabilisés)
+                Route::get('/{classe}/gestion', [App\Http\Controllers\ClasseController::class, 'gerer'])
+                    ->name('gerer');
 
                 // Jours à ne pas compter dans le taux de présence (formulaire dédié)
                 Route::put('/{classe}/jours-exclus', [App\Http\Controllers\ClasseController::class, 'updateJoursExclus'])
@@ -623,6 +645,10 @@ Route::middleware(['auth', 'role:admin'])
                 // Retirer un utilisateur d'une classe
                 Route::delete('/{classe}/inscrits/{user}', [App\Http\Controllers\ClasseController::class, 'retirerUtilisateur'])
                     ->name('inscrits.destroy');
+
+                // Actions groupées sur les inscrits cochés (retirer / enregistrer le paiement)
+                Route::post('/{classe}/inscrits/actions', [App\Http\Controllers\ClasseController::class, 'actionsInscrits'])
+                    ->name('inscrits.actions');
 
                 // Recherche en direct des utilisateurs qu'on peut encore inscrire dans la classe (JSON)
                 Route::get('/{classe}/candidats', [App\Http\Controllers\ClasseController::class, 'candidats'])

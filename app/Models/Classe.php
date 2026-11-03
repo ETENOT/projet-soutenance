@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 class Classe extends Model
 {
     public const LIEU_PAR_DEFAUT = 'Libreville, Pleine-Orety';
+    public const LIEU_LIEN_PAR_DEFAUT = 'https://maps.app.goo.gl/M7TCLLZ5xceY9Q117';
     public const IMAGE_LIEU_PAR_DEFAUT = 'images/images projets/bat-NV.jpeg';
 
     // Ces champs correspondent aux informations d'une session de formation.
@@ -368,8 +369,14 @@ class Classe extends Model
    // Google Maps à partir du nom du lieu : l'utilisateur a toujours un lien utilisable.
    public function getLieuUrlAttribute(): string
    {
-       return $this->lieu_lien
-           ?: 'https://www.google.com/maps/search/?api=1&query=' . urlencode($this->lieu);
+       if ($this->lieu_lien) {
+           return $this->lieu_lien;
+       }
+
+       // Anciennes classes sans lien : si le lieu est celui par défaut, on donne sa position exacte
+       return $this->lieu === self::LIEU_PAR_DEFAUT
+           ? self::LIEU_LIEN_PAR_DEFAUT
+           : 'https://www.google.com/maps/search/?api=1&query=' . urlencode($this->lieu);
    }
 
    // URL publique de la photo du lieu, avec le bâtiment comme photo par défaut.
