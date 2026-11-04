@@ -282,13 +282,26 @@ class DashboardController extends Controller
 
     private function admin($utilisateur)
     {
+        // ----- Chiffres clés -----
+        // Classes : seulement les classes publiques ; celles des entreprises se comptent avec les sessions
         $totalUtilisateurs = User::count();
         $totalCours = Cours::count();
-        $totalClasses = Classe::count();
+        $totalClasses = Classe::publiques()->count();
+        $totalSessions = \App\Models\SessionFormation::count();
         $totalInscriptions = Inscription::count();
         $nombreInscriptionsPayees = Inscription::payees()->count();
         $nombreInscriptionsEnAttente = $totalInscriptions - $nombreInscriptionsPayees;
 
+        // Argent réellement encaissé ce mois-ci (paiements validés)
+        $encaisseCeMois = (int) \App\Models\Paiement::where('statut', 'valide')
+            ->whereBetween('created_at', [today()->startOfMonth(), today()->endOfMonth()->endOfDay()])
+            ->sum('montant');
+
+        // ----- À traiter : ce qui demande une action de l'administrateur -----
+        $classesSansFormateur = Classe::publiques()->nonTerminees()->whereNull('formateur_id')->count();
+        $classesAFermer = Classe::publiques()->whereNull('fermee_le')->whereDate('date_fin', '<', today())->count();
+
+        // ----- Inscriptions par mois (9 derniers mois) -----
         $debutPeriode = today()->startOfMonth()->subMonths(8);
         $finPeriode = today()->endOfMonth();
         $comptesParJour = Inscription::query()
@@ -324,23 +337,7 @@ class DashboardController extends Controller
             $mois->addMonth();
         }
 
-        $classesEnCours = Classe::query()
-            ->whereNull('fermee_le')
-            ->whereDate('date_debut', '<=', today())
-            ->whereDate('date_fin', '>=', today())
-            ->count();
-        $classesAVenir = Classe::nonTerminees()
-            ->whereDate('date_debut', '>', today())
-            ->count();
-
-        $inscriptionsEnAttente = Inscription::query()
-            ->whereDoesntHave('paiement', fn ($query) => $query->where('statut', 'valide'))
-            ->with(['user:id,name', 'classe.cours:id,titre'])
-            ->orderByDesc('date_inscription')
-            ->orderByDesc('id')
-            ->limit(5)
-            ->get();
-
+        // ----- Listes : prochaines classes (publiques ET d'entreprise) et inscriptions à encaisser -----
         $prochainesClasses = Classe::with(['cours:id,titre', 'formateur:id,name'])
             ->withCount('inscriptions')
             ->nonTerminees()
@@ -349,11 +346,9 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $dernieresInscriptions = Inscription::with([
-            'user:id,name',
-            'classe.cours:id,titre',
-            'paiement:id,inscription_id,statut',
-        ])
+        $inscriptionsEnAttente = Inscription::query()
+            ->whereDoesntHave('paiement', fn ($query) => $query->where('statut', 'valide'))
+            ->with(['user:id,name', 'classe.cours:id,titre'])
             ->orderByDesc('date_inscription')
             ->orderByDesc('id')
             ->limit(5)
@@ -364,19 +359,16 @@ class DashboardController extends Controller
             'totalUtilisateurs' => $totalUtilisateurs,
             'totalCours' => $totalCours,
             'totalClasses' => $totalClasses,
+            'totalSessions' => $totalSessions,
             'totalInscriptions' => $totalInscriptions,
             'nombreInscriptionsEnAttente' => $nombreInscriptionsEnAttente,
-            'nombreInscriptionsPayees' => $nombreInscriptionsPayees,
-            'pourcentageInscriptionsPayees' => $totalInscriptions > 0
-                ? (int) round($nombreInscriptionsPayees / $totalInscriptions * 100)
-                : 0,
+            'encaisseCeMois' => $encaisseCeMois,
+            'classesSansFormateur' => $classesSansFormateur,
+            'classesAFermer' => $classesAFermer,
             'inscriptionsParMois' => $inscriptionsParMois,
             'inscriptionsSurPeriode' => array_sum($inscriptionsParMois['inscriptions']),
-            'classesEnCours' => $classesEnCours,
-            'classesAVenir' => $classesAVenir,
             'inscriptionsEnAttente' => $inscriptionsEnAttente,
             'prochainesClasses' => $prochainesClasses,
-            'dernieresInscriptions' => $dernieresInscriptions,
             'evenementsCalendrier' => Classe::evenementsAVenir([], null, true),
         ]);
     }
