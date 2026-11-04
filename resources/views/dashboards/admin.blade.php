@@ -95,59 +95,14 @@
             </div>
         </div>
 
-        {{-- ===== Prochaines classes + inscriptions à encaisser ===== --}}
-        <div class="row g-3 mb-3">
+        {{-- ===== Calendrier des classes + inscriptions à encaisser ===== --}}
+        <div class="row g-3">
             <div class="col-xl-7">
-                <div class="card border shadow-sm h-100 mb-0">
-                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center gap-2">
-                        <div>
-                            <h5 class="card-title mb-0">Prochaines classes</h5>
-                            <p class="text-muted fs-13 mb-0">Les 5 prochaines dates de formation</p>
-                        </div>
-                        <a href="{{ route('admin.classes.index') }}" class="text-primary flex-shrink-0">Tout voir</a>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover align-middle mb-0 table-liste">
-                            <thead>
-                                <tr class="table-light">
-                                    <th>Cours</th>
-                                    <th>Classe</th>
-                                    <th class="col-date">Début</th>
-                                    <th class="col-nombre">Inscrits</th>
-                                    <th class="text-end col-coche"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($prochainesClasses as $classe)
-                                    <tr>
-                                        <td class="fw-semibold" title="{{ $classe->cours->titre }}">{{ $classe->cours->titre }}</td>
-                                        <td title="{{ $classe->nom }}">
-                                            {{ $classe->nom }}
-                                            @if ($classe->session_id)
-                                                <span class="badge bg-info-subtle text-info ms-1">Entreprise</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $classe->date_debut->format('d/m/Y') }}</td>
-                                        <td><span class="badge bg-primary-subtle text-primary">{{ $classe->inscriptions_count }} / {{ $classe->capacite_max }}</span></td>
-                                        <td class="text-end">
-                                            <a href="{{ route('admin.cours.classes.gerer', [$classe->cours, $classe]) }}"
-                                               class="btn btn-sm btn-soft-primary" title="Gérer la classe" aria-label="Gérer {{ $classe->nom }}">
-                                                <i class="ri-team-line"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-5">
-                                            <i class="ri-calendar-line display-5 d-block mb-2"></i>
-                                            Aucune classe à venir n'est planifiée.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                @include('partials.calendrier-classes', [
+                    'evenements' => $evenementsCalendrier,
+                    'titre' => 'Calendrier des classes',
+                    'simple' => true,
+                ])
             </div>
 
             <div class="col-xl-5">
@@ -185,13 +140,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- ===== Calendrier ===== --}}
-        @include('partials.calendrier-classes', [
-            'evenements' => $evenementsCalendrier,
-            'titre' => 'Calendrier des classes',
-            'simple' => true,
-        ])
     </div>
 @endsection
 

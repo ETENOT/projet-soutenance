@@ -337,15 +337,7 @@ class DashboardController extends Controller
             $mois->addMonth();
         }
 
-        // ----- Listes : prochaines classes (publiques ET d'entreprise) et inscriptions à encaisser -----
-        $prochainesClasses = Classe::with(['cours:id,titre', 'formateur:id,name'])
-            ->withCount('inscriptions')
-            ->nonTerminees()
-            ->whereDate('date_debut', '>', today())
-            ->orderBy('date_debut')
-            ->limit(5)
-            ->get();
-
+        // ----- Inscriptions à encaisser -----
         $inscriptionsEnAttente = Inscription::query()
             ->whereDoesntHave('paiement', fn ($query) => $query->where('statut', 'valide'))
             ->with(['user:id,name', 'classe.cours:id,titre'])
@@ -368,8 +360,10 @@ class DashboardController extends Controller
             'inscriptionsParMois' => $inscriptionsParMois,
             'inscriptionsSurPeriode' => array_sum($inscriptionsParMois['inscriptions']),
             'inscriptionsEnAttente' => $inscriptionsEnAttente,
-            'prochainesClasses' => $prochainesClasses,
-            'evenementsCalendrier' => Classe::evenementsAVenir([], null, true),
+            // Un clic sur une classe du calendrier ouvre sa page « Gérer la classe » (et non la page publique du cours)
+            'evenementsCalendrier' => Classe::evenementsAVenir([], null, true,
+                fn (Classe $classe) => route('admin.cours.classes.gerer', [$classe->cours_id, $classe->id])
+            ),
         ]);
     }
 }
