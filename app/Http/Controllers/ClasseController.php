@@ -7,8 +7,10 @@ use App\Models\Categorie;
 use App\Models\Cours;
 use App\Models\User;
 use App\Models\Inscription;
+use App\Models\Particulier;
 use App\Models\Role;
 use App\Services\ClasseClotureService;
+use App\Services\CompteAdminService;
 use App\Services\PaiementService;
 use App\Http\Controllers\Concerns\ChoixPaiementAdmin;
 use DomainException;
@@ -689,6 +691,75 @@ class ClasseController extends Controller
                 ? 'Utilisateurs ajoutés à la classe avec un paiement reçu.'
                 : 'Utilisateurs ajoutés à la classe avec un paiement partiel de '
                     . number_format($montantPartiel, 0, ',', ' ') . ' fcfa chacun.');
+    }
+
+    /**
+     * Classe de SESSION (entreprise) : crée un nouveau collaborateur, le rattache à l'entreprise de la session
+     * et l'inscrit à la classe, en une seule fois. Il apparaît donc aussi dans la liste des membres de
+     * l'entreprise (menu « Gestion des entreprises »), sans devoir l'y créer d'abord.
+     * Même règles que l'ajout classique : classe ouverte, places disponibles, paiement enregistré au comptoir.
+     */
+    public function creerMembre(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService, CompteAdminService $comptes)
+    {
+        abort_unless((int) $classe->cours_id === (int) $cours->id, 404);
+        abort_unless($classe->estDeSession(), 404);   // une classe publique n'a pas d'entreprise
+
+        if ($classe->estFermee()) {
+            return back()->with('error', 'La classe est fermée : on ne peut plus y ajouter de membre.');
+        }
+        if ($classe->inscriptions()->count() >= $classe->capacite_max) {
+            return back()->with('reouvrir', $classe->id . ':nouveau')
+                ->with('error', 'La classe est complète : retirez un inscrit pour libérer une place.');
+        }
+
+        // « +241 77 12 34 56 » devient « +24177123456 » avant de vérifier le format international
+        if ($request->filled('telephone')) {
+            $request->merge(['telephone' => preg_replace('/[\s.\-()]/', '', $request->input('telephone'))]);
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'telephone' => ['required', 'string', 'max:20', 'regex:/^\+[1-9]\d{6,14}$/'],
+            'date_de_naissance' => ['nullable', 'date', 'before_or_equal:today'],
+        ], [
+            'email.unique' => 'Cette adresse e-mail est déjà utilisée : ajoutez la personne depuis « Ajouter des utilisateurs ».',
+            'telephone.required' => 'Le téléphone est obligatoire.',
+            'telephone.regex' => 'Le téléphone doit être au format international, par exemple +24177123456.',
+            'date_de_naissance.before_or_equal' => 'La date de naissance ne peut pas être dans le futur.',
+        ]);
+
+        $entreprise = $classe->session->entreprise;
+
+        // Tout ou rien : profil, compte, rattachement et inscription sont créés ensemble
+        [$user, $paiement] = DB::transaction(function () use ($data, $entreprise, $classe, $comptes, $paiementService) {
+            $profil = Particulier::create([
+                'telephone' => $data['telephone'],
+                'date_de_naissance' => $data['date_de_naissance'] ?? null,
+                'entreprise_id' => $entreprise->id,
+            ]);
+
+            $user = $comptes->creer([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role_id' => Role::where('nom', 'particulier')->value('id'),
+                'particulier_id' => $profil->id,
+            ]);
+
+            $inscription = Inscription::firstOrCreate(
+                ['user_id' => $user->id, 'classe_id' => $classe->id],
+                ['date_inscription' => now()]
+            );
+
+            return [$user, $paiementService->creerAuComptoir($inscription)];
+        });
+
+        if ($paiement) {
+            $paiementService->envoyerEmail($paiement);
+        }
+
+        return back()->with('success', "{$user->name} a été créé, ajouté à « {$entreprise->raison_sociale} » et inscrit à la classe. "
+            . 'Mot de passe temporaire : ' . User::MOT_DE_PASSE_PAR_DEFAUT . ' (à changer à sa première connexion).');
     }
 
     /**

@@ -1,4 +1,3 @@
-
 @extends(Auth::check() ? 'layouts.master' : 'layouts.master-without-nav')
 
 @section('title', $cours->titre)
@@ -20,6 +19,9 @@
         ->filter(fn ($classe) => \Carbon\Carbon::parse($classe->date_debut)->isFuture())
         ->sortBy('date_debut')
         ->take(3);
+
+    // Inscrit à au moins une classe de ce cours (la liste $mesInscriptions vient du contrôleur)
+    $estInscrit = $mesInscriptions->intersect($cours->classes->pluck('id'))->isNotEmpty();
 @endphp
 
 {{-- ===== Fil d'Ariane (connectés) ===== --}}
@@ -117,15 +119,15 @@
                     <div class="text-muted small mb-1">Tarif du cours</div>
 
                     @if($role === 'entreprise')
-                        <div class="fs-2 fw-bold text-danger">
+                        <div class="fs-2 fw-bold text-body">
                             {{ number_format($cours->prix_entreprise, 0, ',', ' ') }} FCFA
                         </div>
                     @elseif($role === 'particulier')
-                        <div class="fs-2 fw-bold text-danger">
+                        <div class="fs-2 fw-bold text-body">
                             {{ number_format($cours->prix_particulier, 0, ',', ' ') }} FCFA
                         </div>
                     @else
-                        <div class="fs-2 fw-bold text-danger">
+                        <div class="fs-2 fw-bold text-body">
                             {{ number_format($cours->prix_particulier, 0, ',', ' ') }} FCFA
                             <small class="fs-6 fw-normal text-muted">particulier</small>
                         </div>
@@ -135,12 +137,8 @@
                         </div>
                     @endif
 
-                    <a href="{{ route('cours.espace', $cours) }}" class="btn btn-danger w-100 mt-3">
+                    <a href="{{ route('cours.espace', $cours) }}" class="btn {{ $estInscrit ? 'btn-success' : 'btn-danger' }} w-100 mt-3">
                         Accéder au cours
-                    </a>
-
-                    <a href="{{ route('cours.programme.pdf', $cours) }}" class="btn btn-outline-primary w-100 mt-2">
-                        <i class="ri-download-2-line me-1"></i> Télécharger les chapitres
                     </a>
                 </div>
             </div>
@@ -485,30 +483,6 @@
                     @endguest
                 </div>
             </div>
-            {{-- Quiz des chapitres + quiz final (en plus du quiz du cours ci-dessus, qui ne change pas).
-                 Réservés aux particuliers inscrits ; visiteurs et non-inscrits voient des cadenas. --}}
-            @if (($etapesQuiz ?? collect())->isNotEmpty())
-                <div class="card border shadow-sm mt-3">
-                    <div class="card-body p-4">
-                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                            <h5 class="fw-bold mb-0">
-                                <i class="ri-route-line text-danger me-2"></i>Quiz des chapitres
-                            </h5>
-                            @auth
-                                <a href="{{ route('evaluations.parcours', $cours) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="ri-history-line me-1"></i>Historique des quiz de chapitre
-                                </a>
-                            @endauth
-                        </div>
-                        <p class="text-muted small">
-                            Terminez le quiz d'un chapitre pour débloquer le suivant, jusqu'au quiz final.
-                            Un quiz débloqué peut être repassé autant de fois que vous le souhaitez.
-                        </p>
-
-                        @include('evaluations.partials.parcours', ['cours' => $cours, 'etapes' => $etapesQuiz])
-                    </div>
-                </div>
-            @endif
         </div>
 
         {{-- ---------- Avis ---------- --}}

@@ -14,10 +14,6 @@
         @endslot
     @endcomponent
 
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-
     <div class="alert alert-info">
         Chaque chapitre a son quiz, construit avec les questions de la banque <strong>rattachées à ce chapitre</strong>
         (menu « Chapitre » de la <a href="{{ route('admin.questions.index', ['cours_id' => $cours->id]) }}" class="alert-link">banque de questions</a>).

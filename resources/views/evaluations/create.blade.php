@@ -39,17 +39,6 @@
             </div>
         </div>
 
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <div class="fw-semibold mb-1">Merci de compléter l'évaluation :</div>
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $erreur)
-                        <li>{{ $erreur }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         {{-- ===== Le formateur (seulement si un formateur est affecté à la classe) ===== --}}
         @if ($classe->formateur)
             <div class="card border shadow-sm mb-3">

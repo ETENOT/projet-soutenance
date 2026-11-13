@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="Plateforme de gestion et de formation professionnelle NEO VISION" name="description" />
     <!-- App favicon -->
-    <link rel="shortcut icon" href="{{ URL::asset('build/images/favicon.ico')}}">
+    <link rel="icon" type="image/x-icon" href="{{ URL::asset('images/favicon.ico') }}">
+    <link rel="icon" type="image/png" href="{{ URL::asset('images/favicon.png') }}">
     @include('layouts.head-css')
 </head>
 
@@ -24,44 +25,64 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid">
-                    {{-- Messages de session et erreurs de validation : UN SEUL affichage pour toute l'application.
-                         Les pages ne doivent plus avoir leur propre bloc d'affichage des erreurs.
-                         Ce sont de petites notifications flottantes, fixées sous la barre du haut
-                         (top: 70px), qui ne décalent pas le contenu et se ferment toutes seules. --}}
-                    @if(session('success') || session('error') || $errors->any())
-                        <div class="toast-container position-fixed end-0 p-3" style="top: 70px; z-index: 1100;">
-                            @if(session('success'))
-                                <div class="toast flash-toast show align-items-center text-bg-success border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                                    <div class="d-flex">
-                                        <div class="toast-body">
-                                            <i class="ri-checkbox-circle-line me-1"></i>{{ session('success') }}
-                                        </div>
-                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
-                                    </div>
-                                </div>
-                            @endif
+                    @php
+                        // Codes « status » de Laravel -> texte français
+                        $textesStatus = [
+                            'profile-updated' => 'Profil mis à jour.',
+                            'password-updated' => 'Mot de passe modifié.',
+                            'email-verified' => 'Adresse e-mail vérifiée.',
+                            'verification-link-sent' => 'Un nouveau lien de vérification a été envoyé à votre adresse e-mail.',
+                            'verification-code-sent' => 'Un nouveau code de vérification a été envoyé.',
+                        ];
 
-                            @if(session('error') || $errors->any())
-                                <div class="toast flash-toast show align-items-center text-bg-danger border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
-                                    <div class="d-flex">
-                                        <div class="toast-body">
-                                            <i class="ri-error-warning-line me-1"></i>
-                                            @if(session('error'))
-                                                {{ session('error') }}
-                                            @endif
+                        $succes = array_filter([
+                            session('success'),
+                            session('status') ? ($textesStatus[session('status')] ?? __(session('status'))) : null,
+                            session('message') && session('alert-class') === 'alert-success' ? session('message') : null,
+                        ]);
 
-                                            @if($errors->any())
-                                                    @foreach($errors->all() as $erreur)
-                                                        {{ $erreur }}
-                                                    @endforeach
-                                            @endif
-                                        </div>
-                                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
-                                    </div>
+                        $erreurs = array_filter(array_merge(
+                            [session('error')],
+                            session('message') && session('alert-class') !== 'alert-success' ? [session('message')] : [],
+                            $errors->all(),
+                            $errors->getBag('updatePassword')->all(),
+                            $errors->getBag('userDeletion')->all()
+                        ));
+                    @endphp
+
+                    {{-- Notifications flottantes : UN SEUL affichage pour toute l'application (succès, informations, erreurs).
+                         Le conteneur existe toujours : le JavaScript (window.notifier) y ajoute aussi des messages. --}}
+                    <div id="conteneur-notifications" class="toast-container position-fixed end-0 p-3" style="top: 70px; z-index: 1100;">
+                        @foreach ($succes as $texte)
+                            <div class="toast flash-toast show align-items-center text-bg-success border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body"><i class="ri-checkbox-circle-line me-1"></i>{{ $texte }}</div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
                                 </div>
-                            @endif
-                        </div>
-                    @endif
+                            </div>
+                        @endforeach
+
+                        @if (session('info'))
+                            <div class="toast flash-toast show align-items-center text-bg-info border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body"><i class="ri-information-line me-1"></i>{{ session('info') }}</div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if (count($erreurs))
+                            <div class="toast flash-toast show align-items-center text-bg-danger border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        <i class="ri-error-warning-line me-1"></i>
+                                        @foreach ($erreurs as $erreur){{ $erreur }}@if (! $loop->last)<br>@endif @endforeach
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fermer"></button>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
 
                     @yield('content')
                 </div>
@@ -86,6 +107,34 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+
+        // Affiche une notification flottante depuis le JavaScript : notifier('Message', 'success' | 'danger' | 'info')
+        window.notifier = function (message, type) {
+            type = type || 'success';
+            const icones = { success: 'ri-checkbox-circle-line', danger: 'ri-error-warning-line', info: 'ri-information-line' };
+
+            const toast = document.createElement('div');
+            toast.className = 'toast flash-toast show align-items-center border-0 mb-2 text-bg-' + type;
+            toast.setAttribute('role', 'alert');
+
+            const ligne = document.createElement('div');
+            ligne.className = 'd-flex';
+            const corps = document.createElement('div');
+            corps.className = 'toast-body';
+            const icone = document.createElement('i');
+            icone.className = (icones[type] || icones.info) + ' me-1';
+            corps.append(icone, document.createTextNode(message));   // texte inséré tel quel : pas de HTML injecté
+            const croix = document.createElement('button');
+            croix.type = 'button';
+            croix.className = 'btn-close btn-close-white me-2 m-auto';
+            croix.setAttribute('aria-label', 'Fermer');
+            croix.addEventListener('click', () => toast.remove());
+            ligne.append(corps, croix);
+            toast.appendChild(ligne);
+
+            document.getElementById('conteneur-notifications').appendChild(toast);
+            setTimeout(() => toast.remove(), type === 'danger' ? 8000 : 5000);
+        };
 
         // Ferme automatiquement les messages : 5 secondes pour un succès, 8 pour une erreur
         // (plus longtemps, pour laisser le temps de la lire). On simule un clic sur la croix

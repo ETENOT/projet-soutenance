@@ -19,6 +19,15 @@
     $modeAvecErreur = $errors->any() ? old('_mode') : null;
 
     $libellesRole = ['particulier' => 'Particulier', 'entreprise' => 'Entreprise', 'formateur' => 'Formateur', 'admin' => 'Administrateur'];
+
+    // Droits de la personne connectée sur cette page (voir config/droits.php)
+    $peutGerer = auth()->user()->peut('utilisateurs', 'gestion');
+    $estSuper = auth()->user()->estSuperAdmin();
+    $niveauxDroits = [
+        'gestion' => ['bg-success-subtle text-success', 'Gestion'],
+        'lecture' => ['bg-info-subtle text-info', 'Lecture'],
+        'aucun'   => ['bg-secondary-subtle text-secondary', '—'],
+    ];
 @endphp
 
 <div class="container-fluid pb-4">
@@ -82,17 +91,6 @@
         </div>
     </div>
 
-    {{-- ===== Erreurs de filtre (période à l'envers, nombre négatif...) ===== --}}
-    @if ($errors->any() && ! $modeAvecErreur)
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- ===== Étiquettes des filtres actifs ===== --}}
     @php
         // URL de la liste sans certains paramètres (sert au "×" de chaque étiquette)
@@ -134,10 +132,14 @@
     {{-- ===== Ligne d'outils : bouton de création à gauche, recherche + filtres à droite ===== --}}
     <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
 
-        <button type="button" class="btn btn-primary fw-semibold"
-                data-bs-toggle="modal" data-bs-target="#modalUtilisateur" data-mode="ajout">
-            <i class="ri-add-line me-1"></i>Créer un utilisateur
-        </button>
+        @if ($peutGerer)
+            <button type="button" class="btn btn-primary fw-semibold"
+                    data-bs-toggle="modal" data-bs-target="#modalUtilisateur" data-mode="ajout">
+                <i class="ri-add-line me-1"></i>Créer un utilisateur
+            </button>
+        @else
+            <span></span>
+        @endif
 
         <form method="GET" action="{{ route('admin.users.index') }}" class="col-12 col-md-8 col-lg-6 col-xl-5 ms-md-auto">
             <div class="d-flex align-items-start gap-2">
@@ -265,7 +267,7 @@
             <table class="table table-sm table-hover align-middle mb-0 table-liste">
                 <thead>
                     <tr class="table-light">
-                        <th class="col-coche"><input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner"></th>
+                        <th class="col-coche"><input type="checkbox" id="toutSelectionner" class="form-check-input" aria-label="Tout sélectionner" @disabled(! $peutGerer)></th>
                         <th>Nom</th>
                         <th>E-mail</th>
                         <th class="col-badge">Rôle</th>
@@ -277,7 +279,7 @@
                         @php
                             $nomRole = $utilisateur->role?->nom;
                             $badgeRole = match ($nomRole) {
-                                'admin'       => ['bg-danger-subtle text-danger', 'Administrateur'],
+                                'admin'       => ['bg-danger-subtle text-danger', $utilisateur->libelleProfilAdmin() ?? 'Administrateur'],
                                 'entreprise'  => ['bg-info-subtle text-info', 'Entreprise'],
                                 'particulier' => ['bg-primary-subtle text-primary', 'Particulier'],
                                 'formateur'   => ['bg-secondary-subtle text-secondary', 'Formateur'],
@@ -285,6 +287,13 @@
                             };
                             // Comptes protégés : administrateurs et vous-même (ni sélection, ni suppression)
                             $protege = $nomRole === 'admin' || $utilisateur->id === auth()->id();
+
+                            // Modifier : un compte administrateur seulement par le super-admin
+                            $peutModifier = $peutGerer && ($nomRole !== 'admin' || $estSuper);
+                            // Supprimer : jamais soi-même ni le super-admin ; un administrateur seulement par le super-admin
+                            $peutSupprimer = $peutGerer
+                                && $utilisateur->id !== auth()->id()
+                                && ($nomRole !== 'admin' || ($estSuper && ! $utilisateur->estSuperAdmin()));
 
                             // Profil propre au rôle (peut être vide)
                             $particulier = $nomRole === 'particulier' ? $utilisateur->particulier : null;
@@ -297,7 +306,7 @@
                             <td>
                                 <input type="checkbox" name="ids[]" value="{{ $utilisateur->id }}" form="formGroupe"
                                        class="form-check-input case-utilisateur" aria-label="Sélectionner {{ $utilisateur->name }}"
-                                       @disabled($protege)>
+                                       @disabled($protege || ! $peutGerer)>
                             </td>
                             <td class="fw-semibold cellule-tronquee" title="{{ $utilisateur->name }}">{{ $utilisateur->name }}</td>
                             <td class="text-muted cellule-tronquee-lg" title="{{ $utilisateur->email }}">{{ $utilisateur->email }}</td>
@@ -313,6 +322,7 @@
                                     </button>
 
                                     {{-- Modifier : compte + profil du rôle --}}
+                                    @if ($peutModifier)
                                     <button type="button" class="btn btn-sm btn-soft-secondary" title="Modifier"
                                             data-bs-toggle="modal" data-bs-target="#modalUtilisateur"
                                             data-mode="modif"
@@ -321,6 +331,8 @@
                                             data-email="{{ $utilisateur->email }}"
                                             data-role="{{ $utilisateur->role_id }}"
                                             data-admin="{{ $nomRole === 'admin' ? '1' : '' }}"
+                                            data-profil="{{ $utilisateur->profil_admin }}"
+                                            data-super="{{ $utilisateur->estSuperAdmin() ? '1' : '' }}"
                                             data-telephone="{{ $particulier?->telephone }}"
                                             data-naissance="{{ $naissance }}"
                                             data-raison="{{ $entreprise?->raison_sociale }}"
@@ -329,10 +341,11 @@
                                             data-secteur="{{ $entreprise?->secteur_activite }}">
                                         <i class="ri-edit-line"></i>
                                     </button>
+                                    @endif
 
                                     {{-- Supprimer : demande confirmation dans une fenêtre --}}
-                                    @if ($protege)
-                                        <button type="button" class="btn btn-sm btn-soft-danger" title="Compte protégé : suppression impossible" disabled>
+                                    @if (! $peutSupprimer)
+                                        <button type="button" class="btn btn-sm btn-soft-danger" title="Suppression impossible pour ce compte avec votre profil" disabled>
                                             <i class="ri-delete-bin-line"></i>
                                         </button>
                                     @else
@@ -373,6 +386,48 @@
         @endif
     </div>
 
+    {{-- ===== Droits de chaque profil d'administrateur (lecture seule) : se modifient dans config/droits.php ===== --}}
+    <div class="card border shadow-sm mt-3">
+        <div class="card-header bg-transparent">
+            <h6 class="mb-0">Droits des profils d'administrateur</h6>
+            <small class="text-muted">
+                {{ $estSuper ? 'Vous choisissez le profil à la création ou à la modification d\'un compte administrateur.' : 'Seul le super-administrateur gère les comptes administrateurs.' }}
+            </small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr class="table-light">
+                        <th>Module</th>
+                        <th class="text-center">Super-admin</th>
+                        @foreach ($profils as $profil)
+                            <th class="text-center">{{ $profil['libelle'] }}</th>
+                        @endforeach
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($modulesDroits as $cleModule => $nomModule)
+                        <tr>
+                            <td>{{ $nomModule }}</td>
+                            <td class="text-center"><span class="badge {{ $niveauxDroits['gestion'][0] }}">{{ $niveauxDroits['gestion'][1] }}</span></td>
+                            @foreach ($profils as $profil)
+                                @php $niveau = $profil['droits'][$cleModule] ?? 'aucun'; @endphp
+                                <td class="text-center"><span class="badge {{ $niveauxDroits[$niveau][0] }}">{{ $niveauxDroits[$niveau][1] }}</span></td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                    <tr>
+                        <td>Comptes administrateurs</td>
+                        <td class="text-center"><span class="badge {{ $niveauxDroits['gestion'][0] }}">Gestion</span></td>
+                        @foreach ($profils as $profil)
+                            <td class="text-center"><span class="badge {{ $niveauxDroits['aucun'][0] }}">—</span></td>
+                        @endforeach
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     {{-- Contenus cachés des fenêtres « Voir » (un par utilisateur, copiés par le script) --}}
     @foreach ($utilisateurs as $utilisateur)
         @php
@@ -384,6 +439,11 @@
             <dl class="row mb-0">
                 <dt class="col-sm-5">Type de compte</dt>
                 <dd class="col-sm-7">{{ $libellesRole[$nomRole] ?? '—' }}</dd>
+
+                @if ($nomRole === 'admin')
+                    <dt class="col-sm-5">Profil</dt>
+                    <dd class="col-sm-7">{{ $utilisateur->libelleProfilAdmin() }}</dd>
+                @endif
 
                 <dt class="col-sm-5">Statut du compte</dt>
                 <dd class="col-sm-7">
@@ -521,12 +581,29 @@
                         <select name="role_id" id="champRole" class="form-select" required>
                             <option value="">— Choisir —</option>
                             @foreach ($roles as $role)
+                                @continue($role->nom === 'admin' && ! $estSuper)
                                 <option value="{{ $role->id }}" data-nom="{{ $role->nom }}"
                                         @selected((string) old('role_id') === (string) $role->id)>
                                     {{ $libellesRole[$role->nom] ?? ucfirst($role->nom) }}
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+
+                    {{-- Profil : seulement pour un compte administrateur (réservé au super-admin) --}}
+                    <div class="mb-3 d-none" id="blocProfilAdmin">
+                        <label for="champProfilAdmin" class="form-label">Profil de l'administrateur</label>
+                        <select name="profil_admin" id="champProfilAdmin" class="form-select" disabled>
+                            <option value="">— Choisir —</option>
+                            @foreach ($profils as $cleProfil => $profil)
+                                <option value="{{ $cleProfil }}" @selected(old('profil_admin') === $cleProfil)>{{ $profil['libelle'] }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">
+                            @foreach ($profils as $profil)
+                                <strong>{{ $profil['libelle'] }}</strong> : {{ $profil['description'] }}@if (! $loop->last)<br>@endif
+                            @endforeach
+                        </div>
                     </div>
 
                     {{-- Création : pas de saisie, le compte reçoit le mot de passe par défaut (à changer à la 1re connexion) --}}
@@ -729,6 +806,9 @@ document.addEventListener('DOMContentLoaded', function () {
             .forEach(i => i.disabled = !actif);
     }
 
+    // Vrai quand on modifie le super-admin : son profil ne se change pas
+    let profilVerrouille = false;
+
     // Champs propres au type de compte choisi (création ET modification)
     function majChampsRole() {
         const option = champ('champRole').selectedOptions[0];
@@ -738,6 +818,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         basculerBloc('blocParticulier', particulier);
         basculerBloc('blocEntreprise', entreprise);
+
+        // Profil d'administrateur : seulement pour ce type de compte (liste désactivée = non envoyée)
+        const admin = nomRole === 'admin' && !profilVerrouille;
+        champ('blocProfilAdmin').classList.toggle('d-none', !admin);
+        champ('champProfilAdmin').disabled = !admin;
 
         try {
             telephone.iti.setDisabled(!particulier);
@@ -776,6 +861,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const d = bouton.dataset;
         const modif = d.mode === 'modif';
 
+        profilVerrouille = modif && d.super === '1';
+
         // Titre et mode d'abord : ils ne dépendent pas des champs téléphone
         preparer(d.mode);
 
@@ -796,6 +883,7 @@ document.addEventListener('DOMContentLoaded', function () {
             champ('champNom').value = d.nom;
             champ('champEmail').value = d.email;
             champ('champRole').value = d.role;
+            champ('champProfilAdmin').value = d.profil || '';
             champ('champNaissance').value = d.naissance || '';
             champ('champRaisonSociale').value = d.raison || '';
             champ('champAdresse').value = d.adresse || '';
@@ -811,6 +899,7 @@ document.addEventListener('DOMContentLoaded', function () {
             ['champNom', 'champEmail', 'champNaissance', 'champRaisonSociale',
              'champAdresse', 'champSecteur'].forEach(id => champ(id).value = '');
             champ('champRole').value = '';
+            champ('champProfilAdmin').value = '';
 
             majChampsRole();
             telephone.remplir('');

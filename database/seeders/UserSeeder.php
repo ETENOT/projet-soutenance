@@ -30,6 +30,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'email_verified_at' => now(),
             'role_id' => $roleAdmin->id,
+            'profil_admin' => 'super_admin',
         ]);
 
         // --- Compte entreprise de test ---

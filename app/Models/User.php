@@ -39,6 +39,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'must_change_password',
         'avatar',
         'role_id',
+        'profil_admin',
         'particulier_id',
         'entreprise_id',
     ];
@@ -203,6 +204,61 @@ class User extends Authenticatable implements MustVerifyEmail
 
     // Vrai si l'utilisateur est inscrit à une classe de ce cours ET a payé (en totalité ou en partie) :
     // un paiement partiel donne les mêmes accès qu'un paiement complet (sauf l'attestation)
+    // ------------------------------------------------------------------
+    // Droits des administrateurs (profils et modules : voir config/droits.php)
+    // ------------------------------------------------------------------
+
+    // super_admin, admin_centre ou assistant ; null si le compte n'est pas administrateur.
+    // Un administrateur sans profil enregistré reçoit le profil le plus limité.
+    public function profilAdmin(): ?string
+    {
+        if ($this->role?->nom !== 'admin') {
+            return null;
+        }
+
+        return $this->profil_admin ?: config('droits.profil_par_defaut', 'assistant');
+    }
+
+    public function estSuperAdmin(): bool
+    {
+        return $this->profilAdmin() === 'super_admin';
+    }
+
+    public function libelleProfilAdmin(): ?string
+    {
+        $profil = $this->profilAdmin();
+
+        return match (true) {
+            $profil === null => null,
+            $profil === 'super_admin' => config('droits.super_admin.libelle', 'Super-admin'),
+            default => config("droits.profils.{$profil}.libelle", $profil),
+        };
+    }
+
+    // 'aucun', 'lecture' ou 'gestion' pour un module (le super-admin a la gestion partout)
+    public function niveauDroit(string $module): string
+    {
+        $profil = $this->profilAdmin();
+
+        if ($profil === null) {
+            return 'aucun';
+        }
+        if ($profil === 'super_admin') {
+            return 'gestion';
+        }
+
+        return config("droits.profils.{$profil}.droits.{$module}", 'aucun');
+    }
+
+    // $user->peut('classes') = au moins la lecture ; $user->peut('classes', 'gestion') = créer/modifier/supprimer
+    public function peut(string $module, string $niveau = 'lecture'): bool
+    {
+        $ordre = ['aucun' => 0, 'lecture' => 1, 'gestion' => 2];
+
+        return $ordre[$this->niveauDroit($module)] >= $ordre[$niveau];
+    }
+
+    // Vrai si l'utilisateur est inscrit à une classe de ce cours ET a un paiement validé
     public function aPayeCours(int $coursId): bool
     {
         return $this->inscriptions()

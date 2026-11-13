@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 { name: 'Inscriptions', data: JSON.parse(inscriptionsGraph.dataset.inscriptions) },
                 { name: 'Payées', data: JSON.parse(inscriptionsGraph.dataset.payees) },
             ],
-            colors: ['#155b8a', '#d8332b'],
+            colors: ['#1c7fc4', '#0ab39c'],
             plotOptions: {
                 bar: {
                     borderRadius: 4,
@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 axisBorder: { show: false },
                 axisTicks: { show: false },
                 labels: {
-                    style: { colors: '#155b8a', fontFamily: 'Poppins, sans-serif' },
+                    style: { colors: '#6c757d', fontFamily: 'Poppins, sans-serif' },
                 },
             },
             yaxis: {
                 min: 0,
                 forceNiceScale: true,
                 labels: {
-                    style: { colors: '#155b8a', fontFamily: 'Poppins, sans-serif' },
+                    style: { colors: '#6c757d', fontFamily: 'Poppins, sans-serif' },
                 },
             },
         }).render();

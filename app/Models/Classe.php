@@ -325,7 +325,9 @@ class Classe extends Model
    // - dans celui de l'utilisateur inscrit ($mesClassesIds) ;
    // - dans celui de l'entreprise propriétaire de la session ($entrepriseId) ;
    // - partout si $toutes est vrai (administrateur).
-   public static function evenementsAVenir(array $mesClassesIds = [], ?int $entrepriseId = null, bool $toutes = false): Collection
+   // $urlDe (facultatif) : fonction qui donne, pour une classe, la page ouverte au clic
+   // (par défaut : la page publique du cours). L'administrateur l'utilise pour ouvrir « Gérer la classe ».
+   public static function evenementsAVenir(array $mesClassesIds = [], ?int $entrepriseId = null, bool $toutes = false, ?\Closure $urlDe = null): Collection
    {
        return static::with('cours')
            ->nonTerminees()
@@ -339,7 +341,7 @@ class Classe extends Model
            ->orderBy('date_debut')
            ->get()
            ->map(fn (Classe $classe) => $classe->versEvenementCalendrier(
-               null,
+               $urlDe ? $urlDe($classe) : null,
                in_array($classe->id, $mesClassesIds) ? ['nv-cal-inscrit'] : []
            ))
            ->values();

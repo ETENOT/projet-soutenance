@@ -52,7 +52,7 @@ class AdminSessionClasseController extends Controller
             return back()->withInput()->with('error', "La classe a été créée mais n'a pas pu être rattachée à la session (colonne « session_id » absente ou non enregistrée). Vérifiez la migration de la table « classes ».");
         }
 
-        return redirect()->route('admin.sessions.show', $sessionFormation)
+        return redirect()->route('admin.sessions.index', ['ouvrir' => $sessionFormation->id])
             ->with('success', 'Classe ajoutée à la session. Les dates de la session ont été mises à jour.');
     }
 

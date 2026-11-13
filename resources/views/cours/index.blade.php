@@ -66,17 +66,6 @@
         </div>
     </div>
 
-    {{-- ===== Erreurs de filtre (prix ou nombre négatif, maximum inférieur au minimum...) ===== --}}
-    @if ($errors->any() && ! $modeAvecErreur)
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- ===== Étiquettes des filtres actifs ===== --}}
     @php
         // URL de la liste sans certains paramètres (sert au "×" de chaque étiquette)

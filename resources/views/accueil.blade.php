@@ -32,6 +32,7 @@
                 <li class="nav-item"><a class="nav-link active" href="#accueil">Accueil</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('cours.catalogue') }}">Cours</a></li>
                 <li class="nav-item"><a class="nav-link" href="#calendrier">Classes</a></li>
+                <li class="nav-item"><a class="nav-link" href="#parcours-entreprise">Entreprises</a></li>
                 <li class="nav-item"><a class="nav-link" href="#pourquoi">À propos</a></li>
             </ul>
 
@@ -141,6 +142,70 @@
             <p class="small text-muted text-center mt-3 mb-0">
                 <i class="ri-repeat-2-line text-danger me-1"></i>
                 L'étape 5 est facultative : vous pouvez la passer, la sauter ou la recommencer à tout moment de votre cours.
+            </p>
+        </div>
+    </div>
+</section>
+
+{{-- ==================== PARCOURS DE L'ENTREPRISE : le premier réflexe est de nous contacter ==================== --}}
+@php
+    $telephone = config('neovision.telephone');
+    $courriel = config('neovision.email');
+@endphp
+<section class="pb-4" id="parcours-entreprise">
+    <div class="container">
+        <div class="nv-parcours rounded-4 p-3 p-lg-4">
+            <hr class="nv-bar">
+            <h2 class="fw-bold mb-1">Votre parcours <span class="text-danger">entreprise</span></h2>
+            <p class="text-muted small mb-3">Former vos équipes, de la première prise de contact à la remise des attestations.</p>
+
+            {{-- Encart principal : tout se fait par appel, l'entreprise n'a rien à saisir --}}
+            <div class="nv-contact-band rounded-4 p-3 mb-4 d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+                <span class="nv-icon-circle bg-danger flex-shrink-0"><i class="ri-phone-fill"></i></span>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">Le plus simple : contactez-nous</div>
+                    <small class="text-muted">
+                        Un appel suffit. Nous créons votre compte entreprise, inscrivons vos collaborateurs
+                        et organisons vos classes : vous n'avez rien à saisir. Vous recevez ensuite vos accès.
+                    </small>
+                </div>
+                <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                    @if ($telephone)
+                        <a href="tel:{{ preg_replace('/\s+/', '', $telephone) }}" class="btn btn-danger rounded-pill px-4">
+                            <i class="ri-phone-line me-1 align-middle"></i>Appeler {{ $telephone }}
+                        </a>
+                    @endif
+                    @if ($courriel)
+                        <a href="mailto:{{ $courriel }}" class="btn btn-outline-danger rounded-pill px-4">
+                            <i class="ri-mail-line me-1 align-middle"></i>Nous écrire
+                        </a>
+                    @endif
+                </div>
+            </div>
+
+            <div class="row g-4">
+                @foreach([
+                    ['ri-phone-line',          'Nous contacter',               'Un appel pour nous présenter votre besoin : cours, collaborateurs, dates.'],
+                    ['ri-building-2-line',     'Nous créons votre compte',     'Compte entreprise et enrôlement de vos collaborateurs : c\'est nous qui nous en occupons.'],
+                    ['ri-calendar-event-line', 'Session dédiée planifiée',     'Dates, lieu et formateurs : nous organisons vos classes.'],
+                    ['ri-line-chart-line',     'Suivre vos équipes',           'Présences, quiz et progression de chaque collaborateur.'],
+                    ['ri-award-line',          'Recevoir les attestations',    'Une attestation de formation pour chaque collaborateur.'],
+                ] as [$icone, $titre, $texte])
+                    <div class="col-6 col-md-4 col-lg">
+                        <div class="nv-etape">
+                            <span class="nv-etape-numero">{{ $loop->iteration }}</span>
+                            <span class="nv-icon-circle bg-danger mb-2"><i class="{{ $icone }}"></i></span>
+                            <div class="fw-semibold small mb-1">{{ $titre }}</div>
+                            <small class="text-muted">{{ $texte }}</small>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <p class="small text-muted text-center mt-3 mb-0">
+                <i class="ri-map-pin-line text-danger me-1"></i>
+                Formation dans nos locaux ou dans les vôtres, selon ce qui vous convient.
+                Vous avez déjà reçu vos accès ? <a href="{{ route('login') }}" class="fw-semibold">Connexion</a>
             </p>
         </div>
     </div>

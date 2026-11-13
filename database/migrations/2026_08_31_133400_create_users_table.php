@@ -22,6 +22,7 @@ class CreateUsersTable extends Migration
             //pour enregistrer la date et l'heure auxquelles l'adresse e-mail d'un utilisateur a été vérifiée.
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('google_id')->nullable()->unique();
             // true = le compte a été créé par un administrateur avec le mot de passe par défaut :
             // l'utilisateur doit en choisir un nouveau à sa première connexion.
             // false (par défaut) = inscription normale, ou mot de passe déjà changé.
@@ -31,6 +32,9 @@ class CreateUsersTable extends Migration
                 ->constrained('roles')
                 // Empêche la suppression d'un rôle s'il est encore utilisé par un utilisateur dans cette table.
                 ->restrictOnDelete();
+
+            // Seulement pour les administrateurs : super_admin, admin_centre ou assistant (voir config/droits.php)
+            $table->string('profil_admin', 30)->nullable();
 
             // 1-1 : un particulier ne peut être rattaché qu'à un seul utilisateur
             $table->foreignId('particulier_id')

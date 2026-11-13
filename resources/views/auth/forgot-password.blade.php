@@ -1,233 +1,69 @@
-@extends('layouts.master-without-nav')
+@extends('layouts.auth-split')
 
 @section('title')
     Mot de passe oublié ?
 @endsection
 
-@section('content')
+@section('titre_visuel', 'Mot de passe oublié ?')
+@section('texte_visuel', 'Pas de panique : un e-mail avec un lien de réinitialisation vous attend.')
 
-<div class="auth-page-wrapper auth-page-brand pt-5">
+@section('formulaire')
 
-    <a href="{{ url('/') }}"
-       class="btn btn-light position-fixed top-0 start-0 m-3 m-sm-4 z-3 auth-return-home">
-        <i class="ri-arrow-left-line align-middle me-1"></i>
-        Retour à l'accueil
-    </a>
-
-    <!-- Arrière-plan de la page -->
-    <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
-
-        <div class="bg-overlay"></div>
-
-        <div class="shape">
-            <svg xmlns="http://www.w3.org/2000/svg"
-                 version="1.1"
-                 xmlns:xlink="http://www.w3.org/1999/xlink"
-                 viewBox="0 0 1440 120">
-
-                <path d="M 0,36 C 144,53.6 432,123.2 720,124
-                         C 1008,124.8 1296,56.8 1440,40
-                         L1440 140 L0 140z">
-                </path>
-
-            </svg>
+    @if (session('status'))
+        {{-- Lien envoyé : l'enveloppe s'ouvre pour dire « regardez votre boîte mail » --}}
+        <div class="nv-env" id="enveloppe" aria-hidden="true">
+            <span class="nv-env-corps">
+                <span class="nv-env-lettre"><i class="ri-mail-check-line"></i></span>
+                <span class="nv-env-poche"></span>
+                <span class="nv-env-rabat"></span>
+            </span>
         </div>
 
-    </div>
-
-
-    <!-- Contenu de la page -->
-    <div class="auth-page-content">
-
-        <div class="container">
-
-            <!-- Logo NEO-VISION -->
-            <div class="row">
-
-                <div class="col-lg-12">
-
-                    <div class="text-center mt-sm-5 mb-4 text-white-50">
-
-                        <div>
-                            <a href="{{ url('/') }}"
-                               class="d-inline-block auth-logo">
-
-                                <img src="{{ asset('images/logo_neovision.png') }}"
-                                     alt="Néovision"
-                                     height="55">
-
-                            </a>
-                        </div>
-
-                        <p class="mt-3 fs-15 fw-medium">
-                            Voir, Faire et Réaliser Différemment
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Carte de demande de réinitialisation -->
-            <div class="row justify-content-center">
-
-                <div class="col-md-8 col-lg-6 col-xl-5">
-
-                    <div class="card mt-4">
-
-                        <div class="card-body p-4">
-
-                            <!-- Titre et consignes -->
-                            <div class="text-center mt-2">
-
-                                <h5 class="text-primary">
-                                    Mot de passe oublié ?
-                                </h5>
-
-                                <p class="text-muted">
-                                    Saisissez votre e-mail : nous vous enverrons un lien pour choisir un nouveau mot de passe.
-                                </p>
-
-                            </div>
-
-
-                            <!-- Message de statut Breeze (lien envoyé / erreur) -->
-                            <x-auth-session-status
-                                class="mb-3 text-center text-success fw-semibold"
-                                :status="session('status')"
-                            />
-
-
-                            <div class="p-2 mt-4">
-
-                                <!-- FORMULAIRE BREEZE -->
-                                <form method="POST"
-                                      action="{{ route('password.email') }}">
-
-                                    @csrf
-
-                                    <!-- Adresse e-mail -->
-                                    <div class="mb-4">
-
-                                        <label for="email"
-                                               class="form-label">
-
-                                            Adresse e-mail
-
-                                            <span class="text-danger">*</span>
-
-                                        </label>
-
-                                        <input
-                                            id="email"
-                                            type="email"
-                                            name="email"
-                                            value="{{ old('email') }}"
-                                            class="form-control @error('email') is-invalid @enderror"
-                                            placeholder="Entrez votre adresse e-mail"
-                                            required
-                                            autofocus
-                                        >
-
-                                        @error('email')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-
-                                    </div>
-
-
-                                    <!-- Bouton d'envoi -->
-                                    <div class="text-center mt-4">
-
-                                        <button
-                                            class="btn btn-success w-100"
-                                            type="submit">
-
-                                            Envoyer le lien
-
-                                        </button>
-
-                                    </div>
-
-                                </form>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- Retour à la connexion -->
-                    <div class="mt-4 text-center">
-
-                        <p class="mb-0">
-
-                            <a href="{{ route('login') }}"
-                               class="fw-semibold text-primary text-decoration-underline auth-switch-link">
-                                Retour à la connexion
-
-                            </a>
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
+        <div class="text-center">
+            <h2 class="fw-bold mb-2">Vérifiez votre boîte mail</h2>
+            <x-auth-session-status class="mb-2 text-success fw-semibold" :status="session('status')" />
+            <p class="text-muted mb-4">
+                Cliquez sur le lien reçu pour choisir un nouveau mot de passe.
+                Pensez à regarder dans vos courriers indésirables.
+            </p>
+            <a href="{{ route('password.request') }}" class="btn btn-light w-100">Utiliser une autre adresse e-mail</a>
         </div>
+    @else
+        <h2 class="fw-bold mb-1">Mot de passe oublié ?</h2>
+        <p class="text-muted mb-4">
+            Saisissez votre e-mail : nous vous enverrons un lien pour choisir un nouveau mot de passe.
+        </p>
 
-    </div>
+        <form method="POST" action="{{ route('password.email') }}">
+            @csrf
 
-
-    <!-- Footer -->
-    <footer class="footer">
-
-        <div class="container">
-
-            <div class="row">
-
-                <div class="col-lg-12">
-
-                    <div class="text-center">
-
-                        <p class="mb-0 text-muted">
-
-                            &copy;
-
-                            <script>
-                                document.write(new Date().getFullYear())
-                            </script>
-
-                            NEO-VISION
-
-                        </p>
-
-                    </div>
-
-                </div>
-
+            <div class="mb-4">
+                <label for="email" class="form-label">Adresse e-mail <span class="text-danger">*</span></label>
+                <input id="email" type="email" name="email" value="{{ old('email') }}"
+                       class="form-control @error('email') is-invalid @enderror"
+                       placeholder="Entrez votre adresse e-mail" required autofocus>
+                @error('email')
+                    <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                @enderror
             </div>
 
-        </div>
+            <button class="btn btn-primary w-100" type="submit">Envoyer le lien</button>
+        </form>
+    @endif
 
-    </footer>
+    <p class="text-center mt-4 mb-0">
+        <a href="{{ route('login') }}" class="fw-semibold">Retour à la connexion</a>
+    </p>
 
-</div>
-
-@endsection
-
-
-@section('script')
-
-<script src="{{ URL::asset('build/libs/particles.js/particles.js') }}"></script>
-
-<script src="{{ URL::asset('build/js/pages/particles.app.js') }}"></script>
+    @if (session('status'))
+        <script>
+            // L'enveloppe s'ouvre une demi-seconde après l'affichage de la page
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(function () {
+                    document.getElementById('enveloppe').classList.add('est-ouverte');
+                }, 500);
+            });
+        </script>
+    @endif
 
 @endsection

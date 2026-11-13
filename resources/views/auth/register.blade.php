@@ -1,317 +1,246 @@
-@extends('layouts.master-without-nav')
+@extends('layouts.auth-split')
 
 @section('title')
     @lang('translation.signup')
 @endsection
 
-@section('content')
+@section('titre_visuel', 'Rejoignez NEO VISION')
+@section('texte_visuel', 'Particulier ou entreprise : créez votre compte en quelques minutes.')
 
-<div class="auth-page-wrapper auth-page-brand pt-5">
-    <a href="{{ url('/') }}"
-       class="btn btn-light position-fixed top-0 start-0 m-3 m-sm-4 z-3 auth-return-home">
-        <i class="ri-arrow-left-line align-middle me-1"></i>
-        {{ __("Retour à l'accueil") }}
-    </a>
+@section('formulaire')
 
-    <!-- auth page bg -->
-    <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
-        <div class="bg-overlay"></div>
+    <h2 class="fw-bold mb-1">Créer un compte</h2>
 
-        <div class="shape">
-            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink"
-                 viewBox="0 0 1440 120">
-                <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
-            </svg>
-        </div>
-    </div>
+    <p class="text-muted mb-4">Rejoignez la plateforme de formation NEO VISION</p>
 
-    <!-- auth page content -->
-    <div class="auth-page-content">
-        <div class="container">
-
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-center mt-sm-5 mb-4 text-white-50">
-                        <div>
-                            <a href="{{ url('/') }}" class="d-inline-block auth-logo">
-                                <img src="{{ asset('images/logo-nv-transparent.png') }}" alt="Néovision" height="55">
-                            </a>
-                        </div>
-                        <p class="mt-3 fs-15 fw-medium">Formation NéoVision</p>
-                    </div>
+    {{--
+        "needs-validation" + "novalidate" : pattern Bootstrap standard de Velzon
+        (cf. resources/js/pages/form-validation.init.js). Les champs "disabled" (bloc du rôle non choisi,
+        cf. toggleRoleFields() plus bas) sont exclus de la vérification.
+    --}}
+    <form class="needs-validation" novalidate method="POST" action="{{ route('register') }}">
+            @csrf
+    
+            <!-- Nom -->
+            <div class="mb-3">
+                <label for="name" class="form-label">Nom <span class="text-danger">*</span></label>
+                <input type="text" class="form-control @error('name') is-invalid @enderror"
+                       name="name" id="name" value="{{ old('name') }}"
+                       placeholder="Entrez votre nom" required autofocus>
+                @error('name')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+    
+            <!-- E-mail -->
+            <div class="mb-3">
+                <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                <input type="email" class="form-control @error('email') is-invalid @enderror"
+                       name="email" id="email"
+                       value="{{ $emailVisiteur ?? old('email') }}"
+                       placeholder="Entrez votre adresse e-mail" required
+                       @if(!empty($emailVisiteur)) readonly @endif>
+                @if(!empty($emailVisiteur))
+                    <small class="text-muted">Adresse saisie avant votre quiz, elle ne peut pas être modifiée.</small>
+                @endif
+                @error('email')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+    
+            <!-- Mot de passe -->
+            <div class="mb-3">
+                <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                <div class="position-relative auth-pass-inputgroup mb-3">
+                    <input type="password"
+                           class="form-control password-input pe-5 @error('password') is-invalid @enderror"
+                           name="password" id="password" placeholder="Entrez un mot de passe" required>
+                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                            type="button">
+                        <i class="ri-eye-fill align-middle"></i>
+                    </button>
+                    @error('password')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
                 </div>
             </div>
-            <!-- end row -->
-
-            <div class="row justify-content-center">
-                <div class="col-md-8 col-lg-6 col-xl-5">
-                    <div class="card mt-4">
-
-                        <div class="card-body p-4">
-                            <div class="text-center mt-2">
-                                <h5 class="text-primary">Créer un compte</h5>
-                                <p class="text-muted">Rejoignez la plateforme Formation NéoVision</p>
-                            </div>
-
-                            <div class="p-2 mt-4">
-
-                                {{--
-                                    "needs-validation" + "novalidate" : pattern Bootstrap standard de Velzon
-                                    (cf. resources/js/pages/form-validation.init.js). Bloque la soumission côté
-                                    navigateur tant qu'un champ "required" ACTIF (non disabled) n'est pas rempli,
-                                    et affiche les .invalid-feedback. Les champs "disabled" (bloc de rôle non
-                                    choisi, cf. toggleRoleFields() plus bas) sont automatiquement exclus de
-                                    cette vérification.
-                                --}}
-                                <form class="needs-validation" novalidate method="POST" action="{{ route('register') }}">
-                                    @csrf
-
-                                    <!-- Nom -->
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">Nom <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror"
-                                               name="name" id="name" value="{{ old('name') }}"
-                                               placeholder="Entrez votre nom" required autofocus>
-                                        @error('name')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <!-- E-mail -->
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
-                                        <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                               name="email" id="email"
-                                               value="{{ $emailVisiteur ?? old('email') }}"
-                                               placeholder="Entrez votre adresse e-mail" required
-                                               @if(!empty($emailVisiteur)) readonly @endif>
-                                        @if(!empty($emailVisiteur))
-                                            <small class="text-muted">Adresse saisie avant votre quiz, elle ne peut pas être modifiée.</small>
-                                        @endif
-                                        @error('email')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <!-- Mot de passe -->
-                                    <div class="mb-3">
-                                        <label for="password" class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                        <div class="position-relative auth-pass-inputgroup mb-3">
-                                            <input type="password"
-                                                   class="form-control password-input pe-5 @error('password') is-invalid @enderror"
-                                                   name="password" id="password" placeholder="Entrez un mot de passe" required>
-                                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                                    type="button">
-                                                <i class="ri-eye-fill align-middle"></i>
-                                            </button>
-                                            @error('password')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <!-- Confirmez le mot de passe -->
-                                    <div class="mb-3">
-                                        <label for="password_confirmation" class="form-label">Confirmez le mot de passe <span class="text-danger">*</span></label>
-                                        <div class="position-relative auth-pass-inputgroup mb-3">
-                                            <input type="password"
-                                                   class="form-control password-input pe-5 @error('password_confirmation') is-invalid @enderror"
-                                                   name="password_confirmation" id="password_confirmation"
-                                                   placeholder="Confirmez le mot de passe" required>
-                                            <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
-                                                    type="button">
-                                                <i class="ri-eye-fill align-middle"></i>
-                                            </button>
-                                            @error('password_confirmation')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <!--
-                                        Rôle : détermine si l'inscrit est un "particulier" ou une "entreprise".
-                                        Ce choix pilote (cf. RegisteredUserController@store) :
-                                          1) quels champs ci-dessous sont affichés ET actifs (toggleRoleFields())
-                                          2) quelle ligne créer en base (table particuliers ou entreprises)
-                                          3) quel role_id est assigné à l'utilisateur
-                                    -->
-                                    <div class="mb-3">
-                                        <label for="role" class="form-label">Rôle <span class="text-danger">*</span></label>
-
-                                        @if(!empty($emailVisiteur))
-                                            <input type="hidden" name="role" value="particulier">
-                                        @endif
-                                        <select id="role" name="role" class="form-select @error('role') is-invalid @enderror"
-                                                required onchange="toggleRoleFields()"
-                                                @if(!empty($emailVisiteur)) disabled @endif>
-                                            {{-- old('role', 'particulier') : "particulier" par défaut au premier chargement,
-                                                 mais réaffiche le choix précédent après une erreur de validation --}}
-                                            <option value="particulier" @selected(old('role', 'particulier') == 'particulier')>Particulier</option>
-                                            <option value="entreprise" @selected(old('role') == 'entreprise')>Entreprise</option>
-                                        </select>
-                                        @error('role')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <!--
-                                        Bloc "particulier" : visible et actif par défaut (rôle par défaut du select).
-                                        Alimente Particulier::create() côté contrôleur.
-                                    -->
-                                    <div id="particulier-fields">
-                                        <div class="mb-3">
-                                            <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label><br>
-
-                                            {{--
-                                                Champ VISIBLE : pas de "name", donc jamais soumis tel quel.
-                                                intl-tel-input (cf. @section('script')) s'y attache pour :
-                                                  1) afficher le sélecteur de pays "drapeau + nom + indicatif",
-                                                  2) adapter le placeholder et le nombre de chiffres au pays choisi,
-                                                  3) valider le numéro selon l'indicatif.
-                                                La classe is-invalid s'applique à CE champ visible si le serveur
-                                                renvoie une erreur sur "telephone".
-                                            --}}
-                                            <input type="tel" class="form-control @error('telephone') is-invalid @enderror"
-                                                   id="telephone" required>
-
-                                            {{-- Un seul bloc "invalid-feedback" : message du serveur s'il existe,
-                                                 sinon message générique (champ vide ou numéro invalide) --}}
-                                            <div class="invalid-feedback">
-                                                @error('telephone')
-                                                    <strong>{{ $message }}</strong>
-                                                @else
-                                                    Veuillez entrer un numéro de téléphone valide pour le pays sélectionné.
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="date_de_naissance" class="form-label">Date de naissance</label>
-                                            <input type="date" class="form-control @error('date_de_naissance') is-invalid @enderror"
-                                                   name="date_de_naissance" id="date_de_naissance"
-                                                   value="{{ old('date_de_naissance') }}">
-                                            @error('date_de_naissance')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <!--
-                                        Bloc "entreprise" : masqué (d-none) ET désactivé (inputs disabled) par défaut,
-                                        cf. toggleRoleFields(). Le d-none seul ne suffit pas : un champ masqué en CSS
-                                        reste soumis avec le formulaire. disabled garantit qu'il n'est jamais envoyé
-                                        quand ce bloc n'est pas actif.
-                                        Alimente Entreprise::create() côté contrôleur.
-                                    -->
-                                    <div id="entreprise-fields" class="d-none">
-                                        <div class="mb-3">
-                                            <label for="raison_sociale" class="form-label">Raison sociale <span class="text-danger">(facultatif)</span></label>
-                                            <input type="text" class="form-control @error('raison_sociale') is-invalid @enderror"
-                                                   name="raison_sociale" id="raison_sociale" value="{{ old('raison_sociale') }}"
-                                                   placeholder="Entrez la raison sociale" required disabled>
-                                            @error('raison_sociale')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="adresse" class="form-label">Siège social <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control @error('adresse') is-invalid @enderror"
-                                                   name="adresse" id="adresse" value="{{ old('adresse') }}"
-                                                   placeholder="Entrez le siège social" required disabled>
-                                            @error('adresse')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="contact_principal" class="form-label">Contact principal <span class="text-danger">*</span></label>
-
-                                            {{-- Même principe que #telephone : champ visible sans "name",
-                                                 initialisé par intl-tel-input, "disabled" tant que le rôle
-                                                 "particulier" est sélectionné --}}
-                                            <input type="tel" class="form-control @error('contact_principal') is-invalid @enderror"
-                                                   id="contact_principal" required disabled>
-
-                                            <div class="invalid-feedback">
-                                                @error('contact_principal')
-                                                    <strong>{{ $message }}</strong>
-                                                @else
-                                                    Veuillez entrer un numéro de contact valide pour le pays sélectionné.
-                                                @enderror
-                                            </div>
-                                        </div>
-
-                                        <div class="mb-3">
-                                            <label for="secteur_activite" class="form-label">Secteur d'activité</label>
-                                            <input type="text" class="form-control @error('secteur_activite') is-invalid @enderror"
-                                                   name="secteur_activite" id="secteur_activite" value="{{ old('secteur_activite') }}"
-                                                   placeholder="Entrez le secteur d'activité">
-                                            @error('secteur_activite')
-                                                <span class="invalid-feedback" role="alert">
-                                                    <strong>{{ $message }}</strong>
-                                                </span>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <button class="btn btn-success w-100" type="submit">S'inscrire</button>
-                                    </div>
-                                </form>
-
-                            </div>
-                        </div>
-                        <!-- end card body -->
-                    </div>
-                    <!-- end card -->
-
-                    <div class="mt-4 text-center">
-                        <p class="mb-0">Déjà inscrit ? <a href="{{ route('login') }}"
-                                class="fw-semibold text-primary text-decoration-underline">Se connecter</a></p>
-                    </div>
-
+    
+            <!-- Confirmez le mot de passe -->
+            <div class="mb-3">
+                <label for="password_confirmation" class="form-label">Confirmez le mot de passe <span class="text-danger">*</span></label>
+                <div class="position-relative auth-pass-inputgroup mb-3">
+                    <input type="password"
+                           class="form-control password-input pe-5 @error('password_confirmation') is-invalid @enderror"
+                           name="password_confirmation" id="password_confirmation"
+                           placeholder="Confirmez le mot de passe" required>
+                    <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                            type="button">
+                        <i class="ri-eye-fill align-middle"></i>
+                    </button>
+                    @error('password_confirmation')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
                 </div>
             </div>
-            <!-- end row -->
-
-        </div>
-        <!-- end container -->
-    </div>
-    <!-- end auth page content -->
-
-    <!-- footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="text-center">
-                        <p class="mb-0">© <script>document.write(new Date().getFullYear())</script> Formation NéoVisions</p>
+    
+            <!--
+                Rôle : détermine si l'inscrit est un "particulier" ou une "entreprise".
+                Ce choix pilote (cf. RegisteredUserController@store) :
+                  1) quels champs ci-dessous sont affichés ET actifs (toggleRoleFields())
+                  2) quelle ligne créer en base (table particuliers ou entreprises)
+                  3) quel role_id est assigné à l'utilisateur
+            -->
+            <div class="mb-3">
+                <label for="role" class="form-label">Vous êtes <span class="text-danger">*</span></label>
+    
+                @if(!empty($emailVisiteur))
+                    <input type="hidden" name="role" value="particulier">
+                @endif
+                <select id="role" name="role" class="form-select @error('role') is-invalid @enderror"
+                        required onchange="toggleRoleFields()"
+                        @if(!empty($emailVisiteur)) disabled @endif>
+                    {{-- old('role', 'particulier') : "particulier" par défaut au premier chargement,
+                         mais réaffiche le choix précédent après une erreur de validation --}}
+                    <option value="particulier" @selected(old('role', 'particulier') == 'particulier')>Particulier</option>
+                    <option value="entreprise" @selected(old('role') == 'entreprise')>Entreprise</option>
+                </select>
+                @error('role')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+    
+            <!--
+                Bloc "particulier" : visible et actif par défaut (rôle par défaut du select).
+                Alimente Particulier::create() côté contrôleur.
+            -->
+            <div id="particulier-fields">
+                <div class="mb-3">
+                    <label for="telephone" class="form-label">Téléphone <span class="text-danger">*</span></label><br>
+    
+                    {{--
+                        Champ VISIBLE : pas de "name", donc jamais soumis tel quel.
+                        intl-tel-input (cf. @section('script')) s'y attache pour :
+                          1) afficher le sélecteur de pays "drapeau + nom + indicatif",
+                          2) adapter le placeholder et le nombre de chiffres au pays choisi,
+                          3) valider le numéro selon l'indicatif.
+                        La classe is-invalid s'applique à CE champ visible si le serveur
+                        renvoie une erreur sur "telephone".
+                    --}}
+                    <input type="tel" class="form-control @error('telephone') is-invalid @enderror"
+                           id="telephone" required>
+    
+                    {{-- Un seul bloc "invalid-feedback" : message du serveur s'il existe,
+                         sinon message générique (champ vide ou numéro invalide) --}}
+                    <div class="invalid-feedback">
+                        @error('telephone')
+                            <strong>{{ $message }}</strong>
+                        @else
+                            Veuillez entrer un numéro de téléphone valide pour le pays sélectionné.
+                        @enderror
                     </div>
                 </div>
+    
+                <div class="mb-3">
+                    <label for="date_de_naissance" class="form-label">Date de naissance</label>
+                    <input type="date" class="form-control @error('date_de_naissance') is-invalid @enderror"
+                           name="date_de_naissance" id="date_de_naissance"
+                           value="{{ old('date_de_naissance') }}">
+                    @error('date_de_naissance')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
             </div>
-        </div>
-    </footer>
-    <!-- end Footer -->
+    
+            <!--
+                Bloc "entreprise" : masqué (d-none) ET désactivé (inputs disabled) par défaut,
+                cf. toggleRoleFields(). Le d-none seul ne suffit pas : un champ masqué en CSS
+                reste soumis avec le formulaire. disabled garantit qu'il n'est jamais envoyé
+                quand ce bloc n'est pas actif.
+                Alimente Entreprise::create() côté contrôleur.
+            -->
+            <div id="entreprise-fields" class="d-none">
+                <div class="mb-3">
+                    <label for="raison_sociale" class="form-label">Raison sociale <span class="text-danger">(facultatif)</span></label>
+                    <input type="text" class="form-control @error('raison_sociale') is-invalid @enderror"
+                           name="raison_sociale" id="raison_sociale" value="{{ old('raison_sociale') }}"
+                           placeholder="Entrez la raison sociale" required disabled>
+                    @error('raison_sociale')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+    
+                <div class="mb-3">
+                    <label for="adresse" class="form-label">Siège social <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control @error('adresse') is-invalid @enderror"
+                           name="adresse" id="adresse" value="{{ old('adresse') }}"
+                           placeholder="Entrez le siège social" required disabled>
+                    @error('adresse')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+    
+                <div class="mb-3">
+                    <label for="contact_principal" class="form-label">Contact principal <span class="text-danger">*</span></label>
+    
+                    {{-- Même principe que #telephone : champ visible sans "name",
+                         initialisé par intl-tel-input, "disabled" tant que le rôle
+                         "particulier" est sélectionné --}}
+                    <input type="tel" class="form-control @error('contact_principal') is-invalid @enderror"
+                           id="contact_principal" required disabled>
+    
+                    <div class="invalid-feedback">
+                        @error('contact_principal')
+                            <strong>{{ $message }}</strong>
+                        @else
+                            Veuillez entrer un numéro de contact valide pour le pays sélectionné.
+                        @enderror
+                    </div>
+                </div>
+    
+                <div class="mb-3">
+                    <label for="secteur_activite" class="form-label">Secteur d'activité</label>
+                    <input type="text" class="form-control @error('secteur_activite') is-invalid @enderror"
+                           name="secteur_activite" id="secteur_activite" value="{{ old('secteur_activite') }}"
+                           placeholder="Entrez le secteur d'activité">
+                    @error('secteur_activite')
+                        <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                    @enderror
+                </div>
+            </div>
+    
+            <div class="mt-3">
+                <button class="btn btn-primary w-100" type="submit">S'inscrire</button>
+            </div>
+        </form>
 
-</div>
-<!-- end auth-page-wrapper -->
+        {-- « Continuer avec Google » : crée un compte particulier
+                                     (une entreprise utilise le formulaire ci-dessus) --}}
+                                @include('auth._bouton-google')
+                                <p class="text-muted fs-12 text-center mt-2 mb-0">
+                                    {{ __('Avec Google, le compte créé est un compte particulier.') }}
+                                </p>
+
+    <p class="text-center mt-4 mb-0">
+        Déjà inscrit ? <a href="{{ route('login') }}" class="fw-semibold">Se connecter</a>
+    </p>
 
 @endsection
 
@@ -324,8 +253,6 @@
 
 @section('script')
 
-    <script src="{{ URL::asset('build/libs/particles.js/particles.js') }}"></script>
-    <script src="{{ URL::asset('build/js/pages/particles.app.js') }}"></script>
     <script src="{{ URL::asset('build/js/pages/form-validation.init.js') }}"></script>
 
     {{-- Variante "WithUtils" : inclut la librairie de validation/formatage, donc
