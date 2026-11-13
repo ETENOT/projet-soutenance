@@ -24,7 +24,7 @@ class AdminSessionController extends Controller
 
         // Les classes de chaque session servent à l'état, aux dates et à la fiche « Voir » de la liste
         $query = SessionFormation::query()
-            ->with(['entreprise', 'classes' => fn ($q) => $q->with('cours', 'formateur')->withCount('inscriptions')->orderBy('date_debut')])
+            ->with(['entreprise', 'classes' => fn ($q) => $q->with('cours', 'formateur', 'inscriptions.user', 'inscriptions.paiement')->orderBy('date_debut')])
             ->withCount('classes');
 
         if ($recherche = trim((string) $request->input('q'))) {
@@ -48,6 +48,14 @@ class AdminSessionController extends Controller
 
         $parPage = 10;
         $page = LengthAwarePaginator::resolveCurrentPage();
+
+        // Session à déplier (?ouvrir=ID) : on affiche la page de la liste qui la contient
+        if ($request->filled('ouvrir') && ! $request->filled('page')) {
+            $position = $sessions->search(fn ($s) => $s->id === $request->integer('ouvrir'));
+            if ($position !== false) {
+                $page = intdiv($position, $parPage) + 1;
+            }
+        }
         $sessionsPage = new LengthAwarePaginator(
             $sessions->forPage($page, $parPage)->values(), $sessions->count(), $parPage, $page,
             ['path' => $request->url(), 'query' => $request->query()]
@@ -57,6 +65,9 @@ class AdminSessionController extends Controller
             'sessions' => $sessionsPage,
             'etats' => $etats,
             'entreprises' => Entreprise::orderBy('raison_sociale')->get(),
+            // listes proposées dans la fenêtre « Ajouter / modifier une classe »
+            'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
+            'tousLesFormateurs' => User::whereHas('role', fn ($q) => $q->where('nom', 'formateur'))->orderBy('name')->get(['id', 'name']),
             'stats' => [
                 'sessions' => SessionFormation::count(),
                 'entreprises' => SessionFormation::distinct()->count('entreprise_id'),
@@ -69,54 +80,9 @@ class AdminSessionController extends Controller
     {
         $session = SessionFormation::create($request->validate($this->regles(), $this->messages()));
 
-        return redirect()->route('admin.sessions.show', $session)
+        // La session s'affiche dépliée : on peut y ajouter ses classes tout de suite
+        return redirect()->route('admin.sessions.index', ['ouvrir' => $session->id])
             ->with('success', 'Session créée : ajoutez maintenant les classes qui la composent.');
-    }
-
-    // Page de la session : ses classes (créées, modifiées, supprimées dans des fenêtres), avec recherche et filtres
-    public function show(Request $request, SessionFormation $sessionFormation)
-    {
-        $request->validate([
-            'date_debut' => ['nullable', 'date'],
-            'cours_id' => ['nullable', 'integer'],
-            'formateur_id' => ['nullable', 'integer'],
-        ]);
-
-        $recherche = trim((string) $request->input('q'));
-
-        $sessionFormation->load([
-            'entreprise',
-            'classes' => fn ($q) => $q
-                ->when($recherche !== '', fn ($q) => $q->where(function ($q) use ($recherche) {
-                    // recherche dans le nom de la classe, le cours ou le formateur
-                    $q->where('nom', 'like', "%{$recherche}%")
-                        ->orWhereHas('cours', fn ($c) => $c->where('titre', 'like', "%{$recherche}%"))
-                        ->orWhereHas('formateur', fn ($f) => $f->where('name', 'like', "%{$recherche}%"));
-                }))
-                ->when($request->filled('cours_id'), fn ($q) => $q->where('cours_id', $request->integer('cours_id')))
-                ->when($request->filled('formateur_id'), fn ($q) => $q->where('formateur_id', $request->integer('formateur_id')))
-                ->when($request->filled('date_debut'), fn ($q) => $q->whereDate('date_debut', $request->input('date_debut')))
-                ->orderByDesc('created_at')->orderByDesc('id')
-                ->with('cours', 'formateur', 'inscriptions.user', 'inscriptions.paiement'),
-        ]);
-
-        // L'état est calculé (dates, fermeture) : on le filtre ici ; plusieurs états cochés = l'un OU l'autre
-        $etats = array_values(array_intersect(self::ETATS, (array) $request->input('etat', [])));
-        $classes = $sessionFormation->classes;
-        if ($etats) {
-            $classes = $classes->filter(fn ($c) => in_array($c->etat, $etats, true))->values();
-        }
-
-        return view('sessions.show', [
-            'session' => $sessionFormation,
-            'classes' => $classes,
-            'etats' => $etats,
-            // choix proposés dans la fenêtre « Filtres » : seulement ce que la session contient
-            'coursDeLaSession' => Cours::whereIn('id', $sessionFormation->classes()->select('cours_id'))->orderBy('titre')->get(['id', 'titre']),
-            'formateursDeLaSession' => User::whereIn('id', $sessionFormation->classes()->whereNotNull('formateur_id')->select('formateur_id'))->orderBy('name')->get(['id', 'name']),
-            'tousLesCours' => Cours::orderBy('titre')->get(['id', 'titre']),
-            'tousLesFormateurs' => User::whereHas('role', fn ($q) => $q->where('nom', 'formateur'))->orderBy('name')->get(['id', 'name']),
-        ]);
     }
 
     public function update(Request $request, SessionFormation $sessionFormation)

@@ -92,6 +92,8 @@ class UserController extends Controller
             'utilisateurs' => $query->orderByDesc('created_at')->orderByDesc('id')->paginate(10)->withQueryString(),
             'rolesChoisis' => $roles,
             'roles' => Role::orderBy('nom')->get(),
+            'profils' => config('droits.profils'),
+            'modulesDroits' => config('droits.modules'),
             // Totaux sur toute la base (pas seulement la page affichée, ni les filtres)
             'stats' => [
                 'particuliers' => $compter('particulier'),
@@ -170,7 +172,7 @@ class UserController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'role_id' => $data['role_id'],
-            ];
+            ] + $this->profilAdminAEnregistrer($nomRole, $data);
 
             if ($nomRole === 'particulier') {
                 $compte['particulier_id'] = Particulier::create($this->profilParticulier($data))->id;
@@ -204,7 +206,7 @@ class UserController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'role_id' => $data['role_id'],
-            ];
+            ] + $this->profilAdminAEnregistrer($nomRole, $data, $user);
 
             // Mot de passe : modifié seulement s'il est renseigné
             if (filled($data['password'] ?? null)) {
@@ -244,11 +246,16 @@ class UserController extends Controller
                 ->with('error', 'Vous ne pouvez pas supprimer votre propre compte.');
         }
 
-        // Protège les comptes administrateurs contre une suppression accidentelle.
+        // Comptes administrateurs : seul le super-admin peut en supprimer, jamais le super-admin lui-même.
         if ($user->role?->nom === 'admin') {
-            return redirect()
-                ->route('admin.users.index')
-                ->with('error', 'Un compte administrateur ne peut pas être supprimé ici.');
+            if (! Auth::user()->estSuperAdmin()) {
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'Seul le super-administrateur peut supprimer un compte administrateur.');
+            }
+            if ($user->estSuperAdmin()) {
+                return redirect()->route('admin.users.index')
+                    ->with('error', 'Le compte super-administrateur ne peut pas être supprimé.');
+            }
         }
 
         $user->delete();
@@ -268,6 +275,13 @@ class UserController extends Controller
      */
     private function valider(Request $request, ?User $user = null): array
     {
+        $acteur = $request->user();
+
+        // Seul le super-admin touche aux comptes administrateurs (création, modification)
+        if ($user?->role?->nom === 'admin' && ! $acteur->estSuperAdmin()) {
+            abort(403, 'Seul le super-administrateur peut modifier un compte administrateur.');
+        }
+
         // Un compte admin ne peut pas être transformé en autre rôle depuis cette page.
         if ($user?->role?->nom === 'admin') {
             $request->merge(['role_id' => $user->role_id]);
@@ -275,6 +289,16 @@ class UserController extends Controller
 
         // Nom du rôle choisi (particulier, entreprise, formateur, admin), pour savoir quels champs exiger
         $nomRole = Role::whereKey($request->input('role_id'))->value('nom');
+
+        if ($nomRole === 'admin' && ! $acteur->estSuperAdmin()) {
+            abort(403, 'Seul le super-administrateur peut créer un compte administrateur.');
+        }
+
+        // Le profil n'a de sens que pour un administrateur, et jamais pour changer celui du super-admin
+        $profilObligatoire = $nomRole === 'admin' && ! $user?->estSuperAdmin();
+        if (! $profilObligatoire) {
+            $request->request->remove('profil_admin');
+        }
 
         // Les champs d'un autre rôle sont ignorés (ex. un téléphone envoyé pour un formateur) :
         // le formulaire les désactive déjà, mais le serveur ne doit pas leur faire confiance.
@@ -300,6 +324,7 @@ class UserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
             'role_id' => ['required', 'exists:roles,id'],
+            'profil_admin' => [Rule::requiredIf($profilObligatoire), 'nullable', Rule::in(array_keys(config('droits.profils')))],
 
             // Champs du particulier : obligatoires seulement pour ce rôle
             'telephone' => [Rule::requiredIf($nomRole === 'particulier'), 'nullable', 'string', 'max:20', 'regex:/^\+[1-9]\d{6,14}$/'],
@@ -313,6 +338,8 @@ class UserController extends Controller
         ], [
             'role_id.required' => 'Choisissez un type de compte.',
             'role_id.exists' => 'Ce type de compte n\'existe pas.',
+            'profil_admin.required' => 'Choisissez le profil de cet administrateur.',
+            'profil_admin.in' => 'Ce profil n\'existe pas.',
             'telephone.required' => 'Le téléphone est obligatoire pour un particulier.',
             'telephone.regex' => 'Le téléphone doit être au format international, par exemple +24177123456.',
             'date_de_naissance.before_or_equal' => 'La date de naissance ne peut pas être dans le futur.',
@@ -324,6 +351,24 @@ class UserController extends Controller
         ]);
 
         return [$data, $nomRole];
+    }
+
+    /**
+     * Profil d'administrateur à enregistrer avec le compte :
+     * - pas administrateur : aucun profil ;
+     * - modification du super-admin : on ne touche pas à son profil ;
+     * - sinon : le profil choisi dans la liste.
+     */
+    private function profilAdminAEnregistrer(?string $nomRole, array $data, ?User $user = null): array
+    {
+        if ($nomRole !== 'admin') {
+            return ['profil_admin' => null];
+        }
+        if ($user?->estSuperAdmin()) {
+            return [];
+        }
+
+        return ['profil_admin' => $data['profil_admin']];
     }
 
     private function profilParticulier(array $data): array

@@ -17,6 +17,11 @@
     // Retour d'une validation qui a échoué : "_mode" (ajout ou modification) dit quelle fenêtre rouvrir
     // (erreur de validation OU message d'erreur du serveur, tant que la saisie a été conservée)
     $modeAvecErreur = ($errors->any() || session('error')) ? old('_mode') : null;
+    $erreurClasse = in_array($modeAvecErreur, ['classe-ajout', 'classe-modif'], true);
+    $libellesEtat = ['a_venir' => 'À venir', 'en_cours' => 'En cours', 'terminee' => 'Terminée'];
+
+    // Session à déplier d'office : après un ajout (?ouvrir=ID) ou quand la fenêtre d'une de ses classes se rouvre sur une erreur
+    $sessionOuverte = (int) (request('ouvrir') ?: ($erreurClasse ? old('_session') : 0));
 @endphp
 
 <div class="container-fluid pb-4">
@@ -188,7 +193,7 @@
                         <th class="col-periode">Dates</th>
                         <th class="col-nombre">Classes</th>
                         <th class="col-badge">État</th>
-                        <th class="text-end col-actions-4">Actions</th>
+                        <th class="text-end col-actions-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -213,14 +218,11 @@
                             <td><span class="badge bg-{{ $session->etat_couleur }}-subtle text-{{ $session->etat_couleur }}">{{ $session->etat_libelle }}</span></td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
-                                    <button type="button" class="btn btn-sm btn-soft-primary" title="Voir le détail"
-                                            data-bs-toggle="modal" data-bs-target="#modalVoir"
-                                            data-detail="detail-{{ $session->id }}" data-titre="{{ $session->nom }}">
-                                        <i class="ri-eye-line"></i>
-                                    </button>
-                                    <a href="{{ route('admin.sessions.show', $session) }}" class="btn btn-sm btn-soft-success" title="Ouvrir la session (classes et inscrits)">
+                                    <button type="button" class="btn btn-sm btn-soft-success" title="Voir les classes de la session"
+                                            data-bs-toggle="modal" data-bs-target="#modalClassesSession"
+                                            data-session="{{ $session->id }}" data-titre="{{ $session->nom }}">
                                         <i class="ri-folder-open-line"></i>
-                                    </a>
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-soft-secondary" title="Modifier la session"
                                             data-bs-toggle="modal" data-bs-target="#modalSession"
                                             data-mode="modif"
@@ -263,52 +265,281 @@
     </div>
 </div>
 
-{{-- Modèles cachés du détail : un par session, clonés dans la fenêtre « Voir » --}}
 @foreach ($sessions as $session)
-    <template id="detail-{{ $session->id }}">
-        <dl class="row mb-3">
-            <dt class="col-sm-4 text-muted fw-normal">Entreprise</dt>
-            <dd class="col-sm-8">{{ $session->entreprise->raison_sociale }}</dd>
-            <dt class="col-sm-4 text-muted fw-normal">Période</dt>
-            <dd class="col-sm-8">
-                @if ($session->date_debut)
-                    {{ $session->date_debut->format('d/m/Y') }} → {{ $session->date_fin->format('d/m/Y') }}
-                @else
-                    Aucune classe
-                @endif
-            </dd>
-            <dt class="col-sm-4 text-muted fw-normal">État</dt>
-            <dd class="col-sm-8"><span class="badge bg-{{ $session->etat_couleur }}-subtle text-{{ $session->etat_couleur }}">{{ $session->etat_libelle }}</span></dd>
-            @if ($session->description)
-                <dt class="col-sm-4 text-muted fw-normal">Description</dt>
-                <dd class="col-sm-8">{{ $session->description }}</dd>
-            @endif
-        </dl>
-
-        <h6 class="fw-semibold">Classes ({{ $session->classes_count }})</h6>
-        @forelse ($session->classes as $classe)
-            <div class="d-flex justify-content-between align-items-center gap-2 border-bottom py-2">
-                <div class="overflow-hidden">
-                    <div class="fw-medium text-truncate" title="{{ $classe->nom }}">{{ $classe->nom }}</div>
-                    <div class="text-muted fs-12 text-truncate" title="{{ $classe->cours?->titre }}">{{ $classe->cours?->titre ?? 'Cours supprimé' }}</div>
+@foreach ($session->classes as $classe)
+    <template id="membres-classe-{{ $classe->id }}">
+        @forelse ($classe->inscriptions as $inscription)
+            <div class="d-flex justify-content-between align-items-start gap-3 {{ $loop->last ? '' : 'border-bottom pb-2 mb-2' }}">
+                <div class="min-w-0">
+                    <div class="fw-medium">{{ $inscription->user?->name ?? 'Compte supprimé' }}</div>
+                    <div class="text-muted small">{{ $inscription->user?->email ?? '—' }}</div>
                 </div>
-                <span class="badge bg-primary-subtle text-primary flex-shrink-0">{{ $classe->inscriptions_count }} / {{ $classe->capacite_max }}</span>
+                <div class="text-end flex-shrink-0">
+                    <span class="badge bg-{{ $inscription->paiement ? 'success' : 'warning' }}-subtle text-{{ $inscription->paiement ? 'success' : 'warning' }}">
+                        {{ $inscription->paiement ? 'Payé' : 'Impayé' }}
+                    </span>
+                    <div class="text-muted small mt-1">Inscrit le {{ $inscription->created_at?->format('d/m/Y') ?? '—' }}</div>
+                </div>
             </div>
         @empty
-            <p class="text-muted mb-0">Aucune classe pour le moment.</p>
+            <p class="text-muted mb-0">Aucun membre n'est inscrit dans cette classe.</p>
         @endforelse
     </template>
 @endforeach
+@endforeach
 
-{{-- ===== Fenêtre « Voir » ===== --}}
-<div class="modal fade" id="modalVoir" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
+{{-- ===== Informations de la classe et membres inscrits ===== --}}
+<div class="modal fade" id="modalInfoClasse" tabindex="-1" aria-labelledby="modalInfoClasseTitre" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title text-truncate" id="voirTitre">Session</h5>
+                <div>
+                    <h5 class="modal-title fw-semibold" id="modalInfoClasseTitre"></h5>
+                    <p class="text-muted small mb-0" id="modalInfoClasseCours"></p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
-            <div class="modal-body" id="voirContenu"></div>
+            <div class="modal-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Période</div>
+                        <div><span id="modalInfoClasseDebut"></span> → <span id="modalInfoClasseFin"></span></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Formateur</div>
+                        <div id="modalInfoClasseFormateur"></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Lieu</div>
+                        <div id="modalInfoClasseLieu"></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">Inscrits / capacité</div>
+                        <div id="modalInfoClasseCapacite"></div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="text-muted small">État</div>
+                        <span id="modalInfoClasseEtat" class="badge"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <h6 class="fw-semibold mb-0">Membres inscrits</h6>
+                    <span class="badge bg-primary-subtle text-primary" id="modalInfoClasseNombre"></span>
+                </div>
+                <div id="modalInfoClasseMembres" class="d-flex flex-column gap-2"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ===== Ajouter / modifier une classe (un seul formulaire pour les deux) ===== --}}
+<div class="modal fade" id="modalClasse" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="formClasse" method="POST" action="#" novalidate>
+                @csrf
+                <input type="hidden" name="_method" value="PUT" id="classeMethode" disabled>
+                <input type="hidden" name="_mode" id="classeMode" value="{{ old('_mode') }}">
+                <input type="hidden" name="_action" id="classeAction" value="{{ old('_action') }}">
+                <input type="hidden" name="_session" id="classeSession" value="{{ old('_session') }}">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="classeTitre">Ajouter une classe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row g-3">
+                        <div class="col-md-6" id="blocCours">
+                            <label for="classeCours" class="form-label">Cours <span class="text-danger">*</span></label>
+                            <select name="cours_id" id="classeCours" class="form-select">
+                                <option value="">— Choisir —</option>
+                                @foreach ($tousLesCours as $c)
+                                    <option value="{{ $c->id }}" @selected((string) old('cours_id') === (string) $c->id)>{{ $c->titre }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="classeNom" class="form-label">Nom de la classe <span class="text-danger">*</span></label>
+                            <input type="text" name="nom" id="classeNom" class="form-control" value="{{ old('nom') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="classeDebut" class="form-label">Début <span class="text-danger">*</span></label>
+                            <input type="date" name="date_debut" id="classeDebut" class="form-control" value="{{ old('date_debut') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="classeFin" class="form-label">Fin <span class="text-danger">*</span></label>
+                            <input type="date" name="date_fin" id="classeFin" class="form-control" value="{{ old('date_fin') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="classeCapacite" class="form-label">Capacité <span class="text-danger">*</span></label>
+                            <input type="number" name="capacite_max" id="classeCapacite" class="form-control" min="1" max="255" value="{{ old('capacite_max', 10) }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="classeFormateur" class="form-label">Formateur <span class="text-muted">(facultatif)</span></label>
+                            <select name="formateur_id" id="classeFormateur" class="form-select">
+                                <option value="">— Aucun —</option>
+                                @foreach ($tousLesFormateurs as $f)
+                                    <option value="{{ $f->id }}" @selected((string) old('formateur_id') === (string) $f->id)>{{ $f->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="classeLieu" class="form-label">Lieu <span class="text-danger">*</span></label>
+                            <input type="text" name="lieu" id="classeLieu" class="form-control" value="{{ old('lieu', \App\Models\Classe::LIEU_PAR_DEFAUT) }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="classeLien" class="form-label">Lien Google Maps <span class="text-muted">(facultatif)</span></label>
+                            <input type="url" name="lieu_lien" id="classeLien" class="form-control" value="{{ old('lieu_lien', \App\Models\Classe::LIEU_LIEN_PAR_DEFAUT) }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ===== Suppression d'une classe : confirme, ou explique pourquoi c'est impossible ===== --}}
+<div class="modal fade" id="modalSuppressionClasse" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formSuppressionClasse" method="POST" action="#">
+                @csrf
+                @method('DELETE')
+                <div class="modal-header">
+                    <h5 class="modal-title">Supprimer la classe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="suppClasseConfirmation">
+                        <p class="mb-2">Voulez-vous vraiment supprimer la classe <strong id="suppClasseNom"></strong> ?</p>
+                        <p class="text-muted mb-0">Cette action est définitive.</p>
+                    </div>
+                    <div id="suppClasseBloquee" class="d-none">
+                        <p class="mb-2"><strong id="suppClasseNomBloquee"></strong> ne peut pas être supprimée : <span id="suppClasseNombre"></span> membre(s) y sont inscrits.</p>
+                        <p class="text-muted mb-0">Désinscrivez-les d'abord (bouton « Gérer »), puis revenez la supprimer.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
+                    <button type="submit" class="btn btn-danger" id="suppClasseValider">Supprimer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Contenu de la fenêtre « Classes de la session » : un modèle caché par session --}}
+@foreach ($sessions as $session)
+    <template id="classes-{{ $session->id }}">
+        @if ($session->description)
+            <p class="text-muted small mb-3">{{ $session->description }}</p>
+        @endif
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+            <h6 class="fw-semibold mb-0">Classes de la session ({{ $session->classes->count() }})</h6>
+            <button type="button" class="btn btn-sm btn-primary"
+                    data-bs-toggle="modal" data-bs-target="#modalClasse"
+                    data-mode="classe-ajout" data-session="{{ $session->id }}"
+                    data-action="{{ route('admin.sessions.classes.store', $session) }}">
+                <i class="ri-add-line me-1"></i>Ajouter une classe
+            </button>
+        </div>
+        <div class="table-responsive bg-white border rounded">
+            <table class="table table-sm align-middle mb-0 table-liste">
+                <thead>
+                    <tr class="table-light">
+                        <th>Cours</th>
+                        <th>Classe</th>
+                        <th class="col-periode">Période</th>
+                        <th>Formateur</th>
+                        <th class="col-nombre">Inscrits</th>
+                        <th class="col-badge">État</th>
+                        <th class="text-end col-actions-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($session->classes as $classe)
+                        @php $nbInscrits = $classe->inscriptions->count(); @endphp
+                        <tr>
+                            <td class="fw-semibold" title="{{ $classe->cours?->titre }}">{{ $classe->cours?->titre ?? 'Cours supprimé' }}</td>
+                            <td class="fw-medium" title="{{ $classe->nom }}">{{ $classe->nom }}</td>
+                            <td>{{ $classe->date_debut->format('d/m/Y') }} → {{ $classe->date_fin->format('d/m/Y') }}</td>
+                            <td class="text-muted" title="{{ $classe->formateur?->name }}">{{ $classe->formateur?->name ?? 'Sans formateur' }}</td>
+                            <td><span class="badge bg-primary-subtle text-primary">{{ $nbInscrits }} / {{ $classe->capacite_max }}</span></td>
+                            <td><span class="badge bg-{{ $classe->etat_couleur }}-subtle text-{{ $classe->etat_couleur }}">{{ $libellesEtat[$classe->etat] ?? $classe->etat }}</span></td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    @if ($classe->cours)
+                                        <button type="button" class="btn btn-sm btn-soft-primary" title="Voir les informations de la classe"
+                                                aria-label="Voir les informations de la classe {{ $classe->nom }}"
+                                                data-bs-toggle="modal" data-bs-target="#modalInfoClasse"
+                                                data-membres="membres-classe-{{ $classe->id }}"
+                                                data-nom="{{ $classe->nom }}"
+                                                data-cours="{{ $classe->cours->titre }}"
+                                                data-debut="{{ $classe->date_debut->format('d/m/Y') }}"
+                                                data-fin="{{ $classe->date_fin->format('d/m/Y') }}"
+                                                data-formateur="{{ $classe->formateur?->name ?? 'Sans formateur' }}"
+                                                data-lieu="{{ $classe->lieu }}"
+                                                data-capacite="{{ $nbInscrits }} / {{ $classe->capacite_max }}"
+                                                data-etat="{{ $libellesEtat[$classe->etat] ?? $classe->etat }}"
+                                                data-etat-couleur="{{ $classe->etat_couleur }}">
+                                            <i class="ri-eye-line"></i>
+                                        </button>
+                                        <a href="{{ route('admin.cours.classes.gerer', [$classe->cours, $classe]) }}" class="btn btn-sm btn-soft-primary" title="Gérer les inscrits et les jours non comptabilisés">
+                                            <i class="ri-team-line"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-soft-secondary" title="Modifier la classe"
+                                                data-bs-toggle="modal" data-bs-target="#modalClasse"
+                                                data-mode="classe-modif" data-session="{{ $session->id }}"
+                                                data-action="{{ route('admin.cours.classes.update', [$classe->cours, $classe]) }}"
+                                                data-nom="{{ $classe->nom }}"
+                                                data-capacite="{{ $classe->capacite_max }}"
+                                                data-debut="{{ $classe->date_debut->format('Y-m-d') }}"
+                                                data-fin="{{ $classe->date_fin->format('Y-m-d') }}"
+                                                data-formateur="{{ $classe->formateur_id }}"
+                                                data-lieu="{{ $classe->lieu }}"
+                                                data-lien="{{ $classe->lieu_lien }}">
+                                            <i class="ri-edit-line"></i>
+                                        </button>
+                                    @endif
+                                    <button type="button" class="btn btn-sm btn-soft-danger" title="Supprimer la classe"
+                                            data-bs-toggle="modal" data-bs-target="#modalSuppressionClasse"
+                                            data-action="{{ route('admin.sessions.classes.destroy', [$session, $classe]) }}"
+                                            data-nom="{{ $classe->nom }}"
+                                            data-inscrits="{{ $nbInscrits }}">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Cette session ne contient encore aucune classe.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </template>
+@endforeach
+
+{{-- ===== Classes d'une session ===== --}}
+<div class="modal fade" id="modalClassesSession" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-truncate" id="classesSessionTitre">Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="classesSessionContenu"></div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fermer</button>
             </div>
@@ -496,20 +727,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Validation refusée : on rouvre la fenêtre avec ce qui avait été saisi (déjà dans les champs)
-    if (modeAvecErreur) {
+    if (modeAvecErreur === 'ajout' || modeAvecErreur === 'modif') {
         preparer(modeAvecErreur);
         formSession.action = champ('champAction').value || urlAjout;
         bootstrap.Modal.getOrCreateInstance(modalSession).show();
     }
-
-    // Fenêtre « Voir » : on clone le modèle caché de la session
-    champ('modalVoir').addEventListener('show.bs.modal', function (e) {
-        const d = e.relatedTarget.dataset;
-        champ('voirTitre').textContent = d.titre;
-        champ('voirTitre').title = d.titre;
-        const contenu = champ('voirContenu');
-        contenu.replaceChildren(document.getElementById(d.detail).content.cloneNode(true));
-    });
 
     champ('modalSuppression').addEventListener('show.bs.modal', function (e) {
         const d = e.relatedTarget.dataset;
@@ -525,6 +747,152 @@ document.addEventListener('DOMContentLoaded', function () {
         champ('suppressionBloquee').classList.toggle('d-none', !bloquee);
         champ('suppressionValider').classList.toggle('d-none', bloquee);
     });
+    // ------------------------------------------------------------------
+    // Fenêtre « Classes de la session » : on clone le modèle caché de la session.
+    // Les fenêtres ouvertes depuis celle-ci (infos, modifier, supprimer) la remplacent,
+    // puis on y revient en les fermant. L'id est gardé dans l'onglet pour survivre à un rechargement.
+    // ------------------------------------------------------------------
+    const CLE = 'session-ouverte';
+    const modalClasses = champ('modalClassesSession');
+    const secondaires = ['modalInfoClasse', 'modalClasse', 'modalSuppressionClasse'].map(champ);
+    let sessionCourante = null;
+    let retour = false;
+
+    function memoriser(id) {
+        try { id ? sessionStorage.setItem(CLE, id) : sessionStorage.removeItem(CLE); } catch (e) {}
+    }
+
+    function remplir(id, titre) {
+        sessionCourante = id;
+        champ('classesSessionTitre').textContent = titre;
+        champ('classesSessionContenu').replaceChildren(document.getElementById('classes-' + id).content.cloneNode(true));
+    }
+
+    modalClasses.addEventListener('show.bs.modal', function (e) {
+        if (e.relatedTarget) {
+            remplir(e.relatedTarget.dataset.session, e.relatedTarget.dataset.titre);
+        }
+        memoriser(sessionCourante);
+    });
+
+    modalClasses.addEventListener('hidden.bs.modal', function () {
+        if (!secondaires.some(m => m.classList.contains('show')) && !retour) {
+            memoriser(null);
+        }
+    });
+
+    secondaires.forEach(function (m) {
+        m.addEventListener('show.bs.modal', function () { retour = true; });
+        m.addEventListener('hidden.bs.modal', function () {
+            if (retour && sessionCourante) {
+                retour = false;
+                bootstrap.Modal.getOrCreateInstance(modalClasses).show();
+            }
+        });
+    });
+
+    // Au chargement : après un ajout (?ouvrir=ID), une erreur sur une classe, ou une modification, on rouvre la session
+    let aOuvrir = @json($sessionOuverte);
+    if (!aOuvrir) { try { aOuvrir = sessionStorage.getItem(CLE); } catch (e) {} }
+    const modeleOuvrir = aOuvrir ? document.getElementById('classes-' + aOuvrir) : null;
+    const boutonSession = modeleOuvrir ? document.querySelector('[data-bs-target="#modalClassesSession"][data-session="' + aOuvrir + '"]') : null;
+    if (modeleOuvrir && !@json($erreurClasse)) {
+        remplir(aOuvrir, boutonSession ? boutonSession.dataset.titre : 'Session');
+        bootstrap.Modal.getOrCreateInstance(modalClasses).show();
+    }
+
+    // ------------------------------------------------------------------
+    // Informations d'une classe et de ses membres
+    // ------------------------------------------------------------------
+    champ('modalInfoClasse').addEventListener('show.bs.modal', function (e) {
+        const bouton = e.relatedTarget;
+        if (!bouton) return;
+        const d = bouton.dataset;
+        champ('modalInfoClasseTitre').textContent = d.nom;
+        champ('modalInfoClasseCours').textContent = d.cours;
+        champ('modalInfoClasseDebut').textContent = d.debut;
+        champ('modalInfoClasseFin').textContent = d.fin;
+        champ('modalInfoClasseFormateur').textContent = d.formateur;
+        champ('modalInfoClasseLieu').textContent = d.lieu || '—';
+        champ('modalInfoClasseCapacite').textContent = d.capacite;
+        const etat = champ('modalInfoClasseEtat');
+        etat.textContent = d.etat;
+        etat.className = 'badge bg-' + d.etatCouleur + '-subtle text-' + d.etatCouleur;
+
+        const modeleMembres = document.getElementById(d.membres);
+        champ('modalInfoClasseMembres').replaceChildren(modeleMembres.content.cloneNode(true));
+        champ('modalInfoClasseNombre').textContent = modeleMembres.content.querySelectorAll('.fw-medium').length;
+    });
+
+    // ------------------------------------------------------------------
+    // Fenêtre « Ajouter / modifier une classe »
+    // ------------------------------------------------------------------
+    const modalClasse = champ('modalClasse');
+    const formClasse = champ('formClasse');
+
+    function preparerClasse(mode) {
+        const modif = mode === 'classe-modif';
+        champ('classeTitre').textContent = modif ? 'Modifier la classe' : 'Ajouter une classe';
+        champ('classeMode').value = mode;
+        champ('classeMethode').disabled = !modif;
+        // le cours ne se change pas après création
+        champ('blocCours').classList.toggle('d-none', modif);
+        champ('classeCours').disabled = modif;
+    }
+
+    modalClasse.addEventListener('show.bs.modal', function (e) {
+        const bouton = e.relatedTarget;
+        if (!bouton) return;
+        const d = bouton.dataset;
+        preparerClasse(d.mode);
+        champ('classeSession').value = d.session;
+        champ('classeAction').value = d.action;
+        formClasse.action = d.action;
+
+        if (d.mode === 'classe-modif') {
+            champ('classeNom').value = d.nom;
+            champ('classeDebut').value = d.debut;
+            champ('classeFin').value = d.fin;
+            champ('classeCapacite').value = d.capacite;
+            champ('classeFormateur').value = d.formateur || '';
+            champ('classeLieu').value = d.lieu;
+            champ('classeLien').value = d.lien || '';
+        } else {
+            champ('classeCours').value = '';
+            champ('classeNom').value = '';
+            champ('classeDebut').value = '';
+            champ('classeFin').value = '';
+            champ('classeCapacite').value = 10;
+            champ('classeFormateur').value = '';
+            champ('classeLieu').value = @json(\App\Models\Classe::LIEU_PAR_DEFAUT);
+            champ('classeLien').value = @json(\App\Models\Classe::LIEU_LIEN_PAR_DEFAUT);
+        }
+    });
+
+    // Suppression d'une classe
+    champ('modalSuppressionClasse').addEventListener('show.bs.modal', function (e) {
+        const d = e.relatedTarget.dataset;
+        const nombre = parseInt(d.inscrits, 10);
+        const bloquee = nombre > 0;
+        champ('suppClasseNom').textContent = d.nom;
+        champ('suppClasseNomBloquee').textContent = d.nom;
+        champ('suppClasseNombre').textContent = nombre;
+        champ('formSuppressionClasse').action = d.action;
+        champ('suppClasseConfirmation').classList.toggle('d-none', bloquee);
+        champ('suppClasseBloquee').classList.toggle('d-none', !bloquee);
+        champ('suppClasseValider').classList.toggle('d-none', bloquee);
+    });
+
+    // Validation refusée sur une classe : on rouvre sa fenêtre (la session est dépliée plus haut)
+    if (@json($erreurClasse)) {
+        if (modeleOuvrir) {
+            remplir(aOuvrir, boutonSession ? boutonSession.dataset.titre : 'Session');
+        }
+        preparerClasse(modeAvecErreur);
+        formClasse.action = champ('classeAction').value;
+        retour = true;
+        bootstrap.Modal.getOrCreateInstance(modalClasse).show();
+    }
 });
 </script>
 @endsection

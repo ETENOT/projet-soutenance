@@ -21,12 +21,6 @@
 
     <h2 class="my-3">Quiz des chapitres — {{ $cours->titre }}</h2>
 
-    @foreach (['success' => 'success', 'error' => 'danger'] as $cle => $couleur)
-        @if (session($cle))
-            <div class="alert alert-{{ $couleur }}">{{ session($cle) }}</div>
-        @endif
-    @endforeach
-
     <p class="text-muted">
         Terminez le quiz d'un chapitre pour débloquer le suivant, jusqu'au quiz final qui reprend les questions
         de tous les chapitres. Un quiz débloqué peut être repassé autant de fois que vous le souhaitez.

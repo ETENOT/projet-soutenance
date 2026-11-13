@@ -14,17 +14,6 @@
         @endslot
     @endcomponent
 
-    {{-- Erreurs de validation du formulaire de dépôt (les messages succès/erreur sont affichés par master.blade.php) --}}
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     <div class="row">
 
         {{-- ====== SUPPORTS DÉJÀ DÉPOSÉS ====== --}}

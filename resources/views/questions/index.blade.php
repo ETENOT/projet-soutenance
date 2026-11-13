@@ -78,17 +78,6 @@
         </div>
     @endif
 
-    {{-- ===== Erreurs de validation de l'action groupée (la fenêtre Créer/Modifier affiche les siennes) ===== --}}
-    @if ($errors->any() && ! $modeAvecErreur)
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- ===== Barre d'actions groupées : cachée tant qu'aucune question n'est cochée.
          Les cases du tableau y sont rattachées par form="formGroupe". ===== --}}
     <form id="formGroupe" method="POST" action="{{ route('admin.questions.actions') }}">

@@ -1510,3 +1510,230 @@ html[data-sidebar="dark"] {
 
 .gestion-ligne-haute { min-height: 38px; }
 .gestion-ligne-basse { min-height: 24px; }
+
+
+// ============================================================
+// 5. PAGES DE CONNEXION (connexion, inscription, mot de passe oublié)
+//    Écran partagé : image + message à gauche, formulaire à droite
+// ============================================================
+
+.nv-auth {
+    display: flex;
+    min-height: 100vh;
+    background: #fff;
+    color: $nv-text;
+}
+
+// ----- Côté image (à partir des écrans larges) -----
+.nv-auth-visuel {
+    position: relative;
+    display: none;
+    flex: 0 0 46%;
+    max-width: 46%;
+    height: 100vh;
+    align-self: flex-start;
+    overflow: hidden;
+    color: #fff;
+
+    @media (min-width: 992px) {
+        position: sticky;
+        top: 0;
+        display: flex;
+    }
+}
+
+.nv-auth-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+// Voile bleu : texte lisible, image encore visible
+.nv-auth-voile {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, rgba($nv-blue-dark, 0.92) 0%, rgba($nv-blue-dark, 0.7) 55%, rgba($nv-blue, 0.45) 100%);
+}
+
+.nv-auth-visuel-contenu {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    padding: 2.5rem;
+
+    h1 {
+        font-size: clamp(1.5rem, 2.4vw, 2.1rem);
+        line-height: 1.25;
+    }
+}
+
+.nv-auth-points li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+
+    span {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: 50%;
+        background: rgba(#fff, 0.16);
+        font-size: 1.1rem;
+    }
+}
+
+// ----- Côté formulaire -----
+.nv-auth-formulaire {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    padding: 1rem 1.25rem 2rem;
+}
+
+.nv-auth-haut {
+    padding-bottom: 1rem;
+}
+
+.nv-auth-boite {
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+    padding: 1rem 0;
+}
+
+// ----- Enveloppe (mot de passe oublié) -----
+.nv-env {
+    margin: 0 auto 1.5rem;
+    padding-top: 5rem; // place pour le rabat quand il s'ouvre
+    text-align: center;
+}
+
+.nv-env-bouton {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.nv-env-corps {
+    position: relative;
+    display: block;
+    width: 220px;
+    height: 140px;
+    border-radius: 8px;
+    background: darken($nv-blue-light, 6%);
+    box-shadow: 0 12px 28px rgba($nv-blue-dark, 0.2);
+}
+
+// La lettre sort de l'enveloppe quand elle est ouverte
+.nv-env-lettre {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    left: 16px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 120px;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba($nv-text, 0.12);
+    color: $nv-blue;
+    font-size: 2.2rem;
+    transition: transform 0.5s ease 0.25s;
+}
+
+// Devant de l'enveloppe : tout sauf le triangle du rabat
+.nv-env-poche {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #f5f9fd, $nv-blue-light);
+    clip-path: polygon(0 0, 50% 62%, 100% 0, 100% 100%, 0 100%);
+}
+
+// Rabat triangulaire, qui pivote autour de son bord haut
+.nv-env-rabat {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 3;
+    height: 62%;
+    background: $nv-blue;
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top;
+    transition: transform 0.5s ease, z-index 0s 0.25s;
+}
+
+.nv-env-bouton:hover .nv-env-rabat {
+    transform: rotateX(18deg);
+}
+
+.est-ouverte {
+    .nv-env-rabat,
+    .nv-env-bouton:hover .nv-env-rabat {
+        z-index: 0;
+        background: $nv-blue-dark;
+        transform: rotateX(180deg);
+    }
+
+    .nv-env-lettre {
+        transform: translateY(-70px);
+    }
+
+    .nv-env-indice {
+        visibility: hidden;
+    }
+}
+
+// Formulaire : caché tant que l'enveloppe est fermée (seulement si le script est chargé)
+.nv-env-formulaire.avec-script:not(.est-ouvert) {
+    display: none;
+}
+
+.nv-env-formulaire.est-ouvert {
+    animation: nv-apparition 0.5s ease;
+}
+
+@keyframes nv-apparition {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nv-env-lettre,
+    .nv-env-rabat,
+    .nv-env-formulaire.est-ouvert {
+        transition: none;
+        animation: none;
+    }
+}
+// ============================================================
+// 6. ACCUEIL : encart « appelez-nous » du parcours entreprise
+// ============================================================
+
+.nv-contact-band {
+    border: 1px solid rgba($nv-red, 0.25);
+    background: rgba($nv-red, 0.06);
+}

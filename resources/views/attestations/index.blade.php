@@ -32,17 +32,6 @@
         </div>
     </div>
 
-    {{-- ===== Erreurs de filtre (période à l'envers...) ===== --}}
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     @php
         // URL de la liste sans certains paramètres (sert au "×" de chaque étiquette)
         $sans = fn (array $cles) => route('admin.attestations.index', request()->except(array_merge($cles, ['page'])));

@@ -84,6 +84,7 @@
                          UTILISATEURS
                     ================================= --}}
 
+                    @if (Auth::user()->peut('utilisateurs'))
                     <li class="nav-item">
                         <a
                             class="nav-link menu-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}"
@@ -93,11 +94,13 @@
                             <span>Gestion des utilisateurs</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                         FORMATEURS (CRUD, affectations, avis anonymes)
                     ================================= --}}
 
+                    @if (Auth::user()->peut('formateurs'))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->routeIs('admin.formateurs.*') ? 'active' : '' }}"
                         href="{{ route('admin.formateurs.index') }}">
@@ -105,11 +108,13 @@
                             <span>Gestion des formateurs</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          CLASSES
                     ================================= --}}
 
+                    @if (Auth::user()->peut('classes'))
                     <li class="nav-item">
                         <a
                             class="nav-link menu-link {{ (request()->routeIs('admin.classes.*') || (request()->routeIs('admin.cours.classes.*') && ! request()->route('classe')?->session_id)) ? 'active' : '' }}"
@@ -119,11 +124,13 @@
                             <span>Gestion des Classes</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          COURS
                     ================================= --}}
 
+                    @if (Auth::user()->peut('catalogue'))
                     <li class="nav-item">
 
                         <a
@@ -135,12 +142,14 @@
                         </a>
 
                     </li>
+                    @endif
 
                     
 
                     {{-- ================================
                          ENTREPRISES
                     ================================= --}}
+                    @if (Auth::user()->peut('entreprises'))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->routeIs('admin.entreprises.*') ? 'active' : '' }}"
                         href="{{ route('admin.entreprises.index') }}">
@@ -148,6 +157,7 @@
                             <span>Gestion des entreprises</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          QUIZ
@@ -161,6 +171,7 @@
                         $quizOuvert = $quizSuivi || $quizReglages || $quizBanque;
                     @endphp
 
+                    @if (Auth::user()->peut('quiz'))
                     <li class="nav-item">
 
                         <a
@@ -199,11 +210,13 @@
                             </ul>
                         </div>
                     </li>
+                    @endif
 
                     {{-- ================================
                         INSCRIPTIONS
                     ================================= --}}
 
+                    @if (Auth::user()->peut('inscriptions'))
                     <li class="nav-item">
                         <a
                             class="nav-link menu-link {{ request()->routeIs('admin.inscriptions.*') ? 'active' : '' }}"
@@ -213,11 +226,13 @@
                             <span>Gestion des inscriptions</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          SESSIONS
                     ================================= --}}
 
+                    @if (Auth::user()->peut('classes'))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ (request()->routeIs('admin.sessions.*') || (request()->routeIs('admin.cours.classes.*') && request()->route('classe')?->session_id)) ? 'active' : '' }}"
                         href="{{ route('admin.sessions.index') }}">
@@ -225,11 +240,13 @@
                             <span>Gestion des sessions</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          CATÉGORIES
                     ================================= --}}
 
+                    @if (Auth::user()->peut('catalogue'))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}"
                            href="{{ route('admin.categories.index') }}">
@@ -237,21 +254,25 @@
                             <span>Catégories</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          ÉVALUATIONS (formateurs + cours)
                     ================================= --}}
 
+                    @if (Auth::user()->peut('evaluations'))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->routeIs('admin.evaluations.*') ? 'active' : '' }}" href="{{ route('admin.evaluations.index') }}">
                             <i class="ri-star-smile-line"></i>
                             <span>Évaluations</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                         ATTESTATIONS (toutes celles délivrées, les plus récentes d'abord)
                     ================================= --}}
+                    @if (Auth::user()->peut('attestations'))
                     <li class="nav-item">
                         <a class="nav-link menu-link {{ request()->routeIs('admin.attestations.*') ? 'active' : '' }}"
                         href="{{ route('admin.attestations.index') }}">
@@ -259,6 +280,7 @@
                             <span>Attestations</span>
                         </a>
                     </li>
+                    @endif
 
                     {{-- ================================
                          FORUMS

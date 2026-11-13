@@ -4,6 +4,10 @@
     @lang('translation.settings')
 @endsection
 
+@section('css')
+    <link rel="stylesheet" href="{{ URL::asset('build/libs/intl-tel-input/css/intlTelInput.min.css') }}">
+@endsection
+
 @section('content')
     <div class="row">
         <div class="col-xxl-3">
@@ -57,12 +61,6 @@
                         <!-- ============================= -->
 
                         <div class="tab-pane active" id="personalDetails" role="tabpanel">
-
-                            @if(session('message'))
-                                <div class="alert alert-{{ session('alert-class') == 'alert-success' ? 'success' : 'danger' }}">
-                                    {{ session('message') }}
-                                </div>
-                            @endif
 
                             <form action="{{ route('updateProfile', Auth::user()->id) }}"
                                 method="POST"
@@ -122,10 +120,9 @@
                                                 </label>
 
                                                 <input
-                                                    type="text"
+                                                    type="tel"
                                                     class="form-control"
                                                     id="telephoneInput"
-                                                    name="telephone"
                                                     value="{{ Auth::user()->particulier->telephone ?? '' }}"
                                                 >
 
@@ -277,9 +274,6 @@
 
                         <div class="tab-pane" id="changePassword" role="tabpanel">
 
-                            <!-- Zone où les messages seront affichés. -->
-                            <div id="password-feedback"></div>
-
                             <!-- MODIFIÉ — avant : un <form id="changePasswordForm"> avec
                                  3 champs (mot de passe actuel / nouveau / confirmation,
                                  chacun avec son bouton œil "password-toggle") et un
@@ -322,8 +316,25 @@
 @section('script')
 
     <script src="{{ URL::asset('build/js/app.js') }}"></script>
+    <script src="{{ URL::asset('build/libs/intl-tel-input/js/intlTelInputWithUtils.min.js') }}"></script>
 
     <script>
+
+        const telephoneInput = document.getElementById('telephoneInput');
+        if (telephoneInput) {
+            const telephoneIti = window.intlTelInput(telephoneInput, {
+                initialCountry: 'ga',
+                countryOrder: ['ga', 'fr'],
+                countryNameLocale: 'fr',
+                separateDialCode: true,
+                strictMode: true,
+                hiddenInputs: () => ({ phone: 'telephone' }),
+            });
+
+            if (telephoneInput.value) {
+                telephoneIti.setNumber(telephoneInput.value);
+            }
+        }
 
         // ==========================================================
         // CHANGEMENT DU MOT DE PASSE (envoi d'un lien par email)
@@ -331,9 +342,6 @@
 
         // Récupère le bouton de changement de mot de passe.
         const sendPasswordResetLinkBtn = document.getElementById('sendPasswordResetLinkBtn');
-
-        // Récupère la zone qui servira à afficher les messages.
-        const feedback = document.getElementById('password-feedback');
 
         sendPasswordResetLinkBtn.addEventListener('click', function () {
 
@@ -356,11 +364,7 @@
 
             .then(data => {
 
-                feedback.innerHTML = `
-                    <div class="alert ${data.isSuccess ? 'alert-success' : 'alert-danger'}">
-                        ${data.Message}
-                    </div>
-                `;
+                notifier(data.Message, data.isSuccess ? 'success' : 'danger');
 
                 sendPasswordResetLinkBtn.disabled = false;
             })
@@ -368,11 +372,7 @@
             // Gère une éventuelle erreur réseau ou serveur.
             .catch(() => {
 
-                feedback.innerHTML = `
-                    <div class="alert alert-danger">
-                        Une erreur est survenue. Veuillez réessayer.
-                    </div>
-                `;
+                notifier('Une erreur est survenue. Veuillez réessayer.', 'danger');
 
                 sendPasswordResetLinkBtn.disabled = false;
             });

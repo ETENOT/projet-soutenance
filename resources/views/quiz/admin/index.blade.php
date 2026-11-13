@@ -66,17 +66,6 @@
         </div>
     </div>
 
-    {{-- ===== Erreurs de validation (ex. aucune tentative sélectionnée) ===== --}}
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- ===== Barre de suppression groupée : cachée tant qu'aucune tentative n'est cochée.
          Les cases du tableau y sont rattachées par form="formGroupe". ===== --}}
     <form id="formGroupe" method="POST" action="{{ route('admin.quiz.destroy-multiple') }}">

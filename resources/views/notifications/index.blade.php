@@ -17,10 +17,6 @@
     <div class="row justify-content-center">
         <div class="col-lg-9">
 
-            @error('ids')
-                <div class="alert alert-warning">{{ $message }}</div>
-            @enderror
-
             <div class="card">
                 {{-- Deux onglets : boîte de réception et archives. --}}
                 <div class="card-header d-flex align-items-center justify-content-between">
