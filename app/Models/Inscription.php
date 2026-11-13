@@ -16,24 +16,77 @@ class Inscription extends Model
     ];
 
     /**
-     * Scope "payées" : inscriptions dont le paiement est validé (statut = 'valide').
-     * Même définition que CoursController::utilisateurAAccesPaye().
+     * Scope "payées" = inscriptions qui DONNENT ACCÈS au cours : paiement reçu en totalité
+     * (statut 'valide') OU paiement partiel (statut 'partiel').
+     * Utilisé partout pour l'accès : contenus, forum, quiz du formateur, présences, évaluation…
      * Utilisation : Inscription::payees()->... ou $classe->inscriptions()->payees()
      */
     public function scopePayees($query)
     {
         return $query->whereHas('paiement', function ($q) {
-            $q->where('statut', 'valide');
+            $q->whereIn('statut', Paiement::STATUTS_ACCES);
         });
     }
 
     /**
-     * Inscription payée = un paiement au statut "valide" existe (même définition que scopePayees).
-     * Sert à afficher "Payé" / "En attente" dans la liste et à protéger les suppressions.
+     * Scope "soldées" = paiement reçu en TOTALITÉ (reste à payer = 0).
+     * Seules ces inscriptions donnent droit à l'attestation de suivi de formation.
+     */
+    public function scopeSoldees($query)
+    {
+        return $query->whereHas('paiement', fn ($q) => $q->where('statut', Paiement::STATUT_VALIDE));
+    }
+
+    // Scope "partielles" : paiement partiel en cours (reste à payer > 0)
+    public function scopePartielles($query)
+    {
+        return $query->whereHas('paiement', fn ($q) => $q->where('statut', Paiement::STATUT_PARTIEL));
+    }
+
+    // Scope "en attente" : aucun paiement enregistré
+    public function scopeEnAttenteDePaiement($query)
+    {
+        return $query->whereDoesntHave('paiement');
+    }
+
+    /**
+     * Inscription "payée" au sens de l'ACCÈS (même définition que scopePayees) :
+     * paiement complet ou partiel. Sert aussi à protéger les suppressions.
      */
     public function estPayee(): bool
     {
-        return $this->paiement?->statut === 'valide';
+        return in_array($this->paiement?->statut, Paiement::STATUTS_ACCES, true);
+    }
+
+    // Payée en totalité : donne droit à l'attestation
+    public function estSoldee(): bool
+    {
+        return $this->paiement?->statut === Paiement::STATUT_VALIDE;
+    }
+
+    // Payée en partie seulement : attestation bloquée tant que le reste n'est pas réglé
+    public function estPartielle(): bool
+    {
+        return $this->paiement?->statut === Paiement::STATUT_PARTIEL;
+    }
+
+    // Reste à payer (0 si soldée ; null si aucun paiement, le montant dû dépend alors du compte)
+    public function resteAPayer(): ?float
+    {
+        return $this->paiement?->reste_a_payer;
+    }
+
+    /**
+     * Clé du statut de paiement pour l'affichage et les filtres :
+     * 'paye' (totalité) | 'partiel' | 'en_attente' (aucun paiement).
+     */
+    public function statutPaiement(): string
+    {
+        return match (true) {
+            $this->estSoldee() => 'paye',
+            $this->estPartielle() => 'partiel',
+            default => 'en_attente',
+        };
     }
 
     // Une inscription éligible donne lieu à UNE attestation (créée à la fermeture de la classe)

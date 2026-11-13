@@ -32,11 +32,24 @@
                             au {{ $inscription->classe->date_fin->format('d/m/Y') }}
                         </p>
 
-                        {{-- Statut de paiement : "payée" = l'inscription possède un Paiement
-                             (même règle que le tableau de bord). --}}
+                        {{-- Statut de paiement : Payée (totalité) / Paiement partiel (+ reste à verser) / En attente --}}
                         @if($inscription->paiement)
                             <p class="mb-3">
-                                <span class="badge bg-success-subtle text-success">Payée</span>
+                                @if($inscription->estPartielle())
+                                    <span class="badge bg-info-subtle text-info">Paiement partiel</span>
+                                    <small class="d-block mt-1">
+                                        Versé : {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa
+                                        sur {{ number_format($inscription->paiement->montant_total, 0, ',', ' ') }} fcfa
+                                    </small>
+                                    <strong class="d-block text-danger">
+                                        Reste à payer : {{ number_format($inscription->paiement->reste_a_payer, 0, ',', ' ') }} fcfa
+                                    </strong>
+                                    <small class="text-muted d-block">
+                                        Réglez le reste auprès de l'administration pour recevoir votre attestation.
+                                    </small>
+                                @else
+                                    <span class="badge bg-success-subtle text-success">Payée</span>
+                                @endif
                                 <small class="text-muted d-block mt-1">
                                     {{ $inscription->paiement->libelle_mode }}
                                     @if($inscription->paiement->reference)

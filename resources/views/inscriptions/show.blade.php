@@ -23,14 +23,11 @@
             <i class="ri-edit-line me-1"></i> Modifier
         </a>
 
+        {{-- L'encaissement (paiement reçu ou partiel) se fait dans la carte « Paiement » ci-dessous --}}
         @unless ($payee)
-            <form action="{{ route('paiements.store', $inscription) }}" method="POST"
-                  data-confirmer="Enregistrer le paiement au comptoir de {{ $inscription->user->name }} ?">
-                @csrf
-                <button type="submit" class="btn btn-success">
-                    <i class="ri-money-dollar-circle-line me-1"></i> Encaisser le paiement
-                </button>
-            </form>
+            <a href="#carte-paiement" class="btn btn-success">
+                <i class="ri-money-dollar-circle-line me-1"></i> Encaisser le paiement
+            </a>
         @endunless
 
         <form action="{{ route('admin.inscriptions.destroy', $inscription) }}" method="POST"
@@ -88,15 +85,31 @@
 
         {{-- ===== Paiement ===== --}}
         <div class="col-lg-6">
-            <div class="card h-100">
+            <div class="card h-100" id="carte-paiement">
                 <div class="card-header"><h5 class="card-title mb-0">Paiement</h5></div>
                 <div class="card-body">
                     @if ($payee)
                         <dl class="row mb-0">
                             <dt class="col-sm-4">Statut</dt>
-                            <dd class="col-sm-8"><span class="badge bg-success-subtle text-success">Payé</span></dd>
-                            <dt class="col-sm-4">Montant</dt>
-                            <dd class="col-sm-8">{{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa</dd>
+                            <dd class="col-sm-8">@include('paiements._statut-badge', ['inscription' => $inscription, 'sansReste' => true])</dd>
+                            <dt class="col-sm-4">Montant versé</dt>
+                            <dd class="col-sm-8">
+                                {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa
+                                sur {{ number_format($inscription->paiement->montant_total, 0, ',', ' ') }} fcfa
+                                {{-- Paiement partiel : l'admin peut modifier la somme versée --}}
+                                @if ($inscription->estPartielle())
+                                    <button type="button" class="btn btn-sm btn-soft-info ms-1"
+                                            data-bs-toggle="modal" data-bs-target="#modalMontantVerse"
+                                            data-action="{{ route('paiements.update', $inscription->paiement) }}"
+                                            data-nom="{{ $inscription->user->name }}"
+                                            data-montant="{{ $inscription->paiement->montant }}"
+                                            data-total="{{ $inscription->paiement->montant_total }}">
+                                        <i class="ri-edit-2-line me-1"></i>Modifier
+                                    </button>
+                                @endif
+                            </dd>
+                            <dt class="col-sm-4">Reste à payer</dt>
+                            <dd class="col-sm-8">{{ number_format($inscription->paiement->reste_a_payer, 0, ',', ' ') }} fcfa</dd>
                             <dt class="col-sm-4">Moyen</dt><dd class="col-sm-8">{{ $inscription->paiement->libelle_mode }}</dd>
                             <dt class="col-sm-4">Référence</dt><dd class="col-sm-8">{{ $inscription->paiement->reference ?? '—' }}</dd>
                             <dt class="col-sm-4">Payé le</dt>
@@ -104,7 +117,16 @@
                         </dl>
                     @else
                         <span class="badge bg-warning-subtle text-warning">En attente</span>
-                        <p class="text-muted mb-0 mt-2">Aucun paiement enregistré pour cette inscription.</p>
+                        <p class="text-muted mt-2">Aucun paiement enregistré pour cette inscription.</p>
+
+                        {{-- Encaissement au comptoir : paiement reçu (reste 0) ou paiement partiel --}}
+                        <form action="{{ route('paiements.store', $inscription) }}" method="POST">
+                            @csrf
+                            @include('paiements._choix-admin', ['prefixe' => 'fiche'])
+                            <button type="submit" class="btn btn-success mt-3">
+                                <i class="ri-money-dollar-circle-line me-1"></i> Encaisser le paiement
+                            </button>
+                        </form>
                     @endif
                 </div>
             </div>
@@ -137,4 +159,6 @@
             });
         });
     </script>
+{{-- Fenêtre « Modifier la somme versée » (paiement partiel) --}}
+@include('paiements._modal-montant')
 @endsection

@@ -10,6 +10,7 @@ use App\Models\Inscription;
 use App\Models\Role;
 use App\Services\ClasseClotureService;
 use App\Services\PaiementService;
+use App\Http\Controllers\Concerns\ChoixPaiementAdmin;
 use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,9 @@ use Illuminate\Support\Carbon;
 
 class ClasseController extends Controller
 {
+    // Fenêtre « Mode de paiement » de l'admin : paiement reçu (complet) ou paiement partiel
+    use ChoixPaiementAdmin;
+
     // États et regroupements acceptés par la liste admin (tout le reste est ignoré)
     private const ETATS = ['en_cours', 'a_venir', 'terminee'];
     private const GROUPES = ['formation', 'formateur', 'etat', 'categorie', 'lieu'];
@@ -614,8 +618,11 @@ class ClasseController extends Controller
     }
 
     /**
-     * Ajout manuel d'un utilisateur (hors flux d'inscription/paiement classique).
-     * L'inscription est immédiatement réglée au comptoir et l'utilisateur en est informé.
+     * Ajout manuel d'un ou plusieurs utilisateurs (hors flux d'inscription/paiement classique).
+     * Avant l'envoi, l'admin a choisi dans la fenêtre « Mode de paiement » :
+     *  - « Paiement reçu »    : chaque inscription est payée en totalité (reste à payer = 0) ;
+     *  - « Paiement partiel » : chaque inscription reçoit un paiement partiel de la MÊME somme
+     *                           (modifiable ensuite inscrit par inscrit).
      */
     public function ajouterUtilisateur(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService)
     {
@@ -625,6 +632,9 @@ class ClasseController extends Controller
         ], [
             'user_ids.required' => "Vous n'avez pas choisi d'utilisateur à ajouter",
         ]);
+
+        // null = paiement complet ; sinon somme versée par chaque particulier sélectionné
+        $montantPartiel = $this->montantPartielDemande($request);
 
         if ($classe->estFermee()) {
             return back()->with('error', 'La classe est fermée : on ne peut plus y ajouter d\'utilisateur.');
@@ -648,14 +658,24 @@ class ClasseController extends Controller
             }
         }
 
+        // Paiement partiel : la somme doit rester inférieure au prix de CHAQUE particulier
+        // (vérifié AVANT de créer la moindre inscription : tout passe, ou rien)
+        foreach (User::whereIn('id', $nouveauxIds)->get() as $candidat) {
+            $total = (float) $paiementService->montantPour($classe, $candidat);
+            if ($erreur = $this->erreurMontantPartiel($montantPartiel, $total, $candidat->name)) {
+                return back()->with('reouvrir', $classe->id . ':inscrits')->with('error', $erreur);
+            }
+        }
+
         foreach ($nouveauxIds as $userId) {
-            [$inscription, $paiement] = DB::transaction(function () use ($userId, $classe, $paiementService) {
+            [$inscription, $paiement] = DB::transaction(function () use ($userId, $classe, $paiementService, $montantPartiel) {
                 $inscription = Inscription::firstOrCreate(
                     ['user_id' => $userId, 'classe_id' => $classe->id],
                     ['date_inscription' => now()]
                 );
 
-                return [$inscription, $paiementService->creerAuComptoir($inscription)];
+                // Paiement complet (null) ou partiel de la somme saisie
+                return [$inscription, $paiementService->creerAuComptoir($inscription, $montantPartiel)];
             });
 
             if ($paiement) {
@@ -665,7 +685,10 @@ class ClasseController extends Controller
 
         // On revient sur la page « Gérer la classe »
         return back()->with('reouvrir', $classe->id . ':inscrits')
-            ->with('success', 'Utilisateurs ajoutés à la classe.');
+            ->with('success', $montantPartiel === null
+                ? 'Utilisateurs ajoutés à la classe avec un paiement reçu.'
+                : 'Utilisateurs ajoutés à la classe avec un paiement partiel de '
+                    . number_format($montantPartiel, 0, ',', ' ') . ' fcfa chacun.');
     }
 
     /**
@@ -707,10 +730,14 @@ class ClasseController extends Controller
             $inscriptions = $inscriptions->filter(fn ($i) => Str::contains(Str::lower(($i->user?->name ?? '') . ' ' . ($i->user?->email ?? '')), $recherche));
         }
 
-        // Paiement : un seul des deux coché = filtre ; les deux (ou aucun) = tous
-        $paiements = array_values(array_intersect(['paye', 'impaye'], (array) $request->input('paiement', [])));
-        if (count($paiements) === 1) {
-            $inscriptions = $inscriptions->filter(fn ($i) => $paiements[0] === 'paye' ? $i->paiement !== null : $i->paiement === null);
+        // Paiement : payé en totalité / paiement partiel / impayé (aucune case ou toutes = tous)
+        $paiements = array_values(array_intersect(['paye', 'partiel', 'impaye'], (array) $request->input('paiement', [])));
+        if (count($paiements) > 0 && count($paiements) < 3) {
+            $inscriptions = $inscriptions->filter(function ($i) use ($paiements) {
+                // statutPaiement() : 'paye' | 'partiel' | 'en_attente' -> on renomme en 'impaye' pour le filtre
+                $statut = $i->statutPaiement() === 'en_attente' ? 'impaye' : $i->statutPaiement();
+                return in_array($statut, $paiements, true);
+            });
         }
 
         if ($request->filled('date_du')) {
@@ -754,6 +781,7 @@ class ClasseController extends Controller
     /**
      * Actions groupées sur les inscrits cochés de la page « Gérer la classe » : retirer | payer.
      * « ids » contient des identifiants d'INSCRIPTION ; seules celles de cette classe sont traitées.
+     * « payer » passe par la fenêtre « Mode de paiement » : paiement reçu ou partiel (même somme pour tous).
      */
     public function actionsInscrits(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService)
     {
@@ -771,6 +799,9 @@ class ClasseController extends Controller
             return back()->with('error', 'La classe est fermée : les inscrits ne sont plus modifiables.');
         }
 
+        // Somme partielle choisie dans la fenêtre « Mode de paiement » (null = paiement complet)
+        $montantPartiel = $data['action'] === 'payer' ? $this->montantPartielDemande($request) : null;
+
         $reussies = 0;
         $ignorees = 0;
 
@@ -778,21 +809,31 @@ class ClasseController extends Controller
             // Même suppression que retirerUtilisateur(), pour plusieurs inscriptions de CETTE classe
             $reussies = Inscription::where('classe_id', $classe->id)->whereIn('id', $data['ids'])->delete();
         } else {
-            $inscriptions = Inscription::with('paiement')
+            $inscriptions = Inscription::with('paiement', 'user')
                 ->where('classe_id', $classe->id)
                 ->whereIn('id', $data['ids'])
                 ->get();
 
+            // Vérifie d'abord la somme partielle pour tous les inscrits concernés (tout ou rien)
+            foreach ($inscriptions->whereNull('paiement') as $inscription) {
+                $total = (float) $paiementService->montantDe($inscription);
+                if ($erreur = $this->erreurMontantPartiel($montantPartiel, $total, $inscription->user?->name ?? 'cet inscrit')) {
+                    return back()->with('error', $erreur);
+                }
+            }
+
             foreach ($inscriptions as $inscription) {
                 if ($inscription->paiement) {
-                    $ignorees++;   // déjà payée
+                    $ignorees++;   // déjà un paiement (complet ou partiel) : sa somme se modifie ligne par ligne
                     continue;
                 }
-                $paiementService->enregistrerAuComptoir($inscription) ? $reussies++ : $ignorees++;
+                $paiementService->enregistrerAuComptoir($inscription, $montantPartiel) ? $reussies++ : $ignorees++;
             }
         }
 
-        $libelle = $data['action'] === 'retirer' ? 'retiré(s) de la classe' : 'payé(s)';
+        $libelle = $data['action'] === 'retirer'
+            ? 'retiré(s) de la classe'
+            : ($montantPartiel === null ? 'payé(s)' : 'enregistré(s) avec un paiement partiel');
 
         // Pas de "reouvrir" ici : la page se recharge simplement, aucune fenêtre ne doit se rouvrir
         $retour = back();
@@ -800,7 +841,7 @@ class ClasseController extends Controller
             $retour->with('success', "{$reussies} inscrit(s) {$libelle}.");
         }
         if ($ignorees > 0) {
-            $retour->with('error', "{$ignorees} inscription(s) ignorée(s) : déjà payée(s).");
+            $retour->with('error', "{$ignorees} inscription(s) ignorée(s) : un paiement existe déjà (modifiez sa somme depuis sa ligne).");
         }
 
         return $retour;

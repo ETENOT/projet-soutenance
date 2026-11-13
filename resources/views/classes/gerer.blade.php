@@ -7,7 +7,7 @@
 @component('components.breadcrumb')
     @slot('li_1')
         @if ($classe->session)
-            <a href="{{ route('admin.sessions.show', $classe->session) }}">{{ $classe->session->nom }}</a>
+            <a href="{{ route('admin.sessions.index', ['ouvrir' => $classe->session->id]) }}">{{ $classe->session->nom }}</a>
         @else
             <a href="{{ route('admin.classes.index') }}">Classes</a>
         @endif
@@ -20,7 +20,13 @@
 @php
     $ferme = $classe->estFermee();
     $nbInscrits = $classe->inscriptions->count();
-    $nbPayes = $classe->inscriptions->filter(fn ($i) => $i->paiement)->count();
+    // Payées en totalité / paiement partiel / sans paiement
+    $nbPayes = $classe->inscriptions->filter->estSoldee()->count();
+    $nbPartiels = $classe->inscriptions->filter->estPartielle()->count();
+
+    // Prix de la formation pour cette classe (tarif entreprise pour une classe de session) :
+    // repère affiché dans la fenêtre « Mode de paiement »
+    $prixClasse = $classe->session_id ? $classe->cours->prix_entreprise : $classe->cours->prix_particulier;
     $placesRestantes = max(0, $classe->capacite_max - $nbInscrits);
 
     // Jours déjà exclus ; si la validation vient d'échouer, on remet ce qui avait été saisi
@@ -31,8 +37,8 @@
 
     // URL de la page sans certains paramètres (sert au "×" de chaque étiquette)
     $sans = fn (array $cles) => route('admin.cours.classes.gerer', array_merge([$cours, $classe], request()->except(array_merge($cles, ['page']))));
-    $paiementsChoisis = array_values(array_intersect(['paye', 'impaye'], (array) request('paiement', [])));
-    $libellesPaiement = ['paye' => 'Payés', 'impaye' => 'Impayés'];
+    $paiementsChoisis = array_values(array_intersect(['paye', 'partiel', 'impaye'], (array) request('paiement', [])));
+    $libellesPaiement = ['paye' => 'Payés', 'partiel' => 'Paiement partiel', 'impaye' => 'Impayés'];
 
     // Étiquettes des filtres actifs : [texte, paramètres à retirer, icône]
     $etiquettes = [];
@@ -47,8 +53,9 @@
     }
     $rechercheActive = request()->filled('q') || count($etiquettes) > 0;
 
-    // Fenêtre à rouvrir : les jours après une erreur de validation ; l'ajout après une erreur du serveur
-    $reouvrir = $erreurJours ? 'jours' : (session('error') ? (explode(':', (string) session('reouvrir'))[1] ?? null) : null);
+    // Fenêtre à rouvrir : "nouveau membre" ou les jours après une erreur de validation ; l'ajout après une erreur du serveur
+    $erreurNouveau = $errors->any() && old('_fenetre') === 'nouveau';
+    $reouvrir = $erreurNouveau ? 'nouveau' : ($erreurJours ? 'jours' : (session('error') ? (explode(':', (string) session('reouvrir'))[1] ?? null) : null));
 @endphp
 
 <div class="container-fluid pb-4">
@@ -64,10 +71,11 @@
         @foreach ([
             ['ri-group-line', 'primary', $nbInscrits . ' / ' . $classe->capacite_max, $placesRestantes === 0 ? 'Places (complet)' : 'Places occupées'],
             ['ri-bank-card-line', 'success', $nbPayes, 'Inscriptions payées'],
-            ['ri-time-line', 'warning', $nbInscrits - $nbPayes, 'Inscriptions impayées'],
-            ['ri-calendar-close-line', 'info', count($joursActuels), 'Jours non comptabilisés'],
+            ['ri-pie-chart-line', 'info', $nbPartiels, 'Paiements partiels'],
+            ['ri-time-line', 'warning', $nbInscrits - $nbPayes - $nbPartiels, 'Inscriptions impayées'],
+            ['ri-calendar-close-line', 'secondary', count($joursActuels), 'Jours non comptabilisés'],
         ] as [$icone, $teinte, $valeur, $libelle])
-            <div class="col-sm-6 col-xl-3">
+            <div class="col-sm-6 col-xl">
                 <div class="card border shadow-sm h-100 mb-0">
                     <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
                         <span class="avatar-sm flex-shrink-0">
@@ -216,6 +224,7 @@
                         <th>Nom</th>
                         <th>E-mail</th>
                         <th class="col-date">Inscrit le</th>
+                        <th>Paiement</th>
                         <th class="text-end col-actions-3">Actions</th>
                     </tr>
                 </thead>
@@ -230,6 +239,8 @@
                             <td class="fw-medium" title="{{ $nomInscrit }}">{{ $nomInscrit }}</td>
                             <td class="text-muted" title="{{ $inscription->user?->email }}">{{ $inscription->user?->email ?? '—' }}</td>
                             <td>{{ $inscription->created_at?->format('d/m/Y') }}</td>
+                            {{-- Payé / Paiement partiel (avec le reste à payer) / En attente --}}
+                            <td>@include('paiements._statut-badge', ['inscription' => $inscription])</td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
                                     @if ($inscription->paiement)
@@ -237,11 +248,23 @@
                                            class="btn btn-sm btn-soft-primary" title="Voir le reçu">
                                             <i class="ri-file-text-line"></i>
                                         </a>
+
+                                        {{-- Paiement partiel : l'admin ajuste la somme versée (même après la fermeture,
+                                             pour solder la formation et débloquer l'attestation) --}}
+                                        @if ($inscription->estPartielle())
+                                            <button type="button" class="btn btn-sm btn-soft-info" title="Modifier la somme versée"
+                                                    data-bs-toggle="modal" data-bs-target="#modalMontantVerse"
+                                                    data-action="{{ route('paiements.update', $inscription->paiement) }}"
+                                                    data-nom="{{ $nomInscrit }}"
+                                                    data-montant="{{ $inscription->paiement->montant }}"
+                                                    data-total="{{ $inscription->paiement->montant_total }}">
+                                                <i class="ri-edit-2-line"></i>
+                                            </button>
+                                        @endif
                                     @elseif (! $ferme)
+                                        {{-- La fenêtre « Mode de paiement » s'ouvre avant l'envoi (paiement reçu ou partiel) --}}
                                         <form action="{{ route('paiements.store', $inscription) }}" method="POST" class="m-0"
-                                              data-confirmation="Enregistrer le paiement de {{ $nomInscrit }} ?"
-                                              data-confirmation-bouton="Enregistrer le paiement"
-                                              data-confirmation-style="success">
+                                              data-choix-paiement="{{ $nomInscrit }}">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-soft-success" title="Enregistrer le paiement">
                                                 <i class="ri-bank-card-line"></i>
@@ -266,7 +289,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-5">
+                            <td colspan="6" class="text-center text-muted py-5">
                                 <i class="ri-group-line display-5 d-block mb-2"></i>
                                 {{ $rechercheActive ? 'Aucun inscrit ne correspond à votre recherche.' : "Aucun inscrit pour l'instant." }}
                             </td>
@@ -284,6 +307,76 @@
     </div>
 </div>
 
+{{-- ===== Nouveau membre de l'entreprise : créé, rattaché à l'entreprise de la session et inscrit d'un coup ===== --}}
+@if ($classe->estDeSession())
+<div class="modal fade" id="modalNouveau" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form action="{{ route('admin.cours.classes.inscrits.nouveau', [$cours, $classe]) }}" method="POST">
+                @csrf
+                <input type="hidden" name="_fenetre" value="nouveau">
+
+                <div class="modal-header">
+                    <div class="overflow-hidden flex-grow-1 me-3">
+                        <h5 class="modal-title">Nouveau membre</h5>
+                        <p class="text-muted small mb-0 text-truncate" title="{{ $classe->session->entreprise->raison_sociale }}">
+                            Créé comme membre de {{ $classe->session->entreprise->raison_sociale }} et inscrit à cette classe
+                        </p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nouveauNom" class="form-label">Nom <span class="text-danger">*</span></label>
+                        <input type="text" name="name" id="nouveauNom" maxlength="255" required
+                               class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}">
+                        @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nouveauEmail" class="form-label">E-mail <span class="text-danger">*</span></label>
+                        <input type="email" name="email" id="nouveauEmail" maxlength="255" required
+                               class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
+                        @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nouveauTelephone" class="form-label">Téléphone <span class="text-danger">*</span></label>
+                        <input type="tel" id="nouveauTelephone" data-champ-telephone="telephone" required
+                            placeholder="77 12 34 56"
+                            class="form-control @error('telephone') is-invalid @enderror" value="{{ old('telephone') }}">
+                        @error('telephone')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="nouveauNaissance" class="form-label">Date de naissance <span class="text-muted">(facultatif)</span></label>
+                        <input type="date" name="date_de_naissance" id="nouveauNaissance" max="{{ today()->toDateString() }}"
+                               class="form-control @error('date_de_naissance') is-invalid @enderror" value="{{ old('date_de_naissance') }}">
+                        @error('date_de_naissance') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="alert alert-info py-2 small mb-0">
+                        Mot de passe temporaire : <strong>{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</strong>.
+                        Le membre devra le changer à sa première connexion.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ri-user-add-line me-1"></i>Créer et inscrire
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
+
 {{-- ===== Ajouter des utilisateurs : liste à gauche, sélection à droite ===== --}}
 <div class="modal fade" id="modalAjout" tabindex="-1" aria-hidden="true"
      data-url-recherche="{{ route('admin.cours.classes.candidats', [$cours, $classe]) }}"
@@ -295,7 +388,7 @@
                 <div class="modal-header">
                     <div class="overflow-hidden flex-grow-1 me-3">
                         <h5 class="modal-title">Ajouter des utilisateurs</h5>
-                        <p class="text-muted small mb-0">Inscrits avec le paiement enregistré au comptoir</p>
+                        <p class="text-muted small mb-0">Vous choisirez ensuite : paiement reçu ou paiement partiel</p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
@@ -402,6 +495,38 @@
     </div>
 </div>
 
+{{-- ===== Mode de paiement : s'affiche avant d'inscrire des utilisateurs ou d'enregistrer un paiement =====
+     Ce formulaire n'est jamais envoyé lui-même : son choix est recopié dans le formulaire visé. --}}
+<div class="modal fade" id="modalChoixPaiement" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="formChoixPaiement" novalidate>
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title">Mode de paiement</h5>
+                        <p class="text-muted small mb-0" id="choixPaiementSousTitre"></p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Comment souhaitez-vous enregistrer le paiement ?</p>
+                    @include('paiements._choix-admin', ['prefixe' => 'gerer', 'prix' => $prixClasse])
+                    <div class="text-danger fs-13 mt-2 d-none" id="choixPaiementErreur"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success" id="choixPaiementValider">
+                        <i class="ri-check-line me-1"></i>Valider
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ===== Modifier la somme versée d'un paiement partiel ===== --}}
+@include('paiements._modal-montant')
+
 {{-- ===== Confirmation (retrait d'un inscrit, paiement) ===== --}}
 <div class="modal fade" id="modalConfirmation" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -423,7 +548,12 @@
 
 @endsection
 
+@section('css')
+        @include('partials.css-telephone')
+@endsection
+
 @section('script')
+    @include('partials.script-telephone')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     // Crée un élément avec ses classes et son texte (le texte est inséré tel quel : pas de HTML injecté)
@@ -456,6 +586,87 @@ document.addEventListener('DOMContentLoaded', function () {
     boutonConfirmer.addEventListener('click', function () {
         // submit() ne redéclenche pas l'événement « submit » : pas de nouvelle demande
         if (formulaireEnAttente) formulaireEnAttente.submit();
+    });
+
+    // ------------------------------------------------------------------
+    // Fenêtre « Mode de paiement » : paiement reçu (reste 0) ou paiement partiel (somme saisie,
+    // la même pour toutes les personnes sélectionnées). Le choix est recopié dans le formulaire
+    // visé (ajout d'utilisateurs, paiement d'une ligne, paiement groupé), puis celui-ci est envoyé.
+    // ------------------------------------------------------------------
+    const fenetreChoix = document.getElementById('modalChoixPaiement');
+    const formChoix = document.getElementById('formChoixPaiement');
+    const erreurChoix = document.getElementById('choixPaiementErreur');
+    const prixClasse = @json((float) $prixClasse);
+    let formulaireChoix = null;     // formulaire à envoyer après le choix
+    let choixValide = false;        // vrai quand l'admin a validé (et pas annulé)
+    let apresAnnulation = null;     // action à faire si l'admin annule (ex. rouvrir l'ajout)
+
+    function demanderModePaiement(formulaire, sousTitre, siAnnulation) {
+        formulaireChoix = formulaire;
+        choixValide = false;
+        apresAnnulation = siAnnulation || null;
+        document.getElementById('choixPaiementSousTitre').textContent = sousTitre;
+        erreurChoix.classList.add('d-none');
+
+        // Remise à zéro : « Paiement reçu » coché par défaut, somme vide et désactivée
+        const complet = formChoix.querySelector('.js-type-paiement[value="complet"]');
+        complet.checked = true;
+        complet.dispatchEvent(new Event('change', { bubbles: true }));
+        formChoix.querySelector('.js-montant-partiel').value = '';
+
+        bootstrap.Modal.getOrCreateInstance(fenetreChoix).show();
+    }
+
+    formChoix.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const type = formChoix.querySelector('.js-type-paiement:checked').value;
+        const montant = formChoix.querySelector('.js-montant-partiel').value;
+
+        // Vérification immédiate de la somme partielle (le serveur la revérifie)
+        if (type === 'partiel') {
+            const valeur = parseFloat(montant);
+            let message = '';
+            if (!montant || isNaN(valeur) || valeur < 1) {
+                message = 'Indiquez la somme versée (au moins 1 fcfa).';
+            } else if (valeur >= prixClasse) {
+                message = 'La somme partielle doit être inférieure au prix de la formation. Pour un paiement complet, choisissez « Paiement reçu ».';
+            }
+            if (message) {
+                erreurChoix.textContent = message;
+                erreurChoix.classList.remove('d-none');
+                return;
+            }
+        }
+
+        // Recopie du choix dans le formulaire visé (en remplaçant un éventuel choix précédent)
+        formulaireChoix.querySelectorAll('.js-choix-copie').forEach(c => c.remove());
+        const champs = { type_paiement: type };
+        if (type === 'partiel') champs.montant_partiel = montant;
+        Object.entries(champs).forEach(function ([nom, valeur]) {
+            const cache = document.createElement('input');
+            cache.type = 'hidden';
+            cache.name = nom;
+            cache.value = valeur;
+            cache.className = 'js-choix-copie';
+            formulaireChoix.appendChild(cache);
+        });
+
+        choixValide = true;
+        document.getElementById('choixPaiementValider').disabled = true;   // évite le double envoi
+        formulaireChoix.submit();
+    });
+
+    // Fenêtre fermée sans valider : on revient à l'étape précédente si besoin
+    fenetreChoix.addEventListener('hidden.bs.modal', function () {
+        if (!choixValide && apresAnnulation) apresAnnulation();
+    });
+
+    // Bouton « Enregistrer le paiement » d'une ligne : le choix s'affiche avant l'envoi
+    document.querySelectorAll('form[data-choix-paiement]').forEach(function (f) {
+        f.addEventListener('submit', function (e) {
+            e.preventDefault();
+            demanderModePaiement(f, 'Inscription de ' + f.dataset.choixPaiement);
+        });
     });
 
     // ------------------------------------------------------------------
@@ -492,6 +703,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const retirer = bouton.dataset.actionGroupee === 'retirer';
             document.getElementById('champActionGroupee').value = bouton.dataset.actionGroupee;
+
+            // Enregistrer le paiement des inscrits cochés : choix paiement reçu / partiel
+            if (!retirer) {
+                demanderModePaiement(document.getElementById('formGroupe'),
+                    nb + ' inscrit(s) sélectionné(s) — les inscriptions ayant déjà un paiement sont ignorées');
+                return;
+            }
+
             formulaireEnAttente = document.getElementById('formGroupe');
             document.getElementById('confirmationMessage').textContent = retirer
                 ? 'Retirer ' + nb + ' inscrit(s) de la classe ? Les paiements déjà enregistrés de ces inscrits seront supprimés avec leur inscription.'
@@ -525,6 +744,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const listeSelection = racine.querySelector('.js-selection');
         const selectionVide = racine.querySelector('.js-selection-vide');
 
+        let conserverSelection = false; // vrai quand on revient de la fenêtre « Mode de paiement »
         let chargement = false;        // vrai pendant la requête
         let tous = [];                 // tous les utilisateurs disponibles
         let visibles = [];             // ceux qui correspondent au filtre
@@ -665,7 +885,30 @@ document.addEventListener('DOMContentLoaded', function () {
         champRecherche.addEventListener('input', dessiner);
 
         // À chaque ouverture de la fenêtre : sélection vide, puis une seule requête pour la liste des utilisateurs disponibles
+        // « Ajouter à la classe » : on ferme cette fenêtre et on demande le mode de paiement.
+        // Si l'admin annule, cette fenêtre se rouvre avec sa sélection intacte.
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.choixFait === '1') return;   // déjà choisi : envoi normal
+            e.preventDefault();
+            if (selection.size === 0) return;
+
+            const nb = selection.size;
+            bootstrap.Modal.getOrCreateInstance(racine).hide();
+            racine.addEventListener('hidden.bs.modal', function ouvrirChoix() {
+                racine.removeEventListener('hidden.bs.modal', ouvrirChoix);
+                demanderModePaiement(form, nb + ' particulier(s) à inscrire', function () {
+                    conserverSelection = true;
+                    bootstrap.Modal.getOrCreateInstance(racine).show();
+                });
+            });
+        });
+
         racine.addEventListener('show.bs.modal', function () {
+            // Retour depuis « Mode de paiement » (annulé) : on garde la sélection telle quelle
+            if (conserverSelection) {
+                conserverSelection = false;
+                return;
+            }
             selection.clear();
             champRecherche.value = '';
             tous = [];
@@ -800,6 +1043,9 @@ document.addEventListener('DOMContentLoaded', function () {
         bootstrap.Modal.getOrCreateInstance(fenetreJours).show();
     } else if (reouvrir === 'inscrits') {
         bootstrap.Modal.getOrCreateInstance(fenetreAjout).show();
+    } else if (reouvrir === 'nouveau') {
+        const fenetreNouveau = document.getElementById('modelNouveau');
+        if (fenetreNouveau) bootstrap.Modal.getOrCreateInstance(fenetreNouveau).show();
     }
 });
 </script>

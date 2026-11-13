@@ -19,7 +19,8 @@ use Throwable;
 // Centralise TOUT ce qui concerne les attestations : création de la ligne en base,
 // génération du PDF, stockage, envoi par e-mail.
 //
-// Qui a droit à une attestation ? Les stagiaires dont l'inscription est payée ET dont
+// Qui a droit à une attestation ? Les stagiaires dont l'inscription est payée EN TOTALITÉ
+// (un paiement partiel donne accès au cours, mais pas à l'attestation) ET dont
 // `attestation_eligible` vaut true. Ce champ est figé par ClasseClotureService à la fermeture
 // de la classe, à partir de la feuille de présence émargée par le formateur
 // (taux de présence >= Classe::SEUIL_ATTESTATION). Ce service ne recalcule donc rien.
@@ -35,8 +36,10 @@ class AttestationService
      */
     public function genererPourClasse(Classe $classe): int
     {
+        // Seulement les inscriptions SOLDÉES : un stagiaire en paiement partiel recevra son attestation
+        // plus tard, quand l'admin aura enregistré la totalité (PaiementService::modifierMontantVerse)
         $inscriptions = $classe->inscriptions()
-            ->payees()
+            ->soldees()
             ->where('attestation_eligible', true)
             ->with('user', 'classe.cours', 'classe.formateur')
             ->get();
@@ -66,6 +69,12 @@ class AttestationService
     {
         if (! $inscription->attestation_eligible) {
             throw new DomainException('Ce stagiaire n\'est pas éligible à l\'attestation (présence insuffisante ou classe non fermée).');
+        }
+
+        // Formation pas entièrement payée : pas d'attestation
+        $inscription->loadMissing('paiement');
+        if (! $inscription->estSoldee()) {
+            throw new DomainException('La formation n\'est pas entièrement payée : l\'attestation sera délivrée après le paiement de la totalité.');
         }
 
         $attestation = Attestation::firstOrCreate(

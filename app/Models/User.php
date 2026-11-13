@@ -35,6 +35,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'password',
+        'google_id',   // compte Google lié (connexion « Continuer avec Google »)
         'must_change_password',
         'avatar',
         'role_id',
@@ -200,12 +201,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Avis::class);
     }
 
-    // Vrai si l'utilisateur est inscrit à une classe de ce cours ET a un paiement validé
+    // Vrai si l'utilisateur est inscrit à une classe de ce cours ET a payé (en totalité ou en partie) :
+    // un paiement partiel donne les mêmes accès qu'un paiement complet (sauf l'attestation)
     public function aPayeCours(int $coursId): bool
     {
         return $this->inscriptions()
             ->whereHas('classe', fn ($q) => $q->where('cours_id', $coursId))
-            ->whereHas('paiement', fn ($q) => $q->where('statut', 'valide'))
+            ->payees()
             ->exists();
     }
 }

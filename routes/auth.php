@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\CancelRegistrationController;
+use App\Http\Controllers\Auth\GoogleController;
 use Illuminate\Support\Facades\Route;
 
 // Ce fichier remplace l'ancien Auth::routes() (fourni par laravel/ui, qu'on a retiré).
@@ -40,6 +41,27 @@ Route::middleware('guest')->group(function () {
     // Traite l'envoi du lien de réinitialisation par e-mail
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
         ->name('password.email');
+
+    // --- « Continuer avec Google » (Laravel Socialite) ---
+
+    // Envoie l'utilisateur sur la page de connexion de Google
+    Route::get('auth/google/redirect', [GoogleController::class, 'redirect'])
+        ->name('google.redirect');
+
+    // Google renvoie l'utilisateur ici (URL à déclarer dans la Google Cloud Console)
+    Route::get('auth/google/callback', [GoogleController::class, 'callback'])
+        ->name('google.callback');
+
+    // Nouveau compte : compléter le profil (téléphone obligatoire pour un particulier)
+    Route::get('auth/google/finaliser', [GoogleController::class, 'completer'])
+        ->name('google.completer');
+    Route::post('auth/google/finaliser', [GoogleController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('google.store');
+
+    // Abandon de la finalisation
+    Route::post('auth/google/annuler', [GoogleController::class, 'annuler'])
+        ->name('google.annuler');
 });
 
 // Affiche le formulaire de saisie du nouveau mot de passe (lien reçu par e-mail avec token)

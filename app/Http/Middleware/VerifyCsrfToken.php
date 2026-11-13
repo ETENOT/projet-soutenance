@@ -12,6 +12,7 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        //
+        // Notification de rappel d'Airtel Money : envoyée par les serveurs d'Airtel, sans jeton CSRF
+        'paiements/airtel/rappel',
     ];
 }

@@ -130,7 +130,7 @@ Choix du paiement
 
 
                     {{-- =================================================
-                         PAIEMENT SINGPAY
+                         PAIEMENT AIRTEL MONEY
                          ================================================= --}}
                     <div class="col-md-6">
 
@@ -142,26 +142,34 @@ Choix du paiement
                             </div>
 
                             <h5 class="mb-2">
-                                Paiement en ligne
+                                Paiement Airtel Money
                             </h5>
 
-                            <p class="text-muted mb-4">
-                                Payez en ligne de manière sécurisée avec
-                                SingPay et choisissez votre opérateur
-                                Mobile Money.
+                            <p class="text-muted mb-3">
+                                Payez depuis votre compte Airtel Money : vous validez
+                                le paiement sur votre téléphone avec votre code PIN.
                             </p>
 
                             <form method="POST"
-                                  action="{{ route('paiements.payer', $classe) }}"
-                                  id="form-singpay">
+                                  action="{{ route('paiements.payer.classe', $classe) }}"
+                                  id="form-airtel">
 
                                 @csrf
 
-                                <button type="submit"
-                                        class="btn btn-primary w-100"
-                                        id="btn-singpay">
+                                {{-- Numéro Airtel Money qui recevra la demande de paiement --}}
+                                @include('paiements._numero-airtel')
 
-                                    Continuer avec SingPay
+                                {{-- Avant la passerelle : payer la totalité ou une partie (au moins la moitié) --}}
+                                @include('paiements._choix-en-ligne', [
+                                    'montant' => $montant,
+                                    'minimumPartiel' => $minimumPartiel,
+                                ])
+
+                                <button type="submit"
+                                        class="btn btn-danger w-100"
+                                        id="btn-airtel">
+
+                                    Payer avec Airtel Money
 
                                 </button>
 
@@ -180,13 +188,13 @@ Choix du paiement
 
 
 {{-- ================================================================
-     PROTECTION CONTRE LES DOUBLES CLICS SINGPAY
+     PROTECTION CONTRE LES DOUBLES CLICS (une seule demande Airtel Money)
      ================================================================ --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
 
-        var formulaire = document.getElementById('form-singpay');
-        var bouton = document.getElementById('btn-singpay');
+        var formulaire = document.getElementById('form-airtel');
+        var bouton = document.getElementById('btn-airtel');
 
         if (!formulaire || !bouton) {
             return;
@@ -196,7 +204,7 @@ Choix du paiement
 
             bouton.disabled = true;
 
-            bouton.textContent = 'Redirection vers SingPay...';
+            bouton.textContent = 'Envoi de la demande à Airtel Money...';
 
         });
 

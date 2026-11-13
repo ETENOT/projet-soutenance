@@ -25,7 +25,7 @@
 
     {{-- ===== Statistiques (totaux sur toute la base) ===== --}}
     <div class="row g-2 mb-3">
-        <div class="col-sm-6 col-xl-4">
+        <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
                 <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
                     <span class="avatar-sm flex-shrink-0">
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-4">
+        <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
                 <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
                     <span class="avatar-sm flex-shrink-0">
@@ -53,7 +53,22 @@
             </div>
         </div>
 
-        <div class="col-sm-6 col-xl-4">
+        {{-- Paiements partiels : accès au cours, attestation bloquée tant que le reste n'est pas réglé --}}
+        <div class="col-sm-6 col-xl-3">
+            <div class="card border shadow-sm h-100 mb-0">
+                <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
+                    <span class="avatar-sm flex-shrink-0">
+                        <span class="avatar-title rounded-3 bg-info-subtle text-info fs-4"><i class="ri-pie-chart-line"></i></span>
+                    </span>
+                    <div>
+                        <h5 class="fw-bold mb-0">{{ $stats['partielles'] }}</h5>
+                        <p class="text-muted mb-0 fs-12">Paiements partiels</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
             <div class="card border shadow-sm h-100 mb-0">
                 <div class="card-body d-flex align-items-center gap-2 py-2 px-3">
                     <span class="avatar-sm flex-shrink-0">
@@ -68,22 +83,11 @@
         </div>
     </div>
 
-    {{-- ===== Erreurs de filtre ===== --}}
-    @if ($errors->any() && ! $modeAvecErreur)
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- ===== Recherche : étiquettes des filtres actifs + fenêtre Filtres ===== --}}
     @php
         $sans = fn (array $cles) => route('admin.inscriptions.index', request()->except(array_merge($cles, ['page'])));
 
-        $libellesPaiement = ['paye' => 'Payé', 'en_attente' => 'En attente'];
+        $libellesPaiement = ['paye' => 'Payé', 'partiel' => 'Paiement partiel', 'en_attente' => 'En attente'];
 
         $etiquettes = [];
         if ($statutsChoisis) {
@@ -288,8 +292,10 @@
                 <tbody>
                     @forelse ($inscriptions as $inscription)
                         @php
+                            // $payee : un paiement existe (complet OU partiel) -> accès au cours
                             $payee = $inscription->estPayee();
-                            $montant = $payee ? $inscription->paiement->montant : $inscription->montant_du;
+                            // Montant dû : figé sur le paiement s'il existe, sinon prix actuel de la classe
+                            $montant = $payee ? $inscription->paiement->montant_total : $inscription->montant_du;
                             $verse = $payee ? $inscription->paiement->montant : 0;
                             $reste = $montant - $verse;
                         @endphp
@@ -305,13 +311,8 @@
                             <td class="cellule-tronquee-sm" title="{{ $inscription->classe->nom }}">{{ $inscription->classe->nom }}</td>
                             <td>{{ $fcfa($verse) }}</td>
                             <td>{{ $fcfa($reste) }}</td>
-                            <td>
-                                @if ($payee)
-                                    <span class="badge bg-success-subtle text-success">Payé</span>
-                                @else
-                                    <span class="badge bg-warning-subtle text-warning">En attente</span>
-                                @endif
-                            </td>
+                            {{-- Payé / Paiement partiel / En attente (le reste est déjà dans sa colonne) --}}
+                            <td>@include('paiements._statut-badge', ['inscription' => $inscription, 'sansReste' => true])</td>
                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-1">
                                     @unless ($payee)
@@ -319,10 +320,23 @@
                                                 data-bs-toggle="modal" data-bs-target="#modalEncaissement"
                                                 data-action="{{ route('paiements.store', $inscription) }}"
                                                 data-nom="{{ $inscription->user->name }}"
-                                                data-montant="{{ $fcfa($montant) }}">
+                                                data-montant="{{ $fcfa($montant) }}"
+                                                data-prix="{{ (float) $montant }}">
                                             <i class="ri-money-dollar-circle-line"></i>
                                         </button>
                                     @endunless
+
+                                    {{-- Paiement partiel : modifier la somme versée --}}
+                                    @if ($inscription->estPartielle())
+                                        <button type="button" class="btn btn-sm btn-soft-info" title="Modifier la somme versée"
+                                                data-bs-toggle="modal" data-bs-target="#modalMontantVerse"
+                                                data-action="{{ route('paiements.update', $inscription->paiement) }}"
+                                                data-nom="{{ $inscription->user->name }}"
+                                                data-montant="{{ $inscription->paiement->montant }}"
+                                                data-total="{{ $inscription->paiement->montant_total }}">
+                                            <i class="ri-edit-2-line"></i>
+                                        </button>
+                                    @endif
 
                                     <button type="button" class="btn btn-sm btn-soft-primary" title="Voir"
                                             data-bs-toggle="modal" data-bs-target="#modalDetail"
@@ -409,7 +423,12 @@
                 <dt class="col-sm-4">Paiement</dt>
                 <dd class="col-sm-8">
                     @if ($payee)
-                        {{ $fcfa($inscription->paiement->montant) }} · {{ $inscription->paiement->libelle_mode }}
+                        {{ $inscription->paiement->libelle_statut }} :
+                        {{ $fcfa($inscription->paiement->montant) }} versés sur {{ $fcfa($inscription->paiement->montant_total) }}
+                        @if ($inscription->estPartielle())
+                            (reste {{ $fcfa($inscription->paiement->reste_a_payer) }})
+                        @endif
+                        · {{ $inscription->paiement->libelle_mode }}
                         le {{ $inscription->paiement->created_at->format('d/m/Y H:i') }}
                         @if ($inscription->paiement->reference)
                             <div class="text-muted">Référence : {{ $inscription->paiement->reference }}</div>
@@ -464,8 +483,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Enregistrer le paiement au comptoir de <strong id="encaissementNom"></strong>
-                        (<span id="encaissementMontant"></span>) ?</p>
+                    <p class="mb-3">Enregistrer le paiement au comptoir de <strong id="encaissementNom"></strong>
+                        (prix : <span id="encaissementMontant"></span>) :</p>
+                    {{-- Paiement reçu (reste 0) ou paiement partiel (somme versée) --}}
+                    @include('paiements._choix-admin', ['prefixe' => 'encaissement'])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
@@ -582,6 +603,12 @@
                                max="{{ today()->toDateString() }}"
                                value="{{ old('date_inscription', today()->toDateString()) }}" required>
                     </div>
+
+                    {{-- Mode de paiement : uniquement à la création (une modification ne touche pas au paiement) --}}
+                    <fieldset class="mt-3" id="blocModePaiement">
+                        <legend class="form-label fs-14 mb-2">Mode de paiement</legend>
+                        @include('paiements._choix-admin', ['prefixe' => 'creation'])
+                    </fieldset>
                 </div>
 
                 <div class="modal-footer">
@@ -592,6 +619,8 @@
         </div>
     </div>
 </div>
+{{-- Fenêtre « Modifier la somme versée » (paiements partiels) --}}
+@include('paiements._modal-montant')
 @endsection
 
 @section('script')
@@ -651,6 +680,10 @@ document.addEventListener('DOMContentLoaded', function () {
         champ('champUtilisateur').disabled = modif;
         champ('champUtilisateur').required = !modif;
         champ('utilisateurFixe').textContent = champ('champNom').value;
+
+        // Le mode de paiement ne concerne que la création ; fieldset désactivé = champs non envoyés
+        champ('blocModePaiement').classList.toggle('d-none', modif);
+        champ('blocModePaiement').disabled = modif;
     }
 
     // Filtrage des classes disponibles
@@ -716,12 +749,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Fenêtre d'encaissement
+    // Fenêtre d'encaissement : « Paiement reçu » coché par défaut à chaque ouverture
     document.getElementById('modalEncaissement').addEventListener('show.bs.modal', function (e) {
         const d = e.relatedTarget.dataset;
         champ('encaissementNom').textContent = d.nom;
         champ('encaissementMontant').textContent = d.montant;
         champ('formEncaissement').action = d.action;
+
+        const complet = champ('encaissement-complet');
+        complet.checked = true;
+        complet.dispatchEvent(new Event('change', { bubbles: true }));
+        const somme = champ('encaissement-montant');
+        somme.value = '';
+        somme.max = Math.max(1, (parseFloat(d.prix) || 0) - 1);   // partiel : strictement inférieur au prix
     });
 
     // Fenêtre de suppression

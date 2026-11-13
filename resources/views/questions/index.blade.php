@@ -99,21 +99,7 @@
 
                 <select name="action" id="actionChoisie" class="form-select w-auto" aria-label="Action à appliquer">
                     <option value="changer_cours">Changer de cours</option>
-                    <option value="changer_chapitre">Rattacher à un chapitre</option>
-                    <option value="retirer_chapitre">Retirer de leur chapitre</option>
                     <option value="supprimer">Supprimer les questions</option>
-                </select>
-
-                {{-- Visible seulement pour l'action « Rattacher à un chapitre » (chapitres groupés par cours) --}}
-                <select name="chapitre_cible" id="chapitreCible" class="form-select w-auto d-none" aria-label="Chapitre de destination">
-                    <option value="">Choisir le chapitre…</option>
-                    @foreach ($chapitres->groupBy('cours_id') as $coursId => $liste)
-                        <optgroup label="{{ $cours->firstWhere('id', $coursId)?->titre }}">
-                            @foreach ($liste as $ch)
-                                <option value="{{ $ch->id }}">Chapitre {{ $ch->ordre }} — {{ $ch->titre }}</option>
-                            @endforeach
-                        </optgroup>
-                    @endforeach
                 </select>
 
                 {{-- Visible seulement pour l'action « Changer de cours » --}}
@@ -241,7 +227,6 @@
                         </th>
                         <th>Question</th>
                         <th>Cours</th>
-                        <th>Chapitre</th>
                         <th>Bonne réponse</th>
                         <th class="text-center">Options</th>
                         <th class="text-end">Actions</th>
@@ -261,18 +246,7 @@
                                 {{ \Illuminate\Support\Str::limit($question->enonce, 90) }}
                             </td>
 
-                            <td>
-                                <span class="badge bg-primary-subtle text-primary">{{ $question->cours->titre }}</span>
-                            </td>
-
-                            <td>
-                                @if ($question->chapitre)
-                                    <span class="badge bg-info-subtle text-info d-block mt-1 text-start text-truncate"
-                                          title="Chapitre {{ $question->chapitre->ordre }} — {{ $question->chapitre->titre }}">
-                                        <i class="ri-bookmark-line me-1"></i>Chapitre {{ $question->chapitre->ordre }}
-                                    </span>
-                                @endif
-                            </td>
+                            <td><span class="badge bg-primary-subtle text-primary">{{ $question->cours->titre }}</span></td>
 
                             <td class="text-success">{{ \Illuminate\Support\Str::limit($question->options->firstWhere('est_correct', true)?->libelle ?? '—', 40) }}</td>
 
@@ -286,7 +260,6 @@
                                             data-mode="modif"
                                             data-action="{{ route('admin.questions.update', $question) }}"
                                             data-cours="{{ $question->cours_id }}"
-                                            data-chapitre="{{ $question->chapitre_id }}"
                                             data-enonce="{{ $question->enonce }}"
                                             data-posee="{{ $question->reponses_count }}"
                                             data-options="{{ $question->options->map(fn ($o) => ['id' => $o->id, 'libelle' => $o->libelle, 'correcte' => (bool) $o->est_correct])->values()->toJson() }}">
@@ -420,20 +393,6 @@
                         </select>
                     </div>
 
-                    {{-- Facultatif : rattache la question au quiz d'un chapitre (et donc au quiz final).
-                         Le quiz du cours, lui, continue de piocher dans toute la banque du cours. --}}
-                    <div class="mb-3">
-                        <label for="champChapitre" class="form-label">Chapitre <span class="text-muted">(facultatif)</span></label>
-                        <select name="chapitre_id" id="champChapitre" class="form-select">
-                            <option value="">— Aucun chapitre (quiz du cours uniquement) —</option>
-                            {{-- data-cours : le JavaScript n'affiche que les chapitres du cours choisi --}}
-                            @foreach ($chapitres as $ch)
-                                <option value="{{ $ch->id }}" data-cours="{{ $ch->cours_id }}">Chapitre {{ $ch->ordre }} — {{ $ch->titre }}</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Les questions d'un chapitre servent au quiz de ce chapitre et au quiz final.</small>
-                    </div>
-
                     <div class="mb-3">
                         <label for="champEnonce" class="form-label">Énoncé de la question</label>
                         <textarea name="enonce" id="champEnonce" rows="3" maxlength="2000" class="form-control" required></textarea>
@@ -467,7 +426,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const anciennesOptions = @json(old('options'));
     const ancienneCorrecte = @json(old('correcte'));
     const ancienCours = @json(old('cours_id'));
-    const ancienChapitre = @json(old('chapitre_id'));
     const ancienEnonce = @json(old('enonce'));
 
     const MIN = 2, MAX = 6;
@@ -504,27 +462,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const action = champ('actionChoisie');
     action.addEventListener('change', function () {
         champ('coursCible').classList.toggle('d-none', action.value !== 'changer_cours');
-        // Le menu des chapitres n'apparaît que pour « Rattacher à un chapitre »
-        champ('chapitreCible').classList.toggle('d-none', action.value !== 'changer_chapitre');
     });
-
-    // ---------- Menu « Chapitre » : seulement les chapitres du cours choisi ----------
-    const champChapitre = champ('champChapitre');
-    function filtrerChapitres(valeur) {
-        const coursId = champ('champCours').value;
-        Array.from(champChapitre.options).forEach(function (opt) {
-            if (!opt.value) return;   // « Aucun chapitre » reste toujours visible
-            const visible = opt.dataset.cours === coursId;
-            opt.hidden = !visible;
-            opt.disabled = !visible;
-        });
-        // Garde le chapitre demandé s'il appartient au cours, sinon « Aucun chapitre »
-        const choisi = Array.from(champChapitre.options).find(o => o.value === String(valeur ?? '') && !o.disabled);
-        champChapitre.value = choisi ? choisi.value : '';
-    }
-
-    // Changement de cours : l'ancien chapitre n'est plus valable
-    champ('champCours').addEventListener('change', () => filtrerChapitres(''));
 
     // « Supprimer » demande d'abord confirmation dans une fenêtre, puis envoie le formulaire
     champ('formGroupe').addEventListener('submit', function (e) {
@@ -641,14 +579,12 @@ document.addEventListener('DOMContentLoaded', function () {
             champ('champAction').value = d.action;
             form.action = d.action;
             champ('champCours').value = d.cours || '';
-            filtrerChapitres(d.chapitre || '');   // modification : chapitre actuel de la question
             champ('champEnonce').value = d.enonce;
             remplirOptions(JSON.parse(d.options).map((o, i) => ({ cle: i, id: o.id, libelle: o.libelle, correcte: o.correcte })));
         } else {
             champ('champAction').value = urlAjout;
             form.action = urlAjout;
             champ('champCours').value = d.cours || '';
-            filtrerChapitres(d.chapitre || '');   // modification : chapitre actuel de la question
             champ('champEnonce').value = '';
             remplirOptions([{ cle: 0 }, { cle: 1 }]);
         }
@@ -659,7 +595,6 @@ document.addEventListener('DOMContentLoaded', function () {
         preparer(modeAvecErreur, 0);
         form.action = champ('champAction').value || urlAjout;
         champ('champCours').value = ancienCours || '';
-        filtrerChapitres(d.chapitre || '');   // modification : chapitre actuel de la question
         champ('champEnonce').value = ancienEnonce || '';
         const lignes = Object.entries(anciennesOptions || {}).map(([cle, o]) => ({
             cle: cle, id: o.id, libelle: o.libelle, correcte: String(cle) === String(ancienneCorrecte)

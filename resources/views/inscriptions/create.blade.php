@@ -65,9 +65,14 @@
                             @error('date_inscription')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
+                        {{-- Mode de paiement : paiement reçu (reste 0) ou paiement partiel (somme versée) --}}
+                        <div class="mb-4">
+                            <label class="form-label">Mode de paiement</label>
+                            @include('paiements._choix-admin', ['prefixe' => 'page-creation'])
+                        </div>
+
                         <p class="text-muted fs-13">
-                            L'inscription est créée « en attente de paiement » ; l'utilisateur est prévenu (cloche + e-mail).
-                            Le paiement se valide ensuite depuis la liste.
+                            Le paiement est enregistré au comptoir ; l'utilisateur est prévenu (cloche + e-mail).
                         </p>
 
                         <button type="submit" class="btn btn-primary">Enregistrer</button>

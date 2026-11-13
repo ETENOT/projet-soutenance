@@ -41,13 +41,22 @@
                     <form method="POST" action="{{ route('paiements.payer', $inscription) }}" id="form-paiement">
                         @csrf
 
+                        {{-- Numéro Airtel Money qui recevra la demande de paiement --}}
+                        @include('paiements._numero-airtel')
+
+                        {{-- Payer la totalité ou une partie (au moins la moitié du prix) --}}
+                        @include('paiements._choix-en-ligne', [
+                            'montant' => $montant,
+                            'minimumPartiel' => $minimumPartiel,
+                        ])
+
                         <p class="text-muted mb-3">
-                            Vous serez redirigé vers SingPay pour choisir votre opérateur Mobile Money et confirmer le paiement.
+                            Une demande de paiement Airtel Money sera envoyée sur votre téléphone : validez-la avec votre code PIN.
                         </p>
 
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success" id="btn-payer">
-                                Continuer vers SingPay
+                                Payer avec Airtel Money
                             </button>
                             <a href="{{ route('cours.mes') }}" class="btn btn-soft-secondary">Annuler</a>
                         </div>
@@ -64,7 +73,7 @@
             formulaire.addEventListener('submit', function () {
                 var bouton = document.getElementById('btn-payer');
                 bouton.disabled = true;
-                bouton.textContent = 'Redirection vers SingPay...';
+                bouton.textContent = 'Envoi de la demande à Airtel Money...';
             });
         });
     </script>

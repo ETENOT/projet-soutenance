@@ -19,18 +19,37 @@ class Paiement extends Model
         'direct' => 'Paiement direct (comptoir)',
         'airtel_money' => 'Airtel Money',
         'moov_money' => 'Moov Money',
-        'singpay' => 'SingPay',
+    ];
+
+    /**
+     * Statuts d'un paiement enregistré.
+     * (Une inscription sans ligne de paiement est simplement "en attente".)
+     */
+    public const STATUT_VALIDE = 'valide';    // payé en totalité : reste à payer = 0
+    public const STATUT_PARTIEL = 'partiel';  // payé en partie : reste à payer > 0
+
+    /**
+     * Statuts qui donnent accès au cours (contenus, forum, quiz, évaluation…).
+     * Le paiement partiel ouvre tous les avantages SAUF l'attestation (réservée au statut valide).
+     */
+    public const STATUTS_ACCES = [self::STATUT_VALIDE, self::STATUT_PARTIEL];
+
+    // Libellés affichés partout (admin et particulier)
+    public const LIBELLES_STATUT = [
+        self::STATUT_VALIDE => 'Payé',
+        self::STATUT_PARTIEL => 'Paiement partiel',
     ];
 
     protected $fillable = [
     'montant',
+    'montant_total',
     'inscription_id',
     'mode',
     'reference',
     'statut',
-    'singpay_transaction_id',
-    'singpay_status',
-    'singpay_result',
+    'operateur_transaction_id',   // identifiant de l'opération chez Airtel Money
+    'operateur_statut',           // code final renvoyé par Airtel (TS = réussi)
+    'operateur_resultat',         // message renvoyé par Airtel
 ];
 
     // La table "paiements" a inscription_id -> belongsTo
@@ -43,6 +62,24 @@ class Paiement extends Model
     public function getLibelleModeAttribute(): string
     {
         return self::MODES[$this->mode] ?? $this->mode;
+    }
+
+    // Vrai si le paiement ne couvre qu'une partie de la formation
+    public function estPartiel(): bool
+    {
+        return $this->statut === self::STATUT_PARTIEL;
+    }
+
+    // Reste à payer : $paiement->reste_a_payer (jamais négatif)
+    public function getResteAPayerAttribute(): float
+    {
+        return max(0, (float) $this->montant_total - (float) $this->montant);
+    }
+
+    // Libellé du statut : $paiement->libelle_statut ("Payé" / "Paiement partiel")
+    public function getLibelleStatutAttribute(): string
+    {
+        return self::LIBELLES_STATUT[$this->statut] ?? $this->statut;
     }
 
     public function getNumeroRecuAttribute(): string

@@ -40,8 +40,10 @@ class AbandonnerQuizVisiteur
         }
 
         // Pages qui font partie du parcours "voir mon résultat" : on ne touche à rien
+        // (google.* : inscription / connexion avec Google, le quiz est rattaché au compte à la fin)
         $parcoursInscription = $request->is('register')
-            || $request->routeIs('quiz.visiteur.termine');
+            || $request->routeIs('quiz.visiteur.termine')
+            || $request->routeIs('google.*');
 
         // Le visiteur est parti ailleurs : on annule tout (quiz en base + session)
         if (!$parcoursInscription) {

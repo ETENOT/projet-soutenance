@@ -123,12 +123,23 @@
             <td class="lib">Montant payé</td>
             <td class="montant">{{ number_format($paiement->montant, 0, ',', ' ') }} fcfa</td>
         </tr>
+        {{-- Paiement partiel : le reçu rappelle le prix total et le reste à payer --}}
+        @if ($paiement->estPartiel())
+            <tr>
+                <td class="lib">Prix de la formation</td>
+                <td style="text-align: right">{{ number_format($paiement->montant_total, 0, ',', ' ') }} fcfa</td>
+            </tr>
+            <tr>
+                <td class="lib">Reste à payer</td>
+                <td style="text-align: right; font-weight: bold">{{ number_format($paiement->reste_a_payer, 0, ',', ' ') }} fcfa</td>
+            </tr>
+        @endif
     </table>
 
     <table class="bas">
         <tr>
             <td style="width: 38%">
-                <span class="paye">PAYÉ</span>
+                <span class="paye">{{ $paiement->estPartiel() ? 'PAIEMENT PARTIEL' : 'PAYÉ' }}</span>
                 <div class="paye-date">le {{ $paiement->created_at->format('d/m/Y') }}</div>
             </td>
             <td style="width: 62%; vertical-align: top">

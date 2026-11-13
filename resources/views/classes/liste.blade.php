@@ -80,17 +80,6 @@
         </div>
     </div>
 
-    {{-- ===== Erreurs de filtre (période à l'envers, nombre négatif...) ===== --}}
-    @if ($errors->any() && ! $modeAvecErreur)
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $erreur)
-                    <li>{{ $erreur }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
     {{-- ===== Étiquettes des filtres actifs ===== --}}
     @php
         // URL de la liste sans certains paramètres (sert au "×" de chaque étiquette)
@@ -602,7 +591,8 @@
                                     <tr>
                                         <td>{{ $inscription->user?->name ?? 'Compte supprimé' }}</td>
                                         <td>{{ $inscription->user?->email ?? '—' }}</td>
-                                        <td>{{ $inscription->estPayee() ? 'Payé' : 'En attente' }}</td>
+                                        {{-- Payé / Paiement partiel (+ reste) / En attente --}}
+                                        <td>@include('paiements._statut-badge', ['inscription' => $inscription])</td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="3" class="text-muted">Aucun inscrit.</td></tr>

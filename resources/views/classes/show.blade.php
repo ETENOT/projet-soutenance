@@ -84,13 +84,8 @@
                                 <tr>
                                     <td>{{ $inscription->user?->name ?? 'Compte supprimé' }}</td>
                                     <td>{{ $inscription->user?->email ?? '—' }}</td>
-                                    <td>
-                                        @if ($inscription->estPayee())
-                                            <span class="badge bg-success-subtle text-success">Payé</span>
-                                        @else
-                                            <span class="badge bg-warning-subtle text-warning">En attente</span>
-                                        @endif
-                                    </td>
+                                    {{-- Payé / Paiement partiel (+ reste) / En attente --}}
+                                    <td>@include('paiements._statut-badge', ['inscription' => $inscription])</td>
                                 </tr>
                             @empty
                                 <tr>

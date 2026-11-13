@@ -334,7 +334,7 @@ class DashboardController extends Controller
             ->count();
 
         $inscriptionsEnAttente = Inscription::query()
-            ->whereDoesntHave('paiement', fn ($query) => $query->where('statut', 'valide'))
+            ->enAttenteDePaiement()   // aucun paiement (les paiements partiels ont déjà accès au cours)
             ->with(['user:id,name', 'classe.cours:id,titre'])
             ->orderByDesc('date_inscription')
             ->orderByDesc('id')

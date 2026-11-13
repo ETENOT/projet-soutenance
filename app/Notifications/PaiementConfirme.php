@@ -65,7 +65,9 @@ class PaiementConfirme extends Notification
 
         $mail = (new MailMessage)
             // Objet de l'email, tel qu'il apparaît dans la boîte de réception.
-            ->subject('Paiement confirmé – Formation NéoVision')
+            ->subject($this->paiement->estPartiel()
+                ? 'Paiement partiel confirmé – Formation NéoVision'
+                : 'Paiement confirmé – Formation NéoVision')
 
             // Formule d'ouverture personnalisée avec le nom de l'utilisateur.
             ->greeting('Bonjour ' . $notifiable->name . ',')
@@ -84,6 +86,14 @@ class PaiementConfirme extends Notification
         // La référence n'existe que pour un paiement en ligne (elle est vide au comptoir).
         if ($this->paiement->reference) {
             $mail->line('Référence de la transaction : ' . $this->paiement->reference . '.');
+        }
+
+        // Paiement partiel : on rappelle le reste à payer et la condition pour l'attestation
+        if ($this->paiement->estPartiel()) {
+            $mail->line('Il s\'agit d\'un paiement partiel. Reste à payer : '
+                . number_format($this->paiement->reste_a_payer, 0, ',', ' ') . ' fcfa.')
+                ->line('Vous avez accès au cours. Votre attestation de suivi de formation sera délivrée '
+                    . 'une fois la totalité de la formation payée.');
         }
 
         return $mail

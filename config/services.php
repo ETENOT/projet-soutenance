@@ -1,16 +1,44 @@
 <?php
 
 return [
-/* ce code dit à laravel où trouver les paramètres singpay 
-    sans écrire les informations sensibles directement dans le contrôleur
-*/
-    'singpay' => [
-        'base_url' => env('SINGPAY_BASE_URL', 'https://gateway.singpay.ga/v1'),
-        'client_id' => env('SINGPAY_CLIENT_ID'),
-        'client_secret' => env('SINGPAY_CLIENT_SECRET'),
-        'wallet_id' => env('SINGPAY_WALLET_ID'),
-        'public_url' => env('SINGPAY_PUBLIC_URL'),
-        'logo_url' => env('SINGPAY_LOGO_URL'),
+/*
+ * Passerelle Airtel Money (Airtel Africa Open API) : paiements en ligne par push USSD.
+ * Identifiants fournis par le portail développeur Airtel (developers.airtel.africa).
+ *  - Environnement de test  : https://openapiuat.airtel.africa
+ *  - Production             : https://openapi.airtel.africa
+ * Le code n'y écrit jamais ces valeurs : tout vient du .env.
+ */
+    'airtel' => [
+        'base_url' => env('AIRTEL_BASE_URL', 'https://openapiuat.airtel.africa'),
+        'client_id' => env('AIRTEL_CLIENT_ID'),
+        'client_secret' => env('AIRTEL_CLIENT_SECRET'),
+
+        // Pays et devise du compte marchand (Gabon, franc CFA) : envoyés à chaque appel
+        'pays' => env('AIRTEL_PAYS', 'GA'),
+        'devise' => env('AIRTEL_DEVISE', 'XAF'),
+
+        // Indicatif téléphonique du pays (retiré du numéro avant l'envoi à Airtel)
+        'indicatif' => env('AIRTEL_INDICATIF', '241'),
+
+        // Numéro envoyé à Airtel : 8 chiffres sans indicatif (74123456) par défaut ;
+        // true = avec le 0 local (074123456), si le compte marchand l'exige (à vérifier en test)
+        'msisdn_avec_zero' => (bool) env('AIRTEL_MSISDN_AVEC_ZERO', false),
+
+        // Chemins de l'API (version 1 de l'API de collecte par défaut)
+        'chemin_paiement' => env('AIRTEL_CHEMIN_PAIEMENT', '/merchant/v1/payments/'),
+        'chemin_statut' => env('AIRTEL_CHEMIN_STATUT', '/standard/v1/payments/'),
+    ],
+
+    /*
+     * Connexion « Continuer avec Google » (Laravel Socialite).
+     * Les identifiants viennent de la Google Cloud Console (API et services > Identifiants >
+     * ID client OAuth 2.0, type « Application Web »). L'URL de redirection déclarée chez Google
+     * doit être EXACTEMENT celle de GOOGLE_REDIRECT_URI.
+     */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
     ],
 
     /*

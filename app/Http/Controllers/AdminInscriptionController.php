@@ -9,21 +9,26 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Notifications\InscriptionEnregistree;
 use App\Services\PaiementService;
+use App\Http\Controllers\Concerns\ChoixPaiementAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Gestion des inscriptions (administrateur) : liste filtrable, création, fiche, modification, suppression.
  *
- * Statut de paiement d'une inscription (même définition que Inscription::scopePayees) :
- *  - "payé"       : un paiement au statut "valide" existe ;
- *  - "en attente" : aucun paiement valide.
- * Les inscriptions saisies par l'administration sont réglées au comptoir.
+ * Statut de paiement d'une inscription (voir Inscription::statutPaiement()) :
+ *  - "payé"             : paiement reçu en totalité (statut "valide", reste à payer = 0) ;
+ *  - "paiement partiel" : une partie seulement est versée (statut "partiel") ;
+ *  - "en attente"       : aucun paiement enregistré.
+ * Les inscriptions saisies par l'administration sont réglées au comptoir, en totalité ou en partie.
  */
 class AdminInscriptionController extends Controller
 {
+    // Fenêtre « Mode de paiement » : paiement reçu ou partiel
+    use ChoixPaiementAdmin;
+
     // Valeurs acceptées par le filtre "statut du paiement" (tout le reste est ignoré)
-    private const STATUTS_PAIEMENT = ['en_attente', 'paye'];
+    private const STATUTS_PAIEMENT = ['en_attente', 'partiel', 'paye'];
 
     // Seuls ces rôles peuvent être inscrits à une classe
     private const ROLES_INSCRIPTIBLES = ['particulier', 'entreprise'];
@@ -76,12 +81,21 @@ class AdminInscriptionController extends Controller
             $query->whereDate('date_inscription', '<=', $request->input('date_au'));
         }
 
-        // --- Filtre par statut du paiement (cocher les deux = pas de filtre) ---
+        // --- Filtre par statut du paiement (tout cocher = pas de filtre) ---
         $statuts = array_values(array_intersect((array) $request->input('statut_paiement', []), self::STATUTS_PAIEMENT));
-        if (count($statuts) === 1) {
-            $statuts[0] === 'paye'
-                ? $query->payees()
-                : $query->whereDoesntHave('paiement', fn ($q) => $q->where('statut', 'valide'));
+        if (count($statuts) > 0 && count($statuts) < count(self::STATUTS_PAIEMENT)) {
+            // OU entre les statuts cochés : payé en totalité / partiel / sans paiement
+            $query->where(function ($q) use ($statuts) {
+                if (in_array('paye', $statuts, true)) {
+                    $q->orWhere(fn ($w) => $w->soldees());
+                }
+                if (in_array('partiel', $statuts, true)) {
+                    $q->orWhere(fn ($w) => $w->partielles());
+                }
+                if (in_array('en_attente', $statuts, true)) {
+                    $q->orWhere(fn ($w) => $w->enAttenteDePaiement());
+                }
+            });
         }
 
         $inscriptions = $query
@@ -120,8 +134,9 @@ class AdminInscriptionController extends Controller
             // Totaux sur toute la base (pas seulement la page affichée, ni les filtres)
             'stats' => [
                 'total' => Inscription::count(),
-                'payees' => Inscription::payees()->count(),
-                'en_attente' => Inscription::count() - Inscription::payees()->count(),
+                'payees' => Inscription::soldees()->count(),
+                'partielles' => Inscription::partielles()->count(),
+                'en_attente' => Inscription::enAttenteDePaiement()->count(),
             ],
         ]);
     }
@@ -140,10 +155,13 @@ class AdminInscriptionController extends Controller
     /**
      * Enregistre l'inscription (mêmes règles que l'inscription faite par l'utilisateur :
      * pas de doublon, classe ouverte aux inscriptions, capacité respectée).
-     * L'inscription est créée comme payée au comptoir.
+     * L'inscription est réglée au comptoir : paiement reçu (complet) ou paiement partiel.
      */
     public function store(Request $request, PaiementService $paiementService)
     {
+        // null = paiement complet ; sinon somme versée (paiement partiel)
+        $montantPartiel = $this->montantPartielDemande($request);
+
         $data = $request->validate([
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'classe_id' => ['required', 'integer', 'exists:classes,id'],
@@ -164,10 +182,15 @@ class AdminInscriptionController extends Controller
         }
 
         // Transaction + verrou sur la classe : deux inscriptions simultanées ne dépassent pas la capacité
-        $resultat = DB::transaction(function () use ($data, $user, $paiementService) {
+        $resultat = DB::transaction(function () use ($data, $user, $paiementService, $montantPartiel) {
             $classe = Classe::with('cours')->whereKey($data['classe_id'])->lockForUpdate()->firstOrFail();
 
             if ($erreur = $this->erreurPlace($classe, $user)) {
+                return $erreur;
+            }
+
+            // Paiement partiel : la somme doit rester inférieure au prix de la formation
+            if ($erreur = $this->erreurMontantPartiel($montantPartiel, (float) $paiementService->montantPour($classe, $user), $user->name)) {
                 return $erreur;
             }
 
@@ -177,13 +200,15 @@ class AdminInscriptionController extends Controller
                 'date_inscription' => $data['date_inscription'],
             ]);
 
-            $paiement = $paiementService->creerAuComptoir($inscription);
+            $paiement = $paiementService->creerAuComptoir($inscription, $montantPartiel);
 
             return [$inscription, $paiement];
         });
 
         if (is_string($resultat)) {
-            return back()->withInput()->withErrors(['classe_id' => $resultat]);
+            // L'erreur de somme partielle s'affiche sous le champ de la somme, les autres sous la classe
+            $champ = $montantPartiel !== null && str_starts_with($resultat, 'La somme partielle') ? 'montant_partiel' : 'classe_id';
+            return back()->withInput()->withErrors([$champ => $resultat]);
         }
 
         $paiement = $resultat[1] ?? null;
@@ -196,7 +221,8 @@ class AdminInscriptionController extends Controller
         Notification::create([
             'user_id' => $user->id,
             'message' => 'Inscription enregistrée : « ' . $resultat->classe->cours->titre . ' », début le '
-                . $resultat->classe->date_debut->format('d/m/Y') . '. Paiement confirmé au comptoir.',
+                . $resultat->classe->date_debut->format('d/m/Y') . '.'
+                . ($paiement?->estPartiel() ? ' Paiement partiel enregistré au comptoir.' : ' Paiement confirmé au comptoir.'),
         ]);
 
         // Email hors transaction : un échec d'envoi n'annule pas l'inscription

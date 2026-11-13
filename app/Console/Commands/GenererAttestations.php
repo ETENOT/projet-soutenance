@@ -27,9 +27,10 @@ class GenererAttestations extends Command
         $total = 0;
 
         foreach ($classes as $classe) {
-            // Éligibles, payées, et sans attestation OU avec un e-mail jamais parti
+            // Éligibles, payées EN TOTALITÉ (un paiement partiel n'y a pas droit),
+            // et sans attestation OU avec un e-mail jamais parti
             $inscriptions = $classe->inscriptions()
-                ->payees()
+                ->soldees()
                 ->where('attestation_eligible', true)
                 ->where(fn ($q) => $q
                     ->whereDoesntHave('attestation')

@@ -188,10 +188,10 @@
                                                 <span class="text-muted fs-12">{{ $inscription->user->email }}</span>
                                             </td>
 
-                                            {{-- Une inscription est « payée » si elle possède un Paiement --}}
+                                            {{-- Payé / Paiement partiel (avec le reste) / En attente --}}
                                             <td>
                                                 @if ($inscription->paiement)
-                                                    <span class="badge bg-success-subtle text-success">Payé</span><br>
+                                                    @include('paiements._statut-badge', ['inscription' => $inscription])
                                                     <span class="text-muted fs-12">
                                                         {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa · {{ $inscription->paiement->libelle_mode }}
                                                     </span>
@@ -204,6 +204,17 @@
                                                 <div class="d-inline-flex align-items-center gap-2">
                                                     @if ($inscription->paiement)
                                                         <a href="{{ route('paiements.recu', $inscription->paiement) }}" target="_blank" class="btn btn-sm btn-soft-primary">Reçu</a>
+                                                        {{-- Paiement partiel : modifier la somme versée --}}
+                                                        @if ($inscription->estPartielle())
+                                                            <button type="button" class="btn btn-sm btn-soft-info"
+                                                                    data-bs-toggle="modal" data-bs-target="#modalMontantVerse"
+                                                                    data-action="{{ route('paiements.update', $inscription->paiement) }}"
+                                                                    data-nom="{{ $inscription->user->name }}"
+                                                                    data-montant="{{ $inscription->paiement->montant }}"
+                                                                    data-total="{{ $inscription->paiement->montant_total }}">
+                                                                Modifier la somme versée
+                                                            </button>
+                                                        @endif
                                                     @endif
 
                                                     @unless ($inscription->paiement)
@@ -268,6 +279,13 @@
                                 </p>
                             </div>
 
+                            {{-- Mode de paiement des utilisateurs ajoutés : paiement reçu ou partiel (même somme pour tous) --}}
+                            <h6 class="mt-4 mb-2">Mode de paiement</h6>
+                            @include('paiements._choix-admin', [
+                                'prefixe' => 'edit-classe',
+                                'prix' => $classe->session_id ? $classe->cours->prix_entreprise : $classe->cours->prix_particulier,
+                            ])
+
                             <button type="submit" class="btn btn-outline-primary mt-3">
                                 <i class="ri-user-add-line me-1"></i>Ajouter les utilisateurs sélectionnés
                             </button>
@@ -307,6 +325,9 @@
             </div>
         </div>
     </div>
+{{-- Fenêtre « Modifier la somme versée » (paiements partiels) --}}
+@include('paiements._modal-montant')
+
 @endsection
 
 @section('script')

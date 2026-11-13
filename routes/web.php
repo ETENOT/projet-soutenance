@@ -70,7 +70,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/inscriptions/{inscription}/paiement', [App\Http\Controllers\PaiementController::class, 'create'])
         ->name('paiements.create');
 
-    Route::post('/inscriptions/{inscription}/paiement/payer', [App\Http\Controllers\PaiementController::class, 'payer'])
+    // Paiement en ligne depuis « Choix du paiement » : crée l'inscription puis demande le paiement à Airtel Money
+    // (payer totalement ou partiellement, au moins la moitié du prix)
+    Route::post('/classes/{classe}/paiements/payer', [App\Http\Controllers\PaiementController::class, 'payer'])
+        ->name('paiements.payer.classe');
+
+    // Paiement en ligne d'une inscription qui existe déjà (page « Statut de mes paiements »)
+    Route::post('/inscriptions/{inscription}/paiement/payer', [App\Http\Controllers\PaiementController::class, 'payerInscription'])
         ->name('paiements.payer');
 
     Route::get('statut-paiement', [App\Http\Controllers\CoursController::class, 'statutPaiement'])
@@ -82,12 +88,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/paiements/{paiement}/recu/telecharger', [App\Http\Controllers\PaiementController::class, 'telechargerRecu'])
         ->name('paiements.recu.telecharger');
 
-    // Retours SingPay
-    Route::get('/paiement/success', [App\Http\Controllers\PaiementController::class, 'success'])
-        ->name('paiements.success');
+    // Airtel Money : page d'attente (« validez sur votre téléphone ») et son statut, consulté en AJAX
+    Route::get('/paiements/airtel/{transaction}', [App\Http\Controllers\PaiementController::class, 'attenteAirtel'])
+        ->name('paiements.airtel.attente');
 
-    Route::get('/paiement/error', [App\Http\Controllers\PaiementController::class, 'error'])
-        ->name('paiements.error');
+    Route::get('/paiements/airtel/{transaction}/statut', [App\Http\Controllers\PaiementController::class, 'statutAirtel'])
+        ->middleware('throttle:30,1')
+        ->name('paiements.airtel.statut');
 
     // Première connexion d'un compte créé par l'admin : changement obligatoire du mot de passe par défaut.
     // Noms en « password.force.* » : le middleware ForcePasswordChange laisse passer ces routes.
@@ -98,10 +105,21 @@ Route::middleware('auth')->group(function () {
         ->name('password.force.update');
 });
 
-// Paiement direct au comptoir — réservé à l'admin
+// Notification de rappel d'Airtel Money (opération terminée) : publique, appelée par les serveurs d'Airtel.
+// Exclue de la vérification CSRF (VerifyCsrfToken). Le statut est toujours revérifié auprès d'Airtel.
+Route::post('/paiements/airtel/rappel', [App\Http\Controllers\PaiementController::class, 'rappelAirtel'])
+    ->middleware('throttle:60,1')
+    ->name('paiements.airtel.rappel');
+
+// Paiement direct au comptoir — réservé à l'admin (paiement reçu ou paiement partiel)
 Route::post('/inscriptions/{inscription}/paiement/direct', [App\Http\Controllers\PaiementController::class, 'store'])
-    ->middleware(['auth', 'role:admin'])
+    ->middleware(['auth', 'role:admin', 'droit'])
     ->name('paiements.store');
+
+// Modifier la somme versée d'un paiement (partiel en général) — réservé à l'admin
+Route::put('/paiements/{paiement}/montant', [App\Http\Controllers\PaiementController::class, 'update'])
+    ->middleware(['auth', 'role:admin'])
+    ->name('paiements.update');
 
 
 // ==========================================================================
@@ -223,22 +241,6 @@ Route::middleware(['auth', 'role:particulier'])->group(function () {
     Route::post('/classes/{classe}/evaluation', [App\Http\Controllers\EvaluationFinFormationController::class, 'store'])
         ->name('evaluations.store');
 
-    // ----- Quiz de chapitre + quiz final (parcours type Cisco) -----
-    // Réservés aux particuliers inscrits à une classe du cours (vérifié dans ParcoursEvaluationService).
-    // Le quiz du cours ci-dessus (quiz.tentative.*) n'est pas concerné.
-
-    // Parcours : étapes (cadenas / débloqué / fait) et historique de chaque quiz
-    Route::get('/cours/{cours}/parcours-quiz', [App\Http\Controllers\EvaluationChapitreController::class, 'parcours'])
-        ->name('evaluations.parcours');
-
-    // Passer ou reprendre le quiz final (déclaré AVANT la route du chapitre)
-    Route::get('/cours/{cours}/parcours-quiz/final', [App\Http\Controllers\EvaluationChapitreController::class, 'final'])
-        ->name('evaluations.final');
-
-    // Passer ou reprendre le quiz d'un chapitre
-    Route::get('/cours/{cours}/parcours-quiz/chapitre/{chapitre}', [App\Http\Controllers\EvaluationChapitreController::class, 'chapitre'])
-        ->name('evaluations.chapitre');
-
     // Onglet « Entreprise » : entreprise dont le particulier est membre (lecture seule)
     Route::get('/mon-entreprise', [MonEntrepriseController::class, 'index'])->name('particulier.entreprise.index');
     Route::delete('/mon-entreprise/quitter', [MonEntrepriseController::class, 'quitter'])->name('particulier.entreprise.quitter');
@@ -304,7 +306,7 @@ Route::middleware(['auth', 'role:entreprise'])->group(function () {
 // ADMINISTRATION
 // ==========================================================================
 
-Route::middleware(['auth', 'role:admin'])
+Route::middleware(['auth', 'role:admin', 'droit'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -427,12 +429,6 @@ Route::middleware(['auth', 'role:admin'])
         // Supprimer un chapitre
         Route::delete('/cours/{cours}/chapitres/{chapitre}', [App\Http\Controllers\ChapitreController::class, 'destroy'])
             ->name('cours.chapitres.destroy');
-
-        // Quiz des chapitres et quiz final d'un cours : « noté sur » de chaque chapitre et du final
-        Route::get('/cours/{cours}/quiz-chapitres', [App\Http\Controllers\AdminQuizChapitreController::class, 'edit'])
-            ->name('cours.quiz-chapitres');
-        Route::put('/cours/{cours}/quiz-chapitres', [App\Http\Controllers\AdminQuizChapitreController::class, 'update'])
-            ->name('cours.quiz-chapitres.update');
 
 
         // ------------------------------------------------------------------
@@ -580,7 +576,6 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::get('/sessions', [AdminSessionController::class, 'index'])->name('sessions.index');
         Route::post('/sessions', [AdminSessionController::class, 'store'])->name('sessions.store');
-        Route::get('/sessions/{sessionFormation}', [AdminSessionController::class, 'show'])->name('sessions.show');
         Route::put('/sessions/{sessionFormation}', [AdminSessionController::class, 'update'])->name('sessions.update');
         Route::delete('/sessions/{sessionFormation}', [AdminSessionController::class, 'destroy'])->name('sessions.destroy');
         Route::post('/sessions/suppression-multiple', [AdminSessionController::class, 'destroyMultiple']) ->name('sessions.destroy-multiple');
@@ -642,6 +637,10 @@ Route::middleware(['auth', 'role:admin'])
                 Route::post('/{classe}/inscrits', [App\Http\Controllers\ClasseController::class, 'ajouterUtilisateur'])
                     ->name('inscrits.store');
 
+                // Créer un nouveau membre de l'entreprise et l'inscrire à la classe
+                Route::post('/{classe}/inscrits/nouveau', [App\Http\Controllers\ClasseController::class, 'creerMembre'])
+                    ->name('inscrits.nouveau');
+
                 // Retirer un utilisateur d'une classe
                 Route::delete('/{classe}/inscrits/{user}', [App\Http\Controllers\ClasseController::class, 'retirerUtilisateur'])
                     ->name('inscrits.destroy');
@@ -653,6 +652,9 @@ Route::middleware(['auth', 'role:admin'])
                 // Recherche en direct des utilisateurs qu'on peut encore inscrire dans la classe (JSON)
                 Route::get('/{classe}/candidats', [App\Http\Controllers\ClasseController::class, 'candidats'])
                     ->name('candidats');
+
+                Route::post('/{classe}/inscrits/nouveau', [App\Http\Controllers\ClasseController::class, 'creerMembre'])
+                    ->name('inscrits.nouveau');
             });
     });
 

@@ -14,12 +14,25 @@ class AttestationController extends Controller
     private function verifierAcces(Attestation $attestation): void
     {
         $user = Auth::user();
+        $estAdmin = $user->role?->nom === 'admin';
 
         abort_unless(
-            $attestation->user_id === $user->id || $user->role?->nom === 'admin',
+            $attestation->user_id === $user->id || $estAdmin,
             403,
             'Cette attestation ne vous appartient pas.'
         );
+
+        // Le stagiaire ne voit / ne télécharge son attestation que si la formation est payée
+        // en TOTALITÉ (un paiement partiel bloque l'attestation). L'admin garde l'accès.
+        if (! $estAdmin) {
+            $inscription = $attestation->inscription()->with('paiement')->first();
+
+            abort_unless(
+                $inscription?->estSoldee(),
+                403,
+                'Vous devez payer la totalité de la formation pour recevoir votre attestation de suivi de formation.'
+            );
+        }
     }
 
     /**

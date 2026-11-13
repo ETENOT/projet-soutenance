@@ -202,8 +202,9 @@ class FormateurSeeder extends Seeder
         Paiement::create([
             'inscription_id' => $inscription->id,
             'montant' => $montant,
+            'montant_total' => $montant,   // payé en totalité : reste à payer = 0
             'mode' => 'direct',
-            'statut' => 'valide', // la définition de "payé" utilisée dans tout le projet
+            'statut' => Paiement::STATUT_VALIDE, // payé en totalité (le statut 'partiel' existe aussi)
         ]);
     }
 

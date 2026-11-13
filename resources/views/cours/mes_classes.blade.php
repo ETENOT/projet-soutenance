@@ -82,6 +82,17 @@
                                         Du {{ $inscription->classe->date_debut->format('d/m/Y') }}
                                         au {{ $inscription->classe->date_fin->format('d/m/Y') }}
                                     </div>
+                                    {{-- Paiement partiel : on rappelle le reste à verser --}}
+                                    @if ($inscription->estPartielle())
+                                        <div class="small mt-1">
+                                            <span class="badge bg-info-subtle text-info">
+                                                <i class="ri-pie-chart-line me-1"></i>Paiement partiel
+                                            </span>
+                                            <span class="text-muted ms-1">
+                                                Reste à payer : {{ number_format($inscription->paiement->reste_a_payer, 0, ',', ' ') }} fcfa
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -131,6 +142,17 @@
                                         <i class="ri-calendar-event-line text-danger me-1"></i>
                                         Début : {{ $inscription->classe->date_debut->format('d/m/Y') }}
                                     </div>
+                                    {{-- Paiement partiel : on rappelle le reste à verser --}}
+                                    @if ($inscription->estPartielle())
+                                        <div class="small mt-1">
+                                            <span class="badge bg-info-subtle text-info">
+                                                <i class="ri-pie-chart-line me-1"></i>Paiement partiel
+                                            </span>
+                                            <span class="text-muted ms-1">
+                                                Reste à payer : {{ number_format($inscription->paiement->reste_a_payer, 0, ',', ' ') }} fcfa
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -181,6 +203,17 @@
                                         Du {{ $inscription->classe->date_debut->format('d/m/Y') }}
                                         au {{ $inscription->classe->date_fin->format('d/m/Y') }}
                                     </div>
+                                    {{-- Paiement partiel : on rappelle le reste à verser --}}
+                                    @if ($inscription->estPartielle())
+                                        <div class="small mt-1">
+                                            <span class="badge bg-info-subtle text-info">
+                                                <i class="ri-pie-chart-line me-1"></i>Paiement partiel
+                                            </span>
+                                            <span class="text-muted ms-1">
+                                                Reste à payer : {{ number_format($inscription->paiement->reste_a_payer, 0, ',', ' ') }} fcfa
+                                            </span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -192,7 +225,25 @@
                                 </a>
 
                                 {{-- Attestation de formation : téléchargeable si éligible, sinon explication --}}
-                                @if ($inscription->attestation)
+                                @if ($inscription->estPartielle() && $inscription->attestation_eligible !== false)
+                                    {{-- Paiement partiel : mêmes boutons, mais grisés, avec l'explication.
+                                         (une présence insuffisante garde, elle, le message « non délivrée » ci-dessous) --}}
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="btn btn-sm btn-soft-secondary" disabled
+                                                aria-label="Voir mon attestation (indisponible)">
+                                            <i class="ri-eye-line"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm text-nowrap" disabled>
+                                            <i class="ri-download-2-line me-1"></i>Télécharger mon attestation
+                                        </button>
+                                    </div>
+                                    <small class="text-danger text-md-end" style="max-width: 22rem;">
+                                        <i class="ri-lock-line me-1"></i>
+                                        Vous devez payer la totalité de la formation pour recevoir votre attestation
+                                        de suivi de formation (reste à payer :
+                                        {{ number_format($inscription->paiement->reste_a_payer, 0, ',', ' ') }} fcfa).
+                                    </small>
+                                @elseif ($inscription->attestation)
                                 {{-- Œil (voir dans un nouvel onglet) + bouton de téléchargement, côte à côte --}}
                                 <div class="d-flex align-items-center gap-2">
                                     <a href="{{ route('attestations.voir', $inscription->attestation) }}"
