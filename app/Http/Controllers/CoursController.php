@@ -181,31 +181,12 @@ class CoursController extends Controller
     }
 
     /**
- * Affiche le détail d'un cours côté administration.
- */
+     * Ancienne fiche d'un cours côté administration.
+     * Remplacée par la page « Contenus » (chapitres et ressources) : on y renvoie l'admin.
+     */
     public function adminShow(Cours $cours)
     {
-        $cours->load([
-            'categorie',
-            'chapitres' => function ($query) {
-                $query->orderBy('ordre');
-            },
-
-            'resources',
-
-            'classes' => function ($query) {
-                $query->withCount('inscriptions')
-                    ->orderBy('date_debut');
-            },
-
-            'quizzes' => function ($query) {
-                $query->orderBy('date');
-            },
-        ]);
-
-        return view('cours.admin-show', [
-            'cours' => $cours,
-        ]);
+        return redirect()->route('admin.cours.contenus', $cours);
     }
 
     /**
@@ -316,13 +297,12 @@ class CoursController extends Controller
     }
 
     /**
-     * Affiche le formulaire vide de création d'un cours.
+     * La création d'un cours se fait dans la fenêtre « Ajouter un cours » de la liste des cours :
+     * l'ancienne page dédiée renvoie vers cette liste.
      */
     public function create()
     {
-        return view('cours.create', [
-            'categories' => Categorie::orderBy('nom')->get(),
-        ]);
+        return redirect()->route('admin.cours.index');
     }
 
     /**
@@ -402,14 +382,12 @@ class CoursController extends Controller
     }
 
     /**
-     * Affiche le formulaire de modification.
+     * La modification d'un cours se fait dans la fenêtre « Modifier » de la liste des cours :
+     * l'ancienne page dédiée renvoie vers cette liste, filtrée sur le titre du cours.
      */
     public function edit(Cours $cours)
     {
-        return view('cours.edit', [
-            'cours' => $cours,
-            'categories' => Categorie::orderBy('nom')->get(),
-        ]);
+        return redirect()->route('admin.cours.index', ['q' => $cours->titre]);
     }
 
     /**

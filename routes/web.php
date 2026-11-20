@@ -652,9 +652,6 @@ Route::middleware(['auth', 'role:admin', 'droit'])
                 // Recherche en direct des utilisateurs qu'on peut encore inscrire dans la classe (JSON)
                 Route::get('/{classe}/candidats', [App\Http\Controllers\ClasseController::class, 'candidats'])
                     ->name('candidats');
-
-                Route::post('/{classe}/inscrits/nouveau', [App\Http\Controllers\ClasseController::class, 'creerMembre'])
-                    ->name('inscrits.nouveau');
             });
     });
 

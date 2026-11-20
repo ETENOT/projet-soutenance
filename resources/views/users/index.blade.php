@@ -280,7 +280,7 @@
                             $nomRole = $utilisateur->role?->nom;
                             $badgeRole = match ($nomRole) {
                                 'admin'       => ['bg-danger-subtle text-danger', $utilisateur->libelleProfilAdmin() ?? 'Administrateur'],
-                                'entreprise'  => ['bg-info-subtle text-info', 'Entreprise'],
+                                'entreprise'  => ['bg-success-subtle text-success', 'Entreprise'],
                                 'particulier' => ['bg-primary-subtle text-primary', 'Particulier'],
                                 'formateur'   => ['bg-secondary-subtle text-secondary', 'Formateur'],
                                 default       => ['bg-secondary-subtle text-secondary', '—'],

@@ -14,11 +14,15 @@
 @php
     $role = Auth::user()?->role?->nom;
 
-    // Prochaines classes : les 3 plus proches dans le futur
-    $prochainesSessions = $cours->classes
-        ->filter(fn ($classe) => \Carbon\Carbon::parse($classe->date_debut)->isFuture())
+    // Classes affichées : seulement celles où l'on peut encore s'inscrire.
+    // Une classe déjà commencée, terminée ou fermée est masquée (même pour un inscrit, qui la retrouve dans « Mes classes »).
+    $classesOuvertes = $cours->classes
+        ->filter(fn ($classe) => $classe->inscriptionsOuvertes())
         ->sortBy('date_debut')
-        ->take(3);
+        ->values();
+
+    // Prochaines classes : les 3 plus proches parmi les classes ouvertes
+    $prochainesSessions = $classesOuvertes->take(3);
 
     // Inscrit à au moins une classe de ce cours (la liste $mesInscriptions vient du contrôleur)
     $estInscrit = $mesInscriptions->intersect($cours->classes->pluck('id'))->isNotEmpty();
@@ -102,7 +106,7 @@
                                 </span>
                                 @unless ($role === 'entreprise')
                                 <span>
-                                    <i class="ri-group-line text-danger fs-5 align-middle me-1"></i>{{ $cours->classes->count() }} classes
+                                    <i class="ri-group-line text-danger fs-5 align-middle me-1"></i>{{ $classesOuvertes->count() }} classes
                                 </span>
                                 @endunless
                             </div>
@@ -350,7 +354,7 @@
                     @if ($role === 'entreprise')
                         @include('cours.partials.classes-entreprise')
                     @else
-                        @forelse($cours->classes as $classe)
+                        @forelse($classesOuvertes as $classe)
                             <div class="border rounded-3 p-3 mb-3">
                                 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3">
 

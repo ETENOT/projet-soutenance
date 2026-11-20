@@ -298,94 +298,27 @@ class ClasseController extends Controller
         return $retour;
     }
 
+    /**
+     * Les classes d'un cours s'affichent dans la liste générale des classes (filtrée sur ce cours),
+     * où se trouvent aussi les fenêtres « Ajouter une classe » et « Modifier » :
+     * les anciennes pages dédiées renvoient vers cette liste.
+     */
     public function index(Cours $cours)
     {
-        $request = request();
-        $request->validate([
-            'q' => ['nullable', 'string', 'max:255'],
-            'etat' => ['nullable', 'array'],
-            'etat.*' => [Rule::in(['a_venir', 'en_cours', 'terminee', 'fermee'])],
-            'completes' => ['nullable', 'boolean'],
-            'incompletes' => ['nullable', 'boolean'],
-            'inscrits_min' => ['nullable', 'integer', 'min:0'],
-            'inscrits_max' => array_filter([
-                'nullable',
-                'integer',
-                'min:0',
-                $request->filled('inscrits_min') ? 'gte:inscrits_min' : null,
-            ]),
-        ]);
-
-        $classes = $cours->classes()
-            ->publiques()
-            ->with('formateur')
-            ->withCount('inscriptions');
-
-        if ($recherche = trim((string) $request->input('q'))) {
-            $classes->where(function ($query) use ($recherche) {
-                $query->where('nom', 'like', "%{$recherche}%")
-                    ->orWhere('lieu', 'like', "%{$recherche}%")
-                    ->orWhereHas('formateur', fn ($formateur) => $formateur->where('name', 'like', "%{$recherche}%"));
-            });
-        }
-
-        $etats = array_values(array_unique((array) $request->input('etat', [])));
-        if ($etats) {
-            $classes->where(function ($query) use ($etats) {
-                foreach ($etats as $etat) {
-                    $query->orWhere(function ($sousRequete) use ($etat) {
-                        if ($etat === 'fermee') {
-                            $sousRequete->whereNotNull('fermee_le');
-                        } elseif ($etat === 'terminee') {
-                            $sousRequete->avecEtat('terminee')->whereNull('fermee_le');
-                        } else {
-                            $sousRequete->avecEtat($etat);
-                        }
-                    });
-                }
-            });
-        }
-
-        if ($request->boolean('completes')) {
-            $classes->whereRaw(
-                '(select count(*) from inscriptions where inscriptions.classe_id = classes.id) >= classes.capacite_max'
-            );
-        }
-        if ($request->boolean('incompletes')) {
-            $classes->whereRaw(
-                '(select count(*) from inscriptions where inscriptions.classe_id = classes.id) < classes.capacite_max'
-            );
-        }
-        if ($request->filled('inscrits_min')) {
-            $classes->has('inscriptions', '>=', (int) $request->input('inscrits_min'));
-        }
-        if ($request->filled('inscrits_max')) {
-            $classes->has('inscriptions', '<=', (int) $request->input('inscrits_max'));
-        }
-
-        return view('classes.index', [
-            'cours' => $cours,
-            'classes' => $classes->orderBy('date_debut')->paginate(10)->withQueryString(),
-            'etatsChoisis' => $etats,
-        ]);
+        return redirect()->route('admin.classes.index', ['cours_id' => $cours->id]);
     }
 
     public function create(Cours $cours)
     {
-        return view('classes.create', ['cours' => $cours, 'formateurs' => $this->formateurs()]);
+        return redirect()->route('admin.classes.index', ['cours_id' => $cours->id]);
     }
 
+    // L'ancienne fiche d'une classe est remplacée par la page « Gérer la classe »
     public function show(Cours $cours, Classe $classe)
     {
         abort_unless((int) $classe->cours_id === (int) $cours->id, 404);
 
-        $classe->load('formateur', 'inscriptions.user', 'inscriptions.paiement')
-            ->loadCount('inscriptions');
-
-        return view('classes.show', [
-            'cours' => $cours,
-            'classe' => $classe,
-        ]);
+        return redirect()->route('admin.cours.classes.gerer', [$cours, $classe]);
     }
 
     // Comptes ayant le rôle "formateur" : liste proposée dans les formulaires de classe.
@@ -496,25 +429,13 @@ class ClasseController extends Controller
             ->with('success', 'Classe créée avec succès.');
     }
 
+    // Les informations de la classe se modifient dans la fenêtre « Modifier » de la liste des classes,
+    // les inscrits et les jours non comptabilisés dans « Gérer la classe » : on y renvoie l'admin.
     public function edit(Cours $cours, Classe $classe)
     {
-        // Charge les inscrits, leur utilisateur et leur paiement en une fois (3 requêtes en tout).
-        // Sans ça, la vue ferait une requête par ligne pour retrouver l'utilisateur
-        // et savoir si l'inscription est payée.
-        $classe->load('inscriptions.user', 'inscriptions.paiement', 'joursExclus');
+        abort_unless((int) $classe->cours_id === (int) $cours->id, 404);
 
-        // Classe de SESSION : uniquement les membres de l'entreprise de la session.
-        // Classe publique : tous les utilisateurs inscriptibles (ni admin, ni formateur).
-        // Dans les deux cas, on exclut ceux qui sont déjà inscrits.
-        $candidats = $this->requeteCandidats($classe)
-            ->get(['users.id', 'users.name', 'users.email']);
-
-        return view('classes.edit', [
-            'cours' => $cours,
-            'classe' => $classe,
-            'formateurs' => $this->formateurs(),
-            'candidats' => $candidats,
-        ]);
+        return redirect()->route('admin.cours.classes.gerer', [$cours, $classe]);
     }
 
     public function update(Request $request, Cours $cours, Classe $classe)
@@ -697,7 +618,8 @@ class ClasseController extends Controller
      * Classe de SESSION (entreprise) : crée un nouveau collaborateur, le rattache à l'entreprise de la session
      * et l'inscrit à la classe, en une seule fois. Il apparaît donc aussi dans la liste des membres de
      * l'entreprise (menu « Gestion des entreprises »), sans devoir l'y créer d'abord.
-     * Même règles que l'ajout classique : classe ouverte, places disponibles, paiement enregistré au comptoir.
+     * Même règles que l'ajout classique : classe ouverte, places disponibles, paiement enregistré au comptoir,
+     * avec le même choix « Paiement reçu » (reste 0) ou « Paiement partiel » (somme versée, inférieure au prix).
      */
     public function creerMembre(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService, CompteAdminService $comptes)
     {
@@ -729,10 +651,20 @@ class ClasseController extends Controller
             'date_de_naissance.before_or_equal' => 'La date de naissance ne peut pas être dans le futur.',
         ]);
 
+        // null = paiement reçu en totalité ; sinon somme versée (paiement partiel)
+        $montantPartiel = $this->montantPartielDemande($request);
+
+        // Classe de session : tarif entreprise (même règle que PaiementService::montantPour)
+        $classe->loadMissing('cours');
+        $prix = (float) $classe->cours->prix_entreprise;
+        if ($erreur = $this->erreurMontantPartiel($montantPartiel, $prix, $data['name'])) {
+            return back()->withInput()->withErrors(['montant_partiel' => $erreur]);
+        }
+
         $entreprise = $classe->session->entreprise;
 
         // Tout ou rien : profil, compte, rattachement et inscription sont créés ensemble
-        [$user, $paiement] = DB::transaction(function () use ($data, $entreprise, $classe, $comptes, $paiementService) {
+        [$user, $paiement] = DB::transaction(function () use ($data, $entreprise, $classe, $comptes, $paiementService, $montantPartiel) {
             $profil = Particulier::create([
                 'telephone' => $data['telephone'],
                 'date_de_naissance' => $data['date_de_naissance'] ?? null,
@@ -751,14 +683,19 @@ class ClasseController extends Controller
                 ['date_inscription' => now()]
             );
 
-            return [$user, $paiementService->creerAuComptoir($inscription)];
+            // Paiement complet (null) ou partiel de la somme saisie
+            return [$user, $paiementService->creerAuComptoir($inscription, $montantPartiel)];
         });
 
         if ($paiement) {
             $paiementService->envoyerEmail($paiement);
         }
 
-        return back()->with('success', "{$user->name} a été créé, ajouté à « {$entreprise->raison_sociale} » et inscrit à la classe. "
+        $textePaiement = $montantPartiel === null
+            ? 'avec un paiement reçu'
+            : 'avec un paiement partiel de ' . number_format($montantPartiel, 0, ',', ' ') . ' fcfa';
+
+        return back()->with('success', "{$user->name} a été créé, ajouté à « {$entreprise->raison_sociale} » et inscrit à la classe {$textePaiement}. "
             . 'Mot de passe temporaire : ' . User::MOT_DE_PASSE_PAR_DEFAUT . ' (à changer à sa première connexion).');
     }
 

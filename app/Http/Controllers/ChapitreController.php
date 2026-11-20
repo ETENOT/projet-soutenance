@@ -8,19 +8,20 @@ use Illuminate\Http\Request;
 
 class ChapitreController extends Controller
 {
+    /**
+     * L'ajout et la modification d'un chapitre se font dans les fenêtres de la page « Contenus » du cours :
+     * les anciennes pages dédiées renvoient vers cette page.
+     */
     public function create(Cours $cours)
     {
-        // Numéro proposé par défaut : le suivant du plus grand ordre déjà utilisé dans ce cours
-        $prochainOrdre = ($cours->chapitres()->max('ordre') ?? 0) + 1;
-
-        return view('chapitres.create', compact('cours', 'prochainOrdre'));
+        return redirect()->route('admin.cours.contenus', $cours);
     }
 
     public function edit(Cours $cours, Chapitre $chapitre)
     {
         $this->verifierCoursParent($cours, $chapitre);
 
-        return view('chapitres.edit', compact('cours', 'chapitre'));
+        return redirect()->route('admin.cours.contenus', $cours);
     }
 
     /**

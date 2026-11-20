@@ -275,9 +275,8 @@
                     <div class="text-muted small">{{ $inscription->user?->email ?? '—' }}</div>
                 </div>
                 <div class="text-end flex-shrink-0">
-                    <span class="badge bg-{{ $inscription->paiement ? 'success' : 'warning' }}-subtle text-{{ $inscription->paiement ? 'success' : 'warning' }}">
-                        {{ $inscription->paiement ? 'Payé' : 'Impayé' }}
-                    </span>
+                    {{-- Payé / Paiement partiel (+ reste à payer) / En attente --}}
+                    @include('paiements._statut-badge', ['inscription' => $inscription])
                     <div class="text-muted small mt-1">Inscrit le {{ $inscription->created_at?->format('d/m/Y') ?? '—' }}</div>
                 </div>
             </div>

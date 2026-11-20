@@ -230,13 +230,8 @@
                 <button class="btn btn-primary w-100" type="submit">S'inscrire</button>
             </div>
         </form>
-
-        {-- « Continuer avec Google » : crée un compte particulier
-                                     (une entreprise utilise le formulaire ci-dessus) --}}
-                                @include('auth._bouton-google')
-                                <p class="text-muted fs-12 text-center mt-2 mb-0">
-                                    {{ __('Avec Google, le compte créé est un compte particulier.') }}
-                                </p>
+        {{-- « Continuer avec Google » : le rôle (particulier ou entreprise) est choisi à l'étape suivante --}}
+        @include('auth._bouton-google')
 
     <p class="text-center mt-4 mb-0">
         Déjà inscrit ? <a href="{{ route('login') }}" class="fw-semibold">Se connecter</a>
@@ -389,4 +384,4 @@
         document.addEventListener('DOMContentLoaded', toggleRoleFields);
     </script>
 
-@endsection
+@endsection

@@ -6,10 +6,11 @@
 
 {{--
     Page affichée après « Continuer avec Google » quand aucun compte n'existe encore
-    pour cette adresse e-mail. Google fournit le nom et l'e-mail ; il manque le téléphone,
-    obligatoire pour un particulier. Le compte créé est un compte PARTICULIER,
-    avec l'adresse e-mail déjà vérifiée (pas de code à 6 chiffres).
-    Variable : $google = ['google_id', 'name', 'email'] (session, voir GoogleController).
+    pour cette adresse e-mail. Google fournit le nom et l'e-mail ; comme sur la page d'inscription,
+    l'utilisateur choisit son rôle (Particulier ou Entreprise) et complète les champs de ce rôle.
+    L'adresse e-mail est déjà vérifiée par Google (pas de code à 6 chiffres).
+    Variables : $google = ['google_id', 'name', 'email'] (session, voir GoogleController)
+                $roleVerrouille = quiz visiteur en attente avec cette adresse -> rôle « Particulier » imposé.
 --}}
 
 @section('content')
@@ -47,7 +48,7 @@
                                 </span>
                                 <h5 class="text-primary">{{ __('Finaliser votre inscription') }}</h5>
                                 <p class="text-muted mb-0">
-                                    {{ __('Votre compte Google est reconnu. Il ne manque que votre numéro de téléphone.') }}
+                                    {{ __('Votre compte Google est reconnu. Indiquez si vous êtes un particulier ou une entreprise, puis complétez votre profil.') }}
                                 </p>
                             </div>
 
@@ -80,6 +81,30 @@
                                         </div>
                                     </div>
 
+                                    {{-- Rôle : mêmes options que la page d'inscription (register.blade.php).
+                                         Il décide quel bloc ci-dessous est affiché et actif (toggleRoleFields()). --}}
+                                    <div class="mb-3">
+                                        <label for="role" class="form-label">Vous êtes <span class="text-danger">*</span></label>
+                                        @if ($roleVerrouille)
+                                            <input type="hidden" name="role" value="particulier">
+                                        @endif
+                                        <select id="role" name="role" required onchange="toggleRoleFields()"
+                                                class="form-select @error('role') is-invalid @enderror"
+                                                @disabled($roleVerrouille)>
+                                            <option value="particulier" @selected(old('role', 'particulier') === 'particulier')>Particulier</option>
+                                            <option value="entreprise" @selected(old('role') === 'entreprise')>Entreprise</option>
+                                        </select>
+                                        @if ($roleVerrouille)
+                                            <div class="form-text">Vous avez passé un quiz avec cette adresse : le compte est créé en tant que particulier pour retrouver votre résultat.</div>
+                                        @endif
+                                        @error('role')
+                                            <div class="invalid-feedback"><strong>{{ $message }}</strong></div>
+                                        @enderror
+                                    </div>
+
+                                    {{-- ===== Bloc « particulier » (actif par défaut) ===== --}}
+                                    <div id="particulier-fields">
+
                                     {{-- Téléphone : même sélecteur d'indicatif que l'inscription classique.
                                          Le champ visible n'a pas de "name" : intl-tel-input envoie un champ caché
                                          "telephone" au format international (ex. +24177123456). --}}
@@ -108,6 +133,56 @@
                                         @enderror
                                     </div>
 
+                                    </div>
+
+                                    {{-- ===== Bloc « entreprise » : masqué ET désactivé tant que « Entreprise » n'est pas choisi
+                                         (un champ disabled n'est ni envoyé ni vérifié par le navigateur) ===== --}}
+                                    <div id="entreprise-fields" class="d-none">
+                                        <div class="mb-3">
+                                            <label for="raison_sociale" class="form-label">Raison sociale <span class="text-danger">*</span></label>
+                                            <input type="text" name="raison_sociale" id="raison_sociale" required disabled
+                                                   class="form-control @error('raison_sociale') is-invalid @enderror"
+                                                   value="{{ old('raison_sociale') }}" placeholder="Entrez la raison sociale">
+                                            <div class="invalid-feedback">
+                                                @error('raison_sociale') <strong>{{ $message }}</strong> @else Veuillez saisir la raison sociale. @enderror
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="adresse" class="form-label">Siège social <span class="text-danger">*</span></label>
+                                            <input type="text" name="adresse" id="adresse" required disabled
+                                                   class="form-control @error('adresse') is-invalid @enderror"
+                                                   value="{{ old('adresse') }}" placeholder="Entrez le siège social">
+                                            <div class="invalid-feedback">
+                                                @error('adresse') <strong>{{ $message }}</strong> @else Veuillez saisir le siège social. @enderror
+                                            </div>
+                                        </div>
+
+                                        {{-- Même principe que le téléphone : champ caché "contact_principal" au format international --}}
+                                        <div class="mb-3">
+                                            <label for="contact_principal" class="form-label">Contact principal <span class="text-danger">*</span></label><br>
+                                            <input type="tel" id="contact_principal" required disabled
+                                                   class="form-control @error('contact_principal') is-invalid @enderror">
+                                            <div class="invalid-feedback">
+                                                @error('contact_principal')
+                                                    <strong>{{ $message }}</strong>
+                                                @else
+                                                    Veuillez entrer un numéro de contact valide pour le pays sélectionné.
+                                                @enderror
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="secteur_activite" class="form-label">Secteur d'activité</label>
+                                            <input type="text" name="secteur_activite" id="secteur_activite" disabled
+                                                   class="form-control @error('secteur_activite') is-invalid @enderror"
+                                                   value="{{ old('secteur_activite') }}" placeholder="Entrez le secteur d'activité">
+                                            @error('secteur_activite')
+                                                <div class="invalid-feedback"><strong>{{ $message }}</strong></div>
+                                            @enderror
+                                        </div>
+                                    </div>
+
                                     <div class="mt-4">
                                         <button type="submit" class="btn btn-success w-100">
                                             {{ __('Créer mon compte') }}
@@ -123,10 +198,6 @@
                                     </button>
                                 </form>
 
-                                <p class="text-muted fs-12 text-center mb-0">
-                                    {{ __('Vous représentez une entreprise ?') }}
-                                    <a href="{{ route('register') }}">{{ __('Créez votre compte avec le formulaire d\'inscription') }}</a>.
-                                </p>
                             </div>
 
                         </div>
@@ -160,9 +231,25 @@
     <script src="{{ URL::asset('build/libs/intl-tel-input/js/intlTelInputWithUtils.min.js') }}"></script>
 
     <script>
-        // Même configuration du téléphone que la page d'inscription (register.blade.php)
-        document.addEventListener('DOMContentLoaded', function () {
-            const champ = document.getElementById('telephone');
+        // Même fonctionnement que la page d'inscription (register.blade.php) :
+        // deux champs téléphone (particulier / entreprise) et affichage selon le rôle choisi.
+
+        // Liste des pays au format « Nom drapeau +indicatif »
+        function formaterListePays() {
+            document.querySelectorAll('.iti__country-list li.iti__country:not([data-format-ok])').forEach(function (li) {
+                const drapeau = li.querySelector(':scope > .iti__flag');
+                const nom = li.querySelector(':scope > .iti__country-name');
+                const indicatif = nom ? nom.querySelector('.iti__dial-code') : null;
+                if (!drapeau || !indicatif) return;
+                indicatif.textContent = '+' + li.dataset.dialCode;
+                nom.after(drapeau);
+                drapeau.after(indicatif);
+                li.dataset.formatOk = '1';
+            });
+        }
+
+        function setupPhoneField(id, ancien) {
+            const champ = document.getElementById(id);
 
             const iti = window.intlTelInput(champ, {
                 initialCountry: 'ga',              // Gabon par défaut
@@ -170,35 +257,49 @@
                 countryNameLocale: 'fr',           // noms de pays en français
                 separateDialCode: true,            // indicatif affiché à côté du drapeau
                 strictMode: true,                  // chiffres uniquement, longueur du pays
-                // À l'envoi : champ caché name="telephone" avec le numéro international complet
-                hiddenInputs: () => ({ phone: 'telephone' }),
+                // À l'envoi : champ caché name="{id}" avec le numéro international complet
+                hiddenInputs: () => ({ phone: id }),
             });
 
             // Retour après une erreur : on remet le numéro saisi
-            const ancien = @json(old('telephone'));
             if (ancien) iti.setNumber(ancien);
 
             // Numéro invalide pour le pays choisi -> envoi bloqué et message affiché
             function verifier() {
-                if (champ.value.trim() === '') { champ.setCustomValidity(''); return; }
+                if (champ.disabled || champ.value.trim() === '') { champ.setCustomValidity(''); return; }
                 champ.setCustomValidity(iti.isValidNumber() === false ? 'Numéro invalide pour le pays sélectionné.' : '');
             }
             champ.addEventListener('input', verifier);
             champ.addEventListener('countrychange', verifier);
+            champ.addEventListener('open:countrydropdown', formaterListePays);
 
-            // Liste des pays au format « Nom drapeau +indicatif », comme à l'inscription
-            champ.addEventListener('open:countrydropdown', function () {
-                document.querySelectorAll('.iti__country-list li.iti__country:not([data-format-ok])').forEach(function (li) {
-                    const drapeau = li.querySelector(':scope > .iti__flag');
-                    const nom = li.querySelector(':scope > .iti__country-name');
-                    const indicatif = nom ? nom.querySelector('.iti__dial-code') : null;
-                    if (!drapeau || !indicatif) return;
-                    indicatif.textContent = '+' + li.dataset.dialCode;
-                    nom.after(drapeau);
-                    drapeau.after(indicatif);
-                    li.dataset.formatOk = '1';
-                });
-            });
-        });
+            return { iti, verifier };
+        }
+
+        const champTelephone = setupPhoneField('telephone', @json(old('telephone')));
+        const champContact = setupPhoneField('contact_principal', @json(old('contact_principal')));
+
+        // Affiche le bloc du rôle choisi et désactive les champs de l'autre bloc
+        // (un champ désactivé n'est ni envoyé ni vérifié, même s'il est "required")
+        function toggleRoleFields() {
+            const estParticulier = document.getElementById('role').value === 'particulier';
+            const blocParticulier = document.getElementById('particulier-fields');
+            const blocEntreprise = document.getElementById('entreprise-fields');
+
+            blocParticulier.classList.toggle('d-none', !estParticulier);
+            blocEntreprise.classList.toggle('d-none', estParticulier);
+
+            blocParticulier.querySelectorAll('input:not(#telephone)').forEach(function (champ) { champ.disabled = !estParticulier; });
+            blocEntreprise.querySelectorAll('input:not(#contact_principal)').forEach(function (champ) { champ.disabled = estParticulier; });
+
+            // iti.setDisabled() désactive aussi le bouton drapeau
+            champTelephone.iti.setDisabled(!estParticulier);
+            champTelephone.verifier();
+            champContact.iti.setDisabled(estParticulier);
+            champContact.verifier();
+        }
+
+        // État correct dès le chargement (ex. formulaire réaffiché avec « Entreprise » après une erreur)
+        document.addEventListener('DOMContentLoaded', toggleRoleFields);
     </script>
 @endsection

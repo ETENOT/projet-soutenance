@@ -282,15 +282,6 @@
                 </div>
 
                 <div class="modal-body">
-                    @if ($modeAvecErreur === 'nouveau')
-                        <div class="alert alert-danger">
-                            <ul class="mb-0">
-                                @foreach ($errors->all() as $erreur)
-                                    <li>{{ $erreur }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
 
                     <div class="row g-3">
                         <div class="col-md-6">

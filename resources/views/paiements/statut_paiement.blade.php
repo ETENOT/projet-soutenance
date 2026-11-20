@@ -32,11 +32,11 @@
                             au {{ $inscription->classe->date_fin->format('d/m/Y') }}
                         </p>
 
-                        {{-- Statut de paiement : Payée (totalité) / Paiement partiel (+ reste à verser) / En attente --}}
+                        {{-- Statut de paiement : Payé (totalité) / Payé partiellement (+ reste à payer) / En attente --}}
                         @if($inscription->paiement)
                             <p class="mb-3">
                                 @if($inscription->estPartielle())
-                                    <span class="badge bg-info-subtle text-info">Paiement partiel</span>
+                                    <span class="badge bg-info-subtle text-info">Payé partiellement</span>
                                     <small class="d-block mt-1">
                                         Versé : {{ number_format($inscription->paiement->montant, 0, ',', ' ') }} fcfa
                                         sur {{ number_format($inscription->paiement->montant_total, 0, ',', ' ') }} fcfa
@@ -48,7 +48,7 @@
                                         Réglez le reste auprès de l'administration pour recevoir votre attestation.
                                     </small>
                                 @else
-                                    <span class="badge bg-success-subtle text-success">Payée</span>
+                                    <span class="badge bg-success-subtle text-success">Payé</span>
                                 @endif
                                 <small class="text-muted d-block mt-1">
                                     {{ $inscription->paiement->libelle_mode }}

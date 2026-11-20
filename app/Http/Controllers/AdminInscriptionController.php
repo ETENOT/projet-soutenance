@@ -142,14 +142,12 @@ class AdminInscriptionController extends Controller
     }
 
     /**
-     * Formulaire : inscrire manuellement un utilisateur à une classe.
+     * L'inscription manuelle se fait dans la fenêtre « Créer une inscription » de la liste :
+     * l'ancienne page dédiée renvoie vers cette liste.
      */
     public function create()
     {
-        return view('inscriptions.create', [
-            'utilisateurs' => $this->utilisateursInscriptibles(),
-            'classes' => $this->classesOuvertes(),
-        ]);
+        return redirect()->route('admin.inscriptions.index');
     }
 
     /**
@@ -237,35 +235,31 @@ class AdminInscriptionController extends Controller
     }
 
     /**
-     * Fiche d'une inscription : utilisateur, classe, paiement, présence.
+     * La fiche (fenêtre « Voir ») et la modification (fenêtre « Modifier ») d'une inscription
+     * sont dans la liste des inscriptions : les anciennes pages dédiées renvoient vers cette liste,
+     * filtrée sur le nom de l'inscrit.
      */
     public function show(Inscription $inscription)
     {
-        $inscription->load('user.role', 'classe.cours', 'classe.formateur', 'paiement');
+        return $this->versLaListe($inscription);
+    }
 
-        return view('inscriptions.show', ['inscription' => $inscription]);
+    public function edit(Inscription $inscription)
+    {
+        return $this->versLaListe($inscription);
+    }
+
+    private function versLaListe(Inscription $inscription)
+    {
+        $inscription->loadMissing('user');
+
+        return redirect()->route('admin.inscriptions.index', array_filter(['q' => $inscription->user?->name]));
     }
 
     /**
-     * Formulaire de modification : on change la classe et/ou la date d'inscription
-     * (l'utilisateur ne change pas : pour une autre personne, on crée une nouvelle inscription).
+     * Modifie la classe et/ou la date d'inscription (l'utilisateur ne change pas).
+     * Inscription payée : seule une classe du même cours est acceptée ; classe déjà commencée : pas de transfert.
      */
-    public function edit(Inscription $inscription)
-    {
-        $inscription->load('user.role', 'classe.cours', 'paiement');
-
-        return view('inscriptions.edit', [
-            'inscription' => $inscription,
-            // Inscription payée : seules les classes du MÊME cours sont proposées (le prix payé reste valable)
-            'classes' => $this->classesOuvertes(
-                $inscription->classe,
-                $inscription->estPayee() ? $inscription->classe->cours_id : null
-            ),
-            // Classe déjà commencée ou fermée : présences / taux déjà enregistrés, on ne déplace plus
-            'transfertBloque' => $inscription->classe->etat !== 'a_venir',
-        ]);
-    }
-
     public function update(Request $request, Inscription $inscription)
     {
         $data = $request->validate([

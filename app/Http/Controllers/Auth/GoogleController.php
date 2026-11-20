@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Entreprise;
 use App\Models\Particulier;
 use App\Models\Role;
 use App\Models\User;
@@ -26,13 +27,14 @@ use Throwable;
  *  2. callback()  : Google renvoie l'utilisateur ici avec son identité (nom, e-mail, id Google).
  *       - un compte NéoVision existe déjà (même id Google, ou même e-mail) -> connexion directe,
  *         le compte Google y est rattaché ;
- *       - aucun compte -> page « Finaliser votre inscription » : Google ne fournit pas le
- *         téléphone, obligatoire pour un particulier (table particuliers).
- *  3. completer() / store() : création du compte PARTICULIER, e-mail déjà vérifié par Google
- *     (pas de code à 6 chiffres), puis connexion.
+ *       - aucun compte -> page « Finaliser votre inscription » : comme sur la page d'inscription,
+ *         l'utilisateur choisit son rôle (Particulier ou Entreprise) et complète ce que Google
+ *         ne fournit pas (téléphone pour un particulier ; raison sociale, siège, contact pour une entreprise).
+ *  3. completer() / store() : création du compte PARTICULIER ou ENTREPRISE, e-mail déjà vérifié
+ *     par Google (pas de code à 6 chiffres), puis connexion.
  *
- * Les entreprises (raison sociale, contact…) s'inscrivent avec le formulaire classique ;
- * une fois inscrites, elles peuvent ensuite se connecter avec Google si l'e-mail est le même.
+ * Exception (même règle que l'inscription classique) : un visiteur qui a passé un quiz avec cette
+ * adresse et attend son résultat est forcément inscrit comme particulier.
  */
 class GoogleController extends Controller
 {
@@ -113,11 +115,15 @@ class GoogleController extends Controller
             return redirect()->route('login');
         }
 
-        return view('auth.google-completer', ['google' => $google]);
+        return view('auth.google-completer', [
+            'google' => $google,
+            // Quiz visiteur en attente avec cette adresse : rôle bloqué sur « Particulier »
+            'roleVerrouille' => $this->quizVisiteurEnAttente($request, $google['email']),
+        ]);
     }
 
     /**
-     * Étape 3b : création du compte particulier puis connexion.
+     * Étape 3b : création du compte (particulier ou entreprise) puis connexion.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -128,17 +134,35 @@ class GoogleController extends Controller
                 ->with('error', 'Votre session Google a expiré. Cliquez à nouveau sur « Continuer avec Google ».');
         }
 
-        // Mêmes règles que l'inscription classique d'un particulier (RegisteredUserController).
+        // Quiz visiteur en attente : rôle imposé par le serveur, quoi qu'envoie le navigateur
+        if ($this->quizVisiteurEnAttente($request, $google['email'])) {
+            $request->merge(['role' => 'particulier']);
+        }
+
+        // Mêmes règles que l'inscription classique (RegisteredUserController), selon le rôle choisi.
         // L'e-mail ne vient PAS du formulaire : il vient de Google (session), il est donc fiable.
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'telephone' => ['required', 'string', 'max:20', 'regex:/^\+[1-9]\d{6,14}$/'],
+            'role' => ['required', 'in:particulier,entreprise'],
+
+            // Particulier
+            'telephone' => ['nullable', 'required_if:role,particulier', 'string', 'max:20', 'regex:/^\+[1-9]\d{6,14}$/'],
             'date_de_naissance' => ['nullable', 'date', 'before:today'],
+
+            // Entreprise
+            'raison_sociale' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'adresse' => ['nullable', 'string', 'max:255'],
+            'contact_principal' => ['nullable', 'required_if:role,entreprise', 'string', 'max:255'],
+            'secteur_activite' => ['nullable', 'string', 'max:255'],
         ], [
             'name.required' => 'Le nom est obligatoire.',
-            'telephone.required' => 'Le numéro de téléphone est obligatoire.',
+            'role.required' => 'Veuillez choisir si vous êtes un particulier ou une entreprise.',
+            'role.in' => 'Veuillez choisir si vous êtes un particulier ou une entreprise.',
+            'telephone.required_if' => 'Le numéro de téléphone est obligatoire.',
             'telephone.regex' => 'Veuillez entrer un numéro de téléphone valide pour le pays sélectionné.',
             'date_de_naissance.before' => 'La date de naissance doit être dans le passé.',
+            'raison_sociale.required_if' => 'La raison sociale est obligatoire.',
+            'contact_principal.required_if' => 'Le contact principal est obligatoire.',
         ]);
 
         // Sécurité : un compte a pu être créé avec cet e-mail entre-temps (autre onglet…)
@@ -148,23 +172,38 @@ class GoogleController extends Controller
             return $this->connecter($request, $existant, $google['google_id']);
         }
 
-        // Particulier + utilisateur créés ensemble, ou pas du tout
+        // Particulier (ou entreprise) + utilisateur créés ensemble, ou pas du tout
         $user = DB::transaction(function () use ($data, $google) {
-            $particulier = Particulier::create([
-                'telephone' => $data['telephone'],
-                'date_de_naissance' => $data['date_de_naissance'] ?? null,
-            ]);
-
-            $user = User::create([
+            $userData = [
                 'name' => $data['name'],
                 'email' => $google['email'],
                 // Mot de passe aléatoire inconnu de tous : le compte se connecte avec Google.
                 // L'utilisateur peut en choisir un plus tard via « Mot de passe oublié ».
                 'password' => Hash::make(Str::random(40)),
                 'google_id' => $google['google_id'],
-                'role_id' => Role::where('nom', 'particulier')->firstOrFail()->id,
-                'particulier_id' => $particulier->id,
-            ]);
+            ];
+
+            if ($data['role'] === 'particulier') {
+                $particulier = Particulier::create([
+                    'telephone' => $data['telephone'],
+                    'date_de_naissance' => $data['date_de_naissance'] ?? null,
+                ]);
+
+                $userData['role_id'] = Role::where('nom', 'particulier')->firstOrFail()->id;
+                $userData['particulier_id'] = $particulier->id;
+            } else {
+                $entreprise = Entreprise::create([
+                    'raison_sociale' => $data['raison_sociale'],
+                    'adresse' => $data['adresse'] ?? null,
+                    'contact_principal' => $data['contact_principal'],
+                    'secteur_activite' => ($data['secteur_activite'] ?? null) ?: null,
+                ]);
+
+                $userData['role_id'] = Role::where('nom', 'entreprise')->firstOrFail()->id;
+                $userData['entreprise_id'] = $entreprise->id;
+            }
+
+            $user = User::create($userData);
 
             // Adresse déjà vérifiée par Google : pas de code de vérification à 6 chiffres.
             // forceFill car email_verified_at n'est pas dans $fillable.
@@ -238,6 +277,19 @@ class GoogleController extends Controller
         // Les comptes créés par l'admin restent obligés de changer leur mot de passe par défaut :
         // le middleware ForcePasswordChange s'en charge sur la page suivante.
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    /**
+     * Vrai si un visiteur anonyme a passé un quiz avec cette adresse et attend son résultat :
+     * il doit alors devenir particulier pour retrouver ce quiz dans son historique.
+     */
+    private function quizVisiteurEnAttente(Request $request, string $email): bool
+    {
+        $token = $request->session()->get('visiteur_token');
+
+        return $token
+            && Str::lower((string) $request->session()->get('visiteur_email')) === Str::lower($email)
+            && app(QuizFinalisationService::class)->visiteurAResultatEnAttente($token);
     }
 
     /**

@@ -118,6 +118,14 @@
                     @if ($ferme) title="Classe fermée" @elseif ($placesRestantes === 0) title="Classe complète : retirez un inscrit pour libérer une place" @endif>
                 <i class="ri-user-add-line me-1"></i>Ajouter des utilisateurs
             </button>
+            {{-- Classe de session : crée un nouveau collaborateur, le rattache à l'entreprise et l'inscrit à la classe --}}
+            @if ($classe->estDeSession())
+                <button type="button" class="btn btn-soft-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#modalNouveau"
+                        @disabled($ferme || $placesRestantes === 0)
+                        @if ($ferme) title="Classe fermée" @elseif ($placesRestantes === 0) title="Classe complète : retirez un inscrit pour libérer une place" @else title="Créer un membre de {{ $classe->session->entreprise->raison_sociale }} et l'inscrire à cette classe" @endif>
+                    <i class="ri-user-star-line me-1"></i>Créer un membre
+                </button>
+            @endif
             <button type="button" class="btn btn-light border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalJours">
                 <i class="ri-calendar-close-line text-primary me-1"></i>Jours non comptabilisés
             </button>
@@ -312,7 +320,7 @@
 <div class="modal fade" id="modalNouveau" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form action="{{ route('admin.cours.classes.inscrits.nouveau', [$cours, $classe]) }}" method="POST">
+            <form action="{{ route('admin.cours.classes.inscrits.nouveau', [$cours, $classe]) }}" method="POST" class="js-form-nouveau">
                 @csrf
                 <input type="hidden" name="_fenetre" value="nouveau">
 
@@ -320,7 +328,8 @@
                     <div class="overflow-hidden flex-grow-1 me-3">
                         <h5 class="modal-title">Nouveau membre</h5>
                         <p class="text-muted small mb-0 text-truncate" title="{{ $classe->session->entreprise->raison_sociale }}">
-                            Créé comme membre de {{ $classe->session->entreprise->raison_sociale }} et inscrit à cette classe
+                            Créé comme membre de {{ $classe->session->entreprise->raison_sociale }} et inscrit à cette classe.
+                            Vous choisirez ensuite : paiement reçu ou paiement partiel
                         </p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
@@ -357,6 +366,13 @@
                                class="form-control @error('date_de_naissance') is-invalid @enderror" value="{{ old('date_de_naissance') }}">
                         @error('date_de_naissance') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+
+                    {{-- Erreur sur le mode de paiement choisi à l'étape suivante (somme partielle trop élevée...) --}}
+                    @if ($erreurNouveau && ($errors->has('montant_partiel') || $errors->has('type_paiement')))
+                        <div class="alert alert-danger py-2 small">
+                            {{ $errors->first('montant_partiel') ?: $errors->first('type_paiement') }}
+                        </div>
+                    @endif
 
                     <div class="alert alert-info py-2 small mb-0">
                         Mot de passe temporaire : <strong>{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</strong>.
@@ -660,6 +676,24 @@ document.addEventListener('DOMContentLoaded', function () {
     fenetreChoix.addEventListener('hidden.bs.modal', function () {
         if (!choixValide && apresAnnulation) apresAnnulation();
     });
+
+    // « Nouveau membre » (classe de session) : même choix « Paiement reçu » / « Paiement partiel »
+    // avant la création ; si l'admin annule, la fenêtre du nouveau membre se rouvre avec sa saisie.
+    const fenetreNouveauMembre = document.getElementById('modalNouveau');
+    const formNouveau = fenetreNouveauMembre?.querySelector('.js-form-nouveau');
+    if (formNouveau) {
+        formNouveau.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const nom = formNouveau.querySelector('[name="name"]').value.trim();
+            bootstrap.Modal.getOrCreateInstance(fenetreNouveauMembre).hide();
+            fenetreNouveauMembre.addEventListener('hidden.bs.modal', function ouvrirChoix() {
+                fenetreNouveauMembre.removeEventListener('hidden.bs.modal', ouvrirChoix);
+                demanderModePaiement(formNouveau, 'Nouveau membre : ' + nom, function () {
+                    bootstrap.Modal.getOrCreateInstance(fenetreNouveauMembre).show();
+                });
+            });
+        });
+    }
 
     // Bouton « Enregistrer le paiement » d'une ligne : le choix s'affiche avant l'envoi
     document.querySelectorAll('form[data-choix-paiement]').forEach(function (f) {
@@ -1044,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (reouvrir === 'inscrits') {
         bootstrap.Modal.getOrCreateInstance(fenetreAjout).show();
     } else if (reouvrir === 'nouveau') {
-        const fenetreNouveau = document.getElementById('modelNouveau');
+        const fenetreNouveau = document.getElementById('modalNouveau');
         if (fenetreNouveau) bootstrap.Modal.getOrCreateInstance(fenetreNouveau).show();
     }
 });
