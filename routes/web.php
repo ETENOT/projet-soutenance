@@ -300,6 +300,11 @@ Route::middleware(['auth', 'role:entreprise'])->group(function () {
     Route::get('/entreprise/sessions', [EntrepriseSessionController::class, 'index'])->name('entreprise.sessions.index');
     Route::get('/entreprise/sessions/{sessionFormation}', [EntrepriseSessionController::class, 'show'])->name('entreprise.sessions.show');
     Route::get('/entreprise/sessions/{sessionFormation}/classes/{classe}', [EntrepriseSessionController::class, 'classe'])->name('entreprise.sessions.classes.show');
+
+    // Attestations reçues par les membres dans les classes où l'entreprise les a inscrits (voir + télécharger)
+    Route::get('/entreprise/attestations', [App\Http\Controllers\EntrepriseAttestationController::class, 'index'])->name('entreprise.attestations.index');
+    Route::get('/entreprise/attestations/{attestation}/voir', [App\Http\Controllers\EntrepriseAttestationController::class, 'voir'])->name('entreprise.attestations.voir');
+    Route::get('/entreprise/attestations/{attestation}/telecharger', [App\Http\Controllers\EntrepriseAttestationController::class, 'telecharger'])->name('entreprise.attestations.telecharger');
 });
 
 // ==========================================================================
@@ -764,4 +769,4 @@ Route::middleware(['auth', 'role:admin', 'droit'])
 // DOIT rester la toute dernière route du fichier.
 
 Route::get('{any}', [App\Http\Controllers\HomeController::class, 'index'])
-    ->name('index');
+    ->name('index');

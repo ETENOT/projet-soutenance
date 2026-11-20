@@ -329,7 +329,7 @@
                         <h5 class="modal-title">Nouveau membre</h5>
                         <p class="text-muted small mb-0 text-truncate" title="{{ $classe->session->entreprise->raison_sociale }}">
                             Créé comme membre de {{ $classe->session->entreprise->raison_sociale }} et inscrit à cette classe.
-                            Vous choisirez ensuite : paiement reçu ou paiement partiel
+                            Paiement réglé par l'entreprise : statut « Payé »
                         </p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
@@ -367,13 +367,6 @@
                         @error('date_de_naissance') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
-                    {{-- Erreur sur le mode de paiement choisi à l'étape suivante (somme partielle trop élevée...) --}}
-                    @if ($erreurNouveau && ($errors->has('montant_partiel') || $errors->has('type_paiement')))
-                        <div class="alert alert-danger py-2 small">
-                            {{ $errors->first('montant_partiel') ?: $errors->first('type_paiement') }}
-                        </div>
-                    @endif
-
                     <div class="alert alert-info py-2 small mb-0">
                         Mot de passe temporaire : <strong>{{ \App\Models\User::MOT_DE_PASSE_PAR_DEFAUT }}</strong>.
                         Le membre devra le changer à sa première connexion.
@@ -404,7 +397,13 @@
                 <div class="modal-header">
                     <div class="overflow-hidden flex-grow-1 me-3">
                         <h5 class="modal-title">Ajouter des utilisateurs</h5>
-                        <p class="text-muted small mb-0">Vous choisirez ensuite : paiement reçu ou paiement partiel</p>
+                        <p class="text-muted small mb-0">
+                            @if ($classe->estDeSession())
+                                Classe d'entreprise : les membres ajoutés sont automatiquement au statut « Payé »
+                            @else
+                                Vous choisirez ensuite : paiement reçu ou paiement partiel
+                            @endif
+                        </p>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
                 </div>
@@ -613,6 +612,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const formChoix = document.getElementById('formChoixPaiement');
     const erreurChoix = document.getElementById('choixPaiementErreur');
     const prixClasse = @json((float) $prixClasse);
+    // Classe d'entreprise (session) : réglée par l'entreprise, ajout et création sans choix de paiement
+    const classeEntreprise = @json($classe->estDeSession());
     let formulaireChoix = null;     // formulaire à envoyer après le choix
     let choixValide = false;        // vrai quand l'admin a validé (et pas annulé)
     let apresAnnulation = null;     // action à faire si l'admin annule (ex. rouvrir l'ajout)
@@ -677,11 +678,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!choixValide && apresAnnulation) apresAnnulation();
     });
 
-    // « Nouveau membre » (classe de session) : même choix « Paiement reçu » / « Paiement partiel »
-    // avant la création ; si l'admin annule, la fenêtre du nouveau membre se rouvre avec sa saisie.
+    // « Nouveau membre » : n'existe que pour une classe d'entreprise, envoyée directement (statut « Payé »).
+    // Le choix « Paiement reçu » / « Paiement partiel » ne s'appliquerait qu'à une classe publique.
     const fenetreNouveauMembre = document.getElementById('modalNouveau');
     const formNouveau = fenetreNouveauMembre?.querySelector('.js-form-nouveau');
-    if (formNouveau) {
+    if (formNouveau && !classeEntreprise) {
         formNouveau.addEventListener('submit', function (e) {
             e.preventDefault();
             const nom = formNouveau.querySelector('[name="name"]').value.trim();
@@ -922,6 +923,11 @@ document.addEventListener('DOMContentLoaded', function () {
         // « Ajouter à la classe » : on ferme cette fenêtre et on demande le mode de paiement.
         // Si l'admin annule, cette fenêtre se rouvre avec sa sélection intacte.
         form.addEventListener('submit', function (e) {
+            // Classe d'entreprise : pas de choix de paiement, envoi direct (statut « Payé »)
+            if (classeEntreprise) {
+                if (selection.size === 0) e.preventDefault();
+                return;
+            }
             if (form.dataset.choixFait === '1') return;   // déjà choisi : envoi normal
             e.preventDefault();
             if (selection.size === 0) return;
@@ -1083,4 +1089,4 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-@endsection
+@endsection

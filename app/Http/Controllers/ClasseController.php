@@ -556,11 +556,22 @@ class ClasseController extends Controller
             'user_ids.required' => "Vous n'avez pas choisi d'utilisateur à ajouter",
         ]);
 
-        // null = paiement complet ; sinon somme versée par chaque particulier sélectionné
-        $montantPartiel = $this->montantPartielDemande($request);
+        // Classe d'entreprise (session) : l'entreprise règle la formation, l'inscription est donc
+        // automatiquement « Payé » (pas de choix reçu / partiel).
+        // Classe publique : null = paiement complet ; sinon somme versée par chaque particulier sélectionné
+        $montantPartiel = $classe->estDeSession() ? null : $this->montantPartielDemande($request);
 
         if ($classe->estFermee()) {
             return back()->with('error', 'La classe est fermée : on ne peut plus y ajouter d\'utilisateur.');
+        }
+
+        // Seuls les particuliers peuvent être inscrits dans une classe (jamais un compte entreprise)
+        $pasParticuliers = User::whereIn('id', $data['user_ids'])
+            ->whereDoesntHave('role', fn ($q) => $q->where('nom', 'particulier'))
+            ->pluck('name');
+        if ($pasParticuliers->isNotEmpty()) {
+            return back()->with('reouvrir', $classe->id . ':inscrits')
+                ->with('error', 'Seuls les particuliers peuvent être inscrits à une classe : ' . $pasParticuliers->implode(', ') . '.');
         }
 
         $inscritsIds = $classe->inscriptions()->pluck('user_id');
@@ -608,18 +619,20 @@ class ClasseController extends Controller
 
         // On revient sur la page « Gérer la classe »
         return back()->with('reouvrir', $classe->id . ':inscrits')
-            ->with('success', $montantPartiel === null
+            ->with('success', $classe->estDeSession()
+                ? 'Membres ajoutés à la classe : paiement réglé par l\'entreprise, statut « Payé ».'
+                : ($montantPartiel === null
                 ? 'Utilisateurs ajoutés à la classe avec un paiement reçu.'
                 : 'Utilisateurs ajoutés à la classe avec un paiement partiel de '
-                    . number_format($montantPartiel, 0, ',', ' ') . ' fcfa chacun.');
+                    . number_format($montantPartiel, 0, ',', ' ') . ' fcfa chacun.'));
     }
 
     /**
      * Classe de SESSION (entreprise) : crée un nouveau collaborateur, le rattache à l'entreprise de la session
      * et l'inscrit à la classe, en une seule fois. Il apparaît donc aussi dans la liste des membres de
      * l'entreprise (menu « Gestion des entreprises »), sans devoir l'y créer d'abord.
-     * Même règles que l'ajout classique : classe ouverte, places disponibles, paiement enregistré au comptoir,
-     * avec le même choix « Paiement reçu » (reste 0) ou « Paiement partiel » (somme versée, inférieure au prix).
+     * Même règles que l'ajout classique : classe ouverte, places disponibles. La formation étant réglée
+     * par l'entreprise, le paiement est enregistré automatiquement comme « Payé » (tarif entreprise, reste 0).
      */
     public function creerMembre(Request $request, Cours $cours, Classe $classe, PaiementService $paiementService, CompteAdminService $comptes)
     {
@@ -651,20 +664,10 @@ class ClasseController extends Controller
             'date_de_naissance.before_or_equal' => 'La date de naissance ne peut pas être dans le futur.',
         ]);
 
-        // null = paiement reçu en totalité ; sinon somme versée (paiement partiel)
-        $montantPartiel = $this->montantPartielDemande($request);
-
-        // Classe de session : tarif entreprise (même règle que PaiementService::montantPour)
-        $classe->loadMissing('cours');
-        $prix = (float) $classe->cours->prix_entreprise;
-        if ($erreur = $this->erreurMontantPartiel($montantPartiel, $prix, $data['name'])) {
-            return back()->withInput()->withErrors(['montant_partiel' => $erreur]);
-        }
-
         $entreprise = $classe->session->entreprise;
 
         // Tout ou rien : profil, compte, rattachement et inscription sont créés ensemble
-        [$user, $paiement] = DB::transaction(function () use ($data, $entreprise, $classe, $comptes, $paiementService, $montantPartiel) {
+        [$user, $paiement] = DB::transaction(function () use ($data, $entreprise, $classe, $comptes, $paiementService) {
             $profil = Particulier::create([
                 'telephone' => $data['telephone'],
                 'date_de_naissance' => $data['date_de_naissance'] ?? null,
@@ -683,25 +686,21 @@ class ClasseController extends Controller
                 ['date_inscription' => now()]
             );
 
-            // Paiement complet (null) ou partiel de la somme saisie
-            return [$user, $paiementService->creerAuComptoir($inscription, $montantPartiel)];
+            // Classe d'entreprise : paiement complet automatique (statut « Payé »)
+            return [$user, $paiementService->creerAuComptoir($inscription)];
         });
 
         if ($paiement) {
             $paiementService->envoyerEmail($paiement);
         }
 
-        $textePaiement = $montantPartiel === null
-            ? 'avec un paiement reçu'
-            : 'avec un paiement partiel de ' . number_format($montantPartiel, 0, ',', ' ') . ' fcfa';
-
-        return back()->with('success', "{$user->name} a été créé, ajouté à « {$entreprise->raison_sociale} » et inscrit à la classe {$textePaiement}. "
+        return back()->with('success', "{$user->name} a été créé, ajouté à « {$entreprise->raison_sociale} » et inscrit à la classe (paiement réglé par l'entreprise, statut « Payé »). "
             . 'Mot de passe temporaire : ' . User::MOT_DE_PASSE_PAR_DEFAUT . ' (à changer à sa première connexion).');
     }
 
     /**
      * Liste (JSON) des utilisateurs qu'on peut encore inscrire dans la classe :
-     * ni admin, ni formateur, pas déjà inscrits. Tous d'un coup (500 au maximum) :
+     * uniquement des particuliers (ni admin, ni formateur, ni entreprise), pas déjà inscrits. Tous d'un coup (500 au maximum) :
      * la page les filtre ensuite par nom ou e-mail sans rappeler le serveur.
      */
     public function candidats(Cours $cours, Classe $classe)
@@ -768,7 +767,7 @@ class ClasseController extends Controller
     {
         $requete = $classe->estDeSession()
             ? $classe->candidatsSession()
-            : User::whereDoesntHave('role', fn ($q) => $q->whereIn('nom', ['admin', 'formateur']))->orderBy('name');
+            : User::whereHas('role', fn ($q) => $q->where('nom', 'particulier'))->orderBy('name');
 
         return $requete->whereNotIn('users.id', $classe->inscriptions()->pluck('user_id'));
     }
@@ -854,4 +853,4 @@ class ClasseController extends Controller
 
         return $retour;
     }
-}
+}

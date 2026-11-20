@@ -30,8 +30,8 @@ class AdminInscriptionController extends Controller
     // Valeurs acceptées par le filtre "statut du paiement" (tout le reste est ignoré)
     private const STATUTS_PAIEMENT = ['en_attente', 'partiel', 'paye'];
 
-    // Seuls ces rôles peuvent être inscrits à une classe
-    private const ROLES_INSCRIPTIBLES = ['particulier', 'entreprise'];
+    // Seuls les particuliers peuvent être inscrits à une classe (jamais un compte entreprise)
+    private const ROLES_INSCRIPTIBLES = ['particulier'];
 
     /**
      * Liste des inscriptions : TOUJOURS du plus récent au plus ancien, quels que soient les filtres.
@@ -154,6 +154,7 @@ class AdminInscriptionController extends Controller
      * Enregistre l'inscription (mêmes règles que l'inscription faite par l'utilisateur :
      * pas de doublon, classe ouverte aux inscriptions, capacité respectée).
      * L'inscription est réglée au comptoir : paiement reçu (complet) ou paiement partiel.
+     * Classe d'entreprise (session) : réglée par l'entreprise, donc automatiquement « Payé ».
      */
     public function store(Request $request, PaiementService $paiementService)
     {
@@ -175,16 +176,21 @@ class AdminInscriptionController extends Controller
 
         if (! in_array($user->role?->nom, self::ROLES_INSCRIPTIBLES, true)) {
             return back()->withInput()->withErrors([
-                'user_id' => 'Seuls les particuliers et les entreprises peuvent être inscrits à une classe.',
+                'user_id' => 'Seuls les particuliers peuvent être inscrits à une classe.',
             ]);
         }
 
         // Transaction + verrou sur la classe : deux inscriptions simultanées ne dépassent pas la capacité
-        $resultat = DB::transaction(function () use ($data, $user, $paiementService, $montantPartiel) {
+        $resultat = DB::transaction(function () use ($data, $user, $paiementService, &$montantPartiel) {
             $classe = Classe::with('cours')->whereKey($data['classe_id'])->lockForUpdate()->firstOrFail();
 
             if ($erreur = $this->erreurPlace($classe, $user)) {
                 return $erreur;
+            }
+
+            // Classe d'entreprise : paiement complet automatique, quel que soit le choix envoyé
+            if ($classe->estDeSession()) {
+                $montantPartiel = null;
             }
 
             // Paiement partiel : la somme doit rester inférieure au prix de la formation
@@ -448,4 +454,4 @@ class AdminInscriptionController extends Controller
             ->orderBy('date_debut')
             ->get();
     }
-}
+}

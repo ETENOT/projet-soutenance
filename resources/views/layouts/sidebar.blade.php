@@ -422,6 +422,14 @@
                                 <span>Présences</span>
                             </a>
                         </li>
+                        {{-- Attestations des membres inscrits par l'entreprise (voir + télécharger) --}}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {{ request()->routeIs('entreprise.attestations.*') ? 'active' : '' }}"
+                            href="{{ route('entreprise.attestations.index') }}">
+                                <i class="ri-award-line"></i>
+                                <span>Attestations</span>
+                            </a>
+                        </li>
                     @endif
 
                     <li class="nav-item">
@@ -494,4 +502,4 @@
 @endif
 
 <!-- Vertical Overlay -->
-<div class="vertical-overlay"></div>
+<div class="vertical-overlay"></div>

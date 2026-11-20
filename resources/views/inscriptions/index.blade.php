@@ -586,6 +586,7 @@
                             @foreach ($classesForm as $uneClasse)
                                 <option value="{{ $uneClasse->id }}"
                                         data-cours="{{ $uneClasse->cours_id }}"
+                                        data-entreprise="{{ $uneClasse->session_id ? '1' : '' }}"
                                         data-pleine="{{ $uneClasse->inscriptions_count >= $uneClasse->capacite_max ? '1' : '' }}"
                                         @selected((string) old('classe_id') === (string) $uneClasse->id)>
                                     {{ $uneClasse->cours->titre }} — {{ $uneClasse->nom }}
@@ -602,6 +603,11 @@
                         <input type="date" name="date_inscription" id="champDate" class="form-control"
                                max="{{ today()->toDateString() }}"
                                value="{{ old('date_inscription', today()->toDateString()) }}" required>
+                    </div>
+
+                    {{-- Classe d'entreprise : la formation est réglée par l'entreprise, pas de choix à faire --}}
+                    <div class="alert alert-success py-2 small mt-3 mb-0 d-none" id="notePayeEntreprise">
+                        <i class="ri-building-line me-1"></i>Classe d'entreprise : l'inscription sera automatiquement enregistrée comme <strong>Payé</strong>.
                     </div>
 
                     {{-- Mode de paiement : uniquement à la création (une modification ne touche pas au paiement) --}}
@@ -682,9 +688,21 @@ document.addEventListener('DOMContentLoaded', function () {
         champ('utilisateurFixe').textContent = champ('champNom').value;
 
         // Le mode de paiement ne concerne que la création ; fieldset désactivé = champs non envoyés
-        champ('blocModePaiement').classList.toggle('d-none', modif);
-        champ('blocModePaiement').disabled = modif;
+        majModePaiement();
     }
+
+    // Mode de paiement affiché seulement à la création ET pour une classe publique :
+    // une classe d'entreprise est payée automatiquement (message à la place du choix)
+    function majModePaiement() {
+        const modif = champ('champMode').value === 'modif';
+        const option = champ('champClasse').selectedOptions[0];
+        const classeEntreprise = !!(option && option.dataset.entreprise === '1');
+        const masquer = modif || classeEntreprise;
+        champ('blocModePaiement').classList.toggle('d-none', masquer);
+        champ('blocModePaiement').disabled = masquer;
+        champ('notePayeEntreprise').classList.toggle('d-none', modif || !classeEntreprise);
+    }
+    champ('champClasse').addEventListener('change', majModePaiement);
 
     // Filtrage des classes disponibles
     function filtrerClasses(classeActuelle, coursImpose) {
@@ -731,6 +749,7 @@ document.addEventListener('DOMContentLoaded', function () {
             champ('champClasse').value = '';
             champ('champDate').value = aujourdhui;
         }
+        majModePaiement();
     });
 
     // Réouverture de la fenêtre après une erreur de validation
@@ -786,4 +805,4 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-@endsection
+@endsection
