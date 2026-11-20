@@ -1,0 +1,1402 @@
+{
+  "source": "Catalogue de formations NEO VISION – édition 2027",
+  "methode": "70 % de pratique, 30 % de théorie, classe inversée. Contenu adaptable en intra-entreprise.",
+  "contact": {
+    "email": "info@group-neovision.com",
+    "telephones": [
+      "+241 77 79 55 29",
+      "+241 62 79 55 29"
+    ],
+    "site": "www.group-neovision.com"
+  },
+  "themes": [
+    {
+      "code": "BUR",
+      "ordre": 1,
+      "nom": "Bureautique & Microsoft 365"
+    },
+    {
+      "code": "CNA",
+      "ordre": 2,
+      "nom": "Neo-Vision Tech Academy – Cisco"
+    },
+    {
+      "code": "SYS",
+      "ordre": 3,
+      "nom": "Systèmes, Cloud & Linux"
+    },
+    {
+      "code": "SEC",
+      "ordre": 4,
+      "nom": "Cybersécurité & solutions de sécurité"
+    },
+    {
+      "code": "DAT",
+      "ordre": 5,
+      "nom": "Data & intelligence artificielle"
+    },
+    {
+      "code": "GOV",
+      "ordre": 6,
+      "nom": "Gouvernance & management des SI"
+    },
+    {
+      "code": "PRJ",
+      "ordre": 7,
+      "nom": "Gestion de projet"
+    },
+    {
+      "code": "MET",
+      "ordre": 8,
+      "nom": "Solutions métiers NEO VISION"
+    }
+  ],
+  "formations": [
+    {
+      "code": "NV-BUR-01",
+      "theme": "BUR",
+      "titre": "Windows 11 et bases de l'informatique",
+      "accroche": "Prendre en main un poste de travail moderne sous Windows 11 et adopter les bons réflexes au quotidien.",
+      "objectifs": [
+        "Maîtriser l'environnement Windows 11 et ses paramètres essentiels",
+        "Organiser ses fichiers et dossiers, localement et dans OneDrive",
+        "Utiliser un navigateur et la messagerie en toute sécurité",
+        "Adopter les bonnes pratiques de sécurité informatique"
+      ],
+      "programme": [
+        "Découverte du poste de travail et de Windows 11",
+        "Bureau, menu Démarrer, barre des tâches et fenêtres",
+        "Explorateur de fichiers, recherche et organisation",
+        "OneDrive : synchroniser et partager ses fichiers",
+        "Navigation web, messagerie et visioconférence",
+        "Sécurité : mots de passe, mises à jour, hameçonnage"
+      ],
+      "duree_heures": 7,
+      "duree_libelle": "1 jour (7 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": null,
+      "public": "Tout utilisateur débutant",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-02",
+      "theme": "BUR",
+      "titre": "Word – Initiation",
+      "accroche": "Créer, mettre en forme et imprimer des documents professionnels simples avec Word (Microsoft 365).",
+      "objectifs": [
+        "Saisir et corriger un texte efficacement",
+        "Mettre en forme caractères, paragraphes et pages",
+        "Insérer tableaux, images et listes",
+        "Imprimer, exporter en PDF et partager un document"
+      ],
+      "programme": [
+        "Interface de Word et modes d'affichage",
+        "Saisie, correction et outils de vérification",
+        "Mise en forme des caractères et des paragraphes",
+        "Listes à puces, tabulations et bordures",
+        "Tableaux simples et images",
+        "Mise en page, en-têtes, pieds de page, impression",
+        "Enregistrement dans OneDrive et partage"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "E-learning"
+      ],
+      "certification": "MOS Word Associate (MO110), en option",
+      "public": "Utilisateurs débutants de Word",
+      "prerequis": "Connaître l'environnement Windows",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-03",
+      "theme": "BUR",
+      "titre": "Word – Perfectionnement",
+      "accroche": "Produire des documents longs et structurés, des courriers en série et des modèles réutilisables.",
+      "objectifs": [
+        "Structurer un document long avec les styles",
+        "Générer table des matières, index et légendes",
+        "Réaliser un publipostage",
+        "Créer des modèles et des formulaires"
+      ],
+      "programme": [
+        "Styles, thèmes et jeux de styles",
+        "Plan, numérotation des titres et sections",
+        "Table des matières, notes, renvois et index",
+        "Publipostage : lettres, étiquettes, e-mails",
+        "Modèles et formulaires avec contrôles de contenu",
+        "Révision, commentaires et coédition en ligne"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "E-learning"
+      ],
+      "certification": "MOS Word Expert (MO-111), en option",
+      "public": "Utilisateurs réguliers de Word",
+      "prerequis": "Word – Initiation ou niveau équivalent",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-04",
+      "theme": "BUR",
+      "titre": "Excel – Initiation",
+      "accroche": "Construire des tableaux de calcul fiables et lisibles avec Excel (Microsoft 365).",
+      "objectifs": [
+        "Créer et mettre en forme un tableau",
+        "Écrire des formules et fonctions de base",
+        "Représenter des données par un graphique",
+        "Mettre en page et imprimer un classeur"
+      ],
+      "programme": [
+        "Classeurs, feuilles, cellules et plages",
+        "Saisie, recopie et séries",
+        "Formules, références relatives et absolues",
+        "Fonctions SOMME, MOYENNE, MIN, MAX, NB",
+        "Mise en forme et mise en forme conditionnelle",
+        "Graphiques simples",
+        "Tri, filtre et impression"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "E-learning"
+      ],
+      "certification": "MOS Excel Associate (MO210), en option",
+      "public": "Utilisateurs débutants d'Excel",
+      "prerequis": "Connaître l'environnement Windows",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-05",
+      "theme": "BUR",
+      "titre": "Excel – Intermédiaire",
+      "accroche": "Exploiter des listes de données et automatiser les calculs courants de gestion.",
+      "objectifs": [
+        "Utiliser les fonctions logiques et de recherche",
+        "Gérer et analyser une liste de données",
+        "Créer des tableaux croisés dynamiques",
+        "Fiabiliser la saisie avec la validation des données"
+      ],
+      "programme": [
+        "Fonctions SI, ET, OU, SI.CONDITIONS",
+        "RECHERCHEX, NB.SI.ENS, SOMME.SI.ENS",
+        "Fonctions date et texte",
+        "Tableaux structurés, tris et filtres avancés",
+        "Tableaux et graphiques croisés dynamiques",
+        "Validation des données et protection"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "E-learning"
+      ],
+      "certification": "MOS Excel Associate (MO210), en option",
+      "public": "Utilisateurs réguliers d'Excel",
+      "prerequis": "Excel – Initiation ou niveau équivalent",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-06",
+      "theme": "BUR",
+      "titre": "Excel – Avancé et analyse de données",
+      "accroche": "Transformer Excel en véritable outil d'analyse : import, nettoyage, modélisation et tableaux de bord.",
+      "objectifs": [
+        "Importer et nettoyer des données avec Power Query",
+        "Modéliser des données liées avec Power Pivot",
+        "Construire un tableau de bord interactif",
+        "Automatiser des tâches simples avec les macros"
+      ],
+      "programme": [
+        "Fonctions avancées : FILTRE, UNIQUE, TRIER, LET",
+        "Power Query : connexion, transformation, actualisation",
+        "Modèle de données et relations",
+        "Mesures et indicateurs clés",
+        "Tableaux de bord avec segments et chronologies",
+        "Enregistreur de macros et premières lignes de VBA"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "MOS Excel Expert (MO-211), en option",
+      "public": "Utilisateurs confirmés, contrôleurs, analystes",
+      "prerequis": "Excel – Intermédiaire ou niveau équivalent",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-07",
+      "theme": "BUR",
+      "titre": "PowerPoint – Présentations efficaces",
+      "accroche": "Concevoir des présentations claires, cohérentes et percutantes, du premier jet à la diffusion.",
+      "objectifs": [
+        "Construire une présentation structurée",
+        "Appliquer un thème et un masque cohérents",
+        "Illustrer avec images, SmartArt et graphiques",
+        "Animer et diffuser sa présentation"
+      ],
+      "programme": [
+        "Bonnes pratiques de conception",
+        "Thèmes, masques et dispositions",
+        "Texte, images, icônes et SmartArt",
+        "Tableaux et graphiques liés à Excel",
+        "Transitions et animations utiles",
+        "Mode Présentateur, export et partage"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "E-learning"
+      ],
+      "certification": "MOS PowerPoint Associate (MO-310), en option",
+      "public": "Toute personne amenée à présenter",
+      "prerequis": "Connaître l'environnement Windows",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-08",
+      "theme": "BUR",
+      "titre": "Outlook et Teams au quotidien",
+      "accroche": "Organiser sa messagerie, son agenda et ses réunions pour gagner en efficacité collective.",
+      "objectifs": [
+        "Traiter et classer ses e-mails efficacement",
+        "Gérer agenda, tâches et contacts",
+        "Organiser et animer une réunion Teams",
+        "Collaborer dans les équipes et canaux Teams"
+      ],
+      "programme": [
+        "Messagerie : règles, dossiers, catégories, recherche",
+        "Agenda partagé et planification de réunions",
+        "Tâches et To Do",
+        "Teams : équipes, canaux, conversations",
+        "Réunions Teams : partage d'écran, enregistrement",
+        "Bonnes pratiques de communication"
+      ],
+      "duree_heures": 7,
+      "duree_libelle": "1 jour (7 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "MOS Outlook Associate (MO-410), en option",
+      "public": "Tout utilisateur de Microsoft 365",
+      "prerequis": "Connaître l'environnement Windows",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-BUR-09",
+      "theme": "BUR",
+      "titre": "Collaborer avec Microsoft 365",
+      "accroche": "Travailler à plusieurs sur les mêmes documents, en toute sécurité, avec OneDrive, SharePoint et Teams.",
+      "objectifs": [
+        "Choisir le bon espace de stockage",
+        "Partager et coéditer des documents",
+        "Gérer les versions et les droits d'accès",
+        "Utiliser Planner et Forms pour le travail d'équipe"
+      ],
+      "programme": [
+        "Vue d'ensemble de Microsoft 365",
+        "OneDrive, SharePoint, Teams : qui fait quoi",
+        "Partage, liens et autorisations",
+        "Coédition et historique des versions",
+        "Planner : suivi des tâches d'équipe",
+        "Forms : enquêtes et questionnaires"
+      ],
+      "duree_heures": 7,
+      "duree_libelle": "1 jour (7 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": null,
+      "public": "Équipes passant à Microsoft 365",
+      "prerequis": "Utilisation courante d'un ordinateur",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-ITN",
+      "theme": "CNA",
+      "titre": "CCNA 1 – Introduction to Networks",
+      "accroche": "Premier cours du cursus CCNA : comprendre et configurer un petit réseau Ethernet et IP.",
+      "objectifs": [
+        "Comprendre les modèles OSI et TCP/IP",
+        "Concevoir un plan d'adressage IPv4 et IPv6",
+        "Configurer routeurs et commutateurs de base",
+        "Sécuriser les équipements et dépanner un petit réseau"
+      ],
+      "programme": [
+        "Protocoles et modèles de communication",
+        "Couches physique et liaison de données, Ethernet",
+        "Adressage IPv4, sous-réseaux et IPv6",
+        "Couche transport et services applicatifs",
+        "Configuration initiale de Cisco IOS",
+        "Fondamentaux de la sécurité réseau",
+        "Travaux pratiques sur Packet Tracer et équipements réels"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "70 heures",
+      "modalites": [
+        "Présentiel",
+        "Mixte (plateforme NetAcad)"
+      ],
+      "certification": "Badge Cisco · prépare au CCNA (200-301)",
+      "public": "Étudiants, techniciens, reconversions",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-SRWE",
+      "theme": "CNA",
+      "titre": "CCNA 2 – Switching, Routing & Wireless Essentials",
+      "accroche": "Deuxième cours CCNA : commutation, routage et réseaux sans fil d'une PME.",
+      "objectifs": [
+        "Configurer VLAN, trunks et routage inter-VLAN",
+        "Mettre en œuvre la redondance de niveau 2",
+        "Configurer DHCP, FHRP et la sécurité des ports",
+        "Déployer et sécuriser un réseau Wi-Fi"
+      ],
+      "programme": [
+        "Concepts de commutation et VLAN",
+        "Routage inter-VLAN et STP",
+        "EtherChannel et protocoles de redondance (FHRP)",
+        "DHCPv4, SLAAC et DHCPv6",
+        "Sécurité de la couche 2",
+        "Réseaux sans fil (WLAN) et contrôleurs",
+        "Routage statique"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "70 heures",
+      "modalites": [
+        "Présentiel",
+        "Mixte (plateforme NetAcad)"
+      ],
+      "certification": "Badge Cisco · prépare au CCNA (200-301)",
+      "public": "Titulaires du module CCNA 1",
+      "prerequis": "CCNA 1 – Introduction to Networks",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-ENSA",
+      "theme": "CNA",
+      "titre": "CCNA 3 – Enterprise Networking, Security & Automation",
+      "accroche": "Dernier cours CCNA : architectures d'entreprise, sécurité, WAN et introduction à l'automatisation.",
+      "objectifs": [
+        "Configurer OSPFv2 en zone unique",
+        "Mettre en œuvre ACL et NAT",
+        "Comprendre VPN, QoS et gestion du réseau",
+        "Découvrir la virtualisation et l'automatisation"
+      ],
+      "programme": [
+        "OSPFv2 : concepts et configuration",
+        "Menaces réseau et listes de contrôle d'accès",
+        "NAT pour IPv4",
+        "Concepts WAN et VPN IPsec",
+        "Qualité de service et supervision (SNMP, Syslog, NTP)",
+        "Conception et dépannage du réseau",
+        "Virtualisation, SDN et automatisation"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "70 heures",
+      "modalites": [
+        "Présentiel",
+        "Mixte (plateforme NetAcad)"
+      ],
+      "certification": "Badge Cisco · prépare au CCNA (200-301)",
+      "public": "Titulaires du module CCNA 2",
+      "prerequis": "CCNA 2 – SRWE",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-ICS",
+      "theme": "CNA",
+      "titre": "Introduction to Cybersecurity",
+      "accroche": "Découvrir les enjeux de la cybersécurité, les menaces courantes et les métiers du domaine.",
+      "objectifs": [
+        "Comprendre les menaces et les attaques courantes",
+        "Protéger ses données et sa vie privée en ligne",
+        "Connaître les mesures de protection des organisations",
+        "Découvrir les métiers de la cybersécurité"
+      ],
+      "programme": [
+        "Le monde de la cybersécurité",
+        "Attaques, concepts et techniques",
+        "Protéger ses données et sa vie privée",
+        "Protéger l'organisation",
+        "La cybersécurité, un métier d'avenir"
+      ],
+      "duree_heures": 15,
+      "duree_libelle": "15 heures",
+      "modalites": [
+        "Présentiel",
+        "E-learning tutoré"
+      ],
+      "certification": "Badge Cisco",
+      "public": "Tout public, lycéens, étudiants",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-CYOPS",
+      "theme": "CNA",
+      "titre": "CyberOps Associate",
+      "accroche": "Se former au métier d'analyste en centre opérationnel de sécurité (SOC).",
+      "objectifs": [
+        "Surveiller et analyser les événements de sécurité",
+        "Comprendre le fonctionnement d'un SOC",
+        "Analyser le trafic réseau et les journaux",
+        "Répondre aux incidents de sécurité"
+      ],
+      "programme": [
+        "Le SOC et le métier d'analyste",
+        "Systèmes Windows et Linux pour la sécurité",
+        "Protocoles et services réseau",
+        "Menaces, attaques et vulnérabilités",
+        "Cryptographie et protection des terminaux",
+        "Analyse des alertes et des données de sécurité",
+        "Réponse aux incidents"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "70 heures",
+      "modalites": [
+        "Présentiel",
+        "Mixte (plateforme NetAcad)"
+      ],
+      "certification": "Badge Cisco · prépare au CCNA Cybersecurity (200-201)",
+      "public": "Techniciens réseau, futurs analystes SOC",
+      "prerequis": "Bases réseau (CCNA 1 conseillé)",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-EHK",
+      "theme": "CNA",
+      "titre": "Ethical Hacker",
+      "accroche": "Apprendre les techniques de test d'intrusion pour mieux protéger les systèmes.",
+      "objectifs": [
+        "Planifier un test d'intrusion dans un cadre légal",
+        "Mener reconnaissance et analyse de vulnérabilités",
+        "Exploiter des failles réseau, web et sans fil en laboratoire",
+        "Rédiger un rapport et des recommandations"
+      ],
+      "programme": [
+        "Cadre légal et éthique du test d'intrusion",
+        "Reconnaissance passive et active",
+        "Analyse de vulnérabilités",
+        "Attaques réseau, sans fil et applications web",
+        "Post-exploitation et mouvements latéraux",
+        "Outils et scripts du pentesteur",
+        "Rapport et communication des résultats"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "70 heures",
+      "modalites": [
+        "Présentiel",
+        "Mixte (plateforme NetAcad)"
+      ],
+      "certification": "Badge Cisco",
+      "public": "Techniciens et administrateurs sécurité",
+      "prerequis": "Bases réseau et système",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-AUTO",
+      "theme": "CNA",
+      "titre": "Automatisation réseau (DevNet / CCNA Automation)",
+      "accroche": "Programmer et automatiser l'infrastructure réseau avec les API et Python.",
+      "objectifs": [
+        "Utiliser Git, Python et les formats JSON, XML, YAML",
+        "Consommer des API REST",
+        "Automatiser des équipements Cisco",
+        "Comprendre conteneurs et intégration continue"
+      ],
+      "programme": [
+        "Environnement de développement et Git",
+        "Python pour l'automatisation",
+        "Formats de données et API REST",
+        "Plateformes et API Cisco",
+        "Déploiement et sécurité des applications",
+        "Infrastructure as code et outils d'automatisation",
+        "Fondamentaux réseau pour développeurs"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "70 heures",
+      "modalites": [
+        "Présentiel",
+        "Mixte (plateforme NetAcad)"
+      ],
+      "certification": "Prépare au CCNA Automation (200-901)",
+      "public": "Administrateurs réseau, développeurs",
+      "prerequis": "CCNA 1 et bases de programmation conseillés",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-PY1",
+      "theme": "CNA",
+      "titre": "Python Essentials 1",
+      "accroche": "Apprendre à programmer en Python, de zéro, avec une approche très pratique.",
+      "objectifs": [
+        "Comprendre les bases de la programmation",
+        "Écrire des programmes Python simples",
+        "Utiliser variables, conditions, boucles et fonctions",
+        "Manipuler listes, tuples et dictionnaires"
+      ],
+      "programme": [
+        "Introduction à Python et à la programmation",
+        "Types de données, variables, entrées et sorties",
+        "Opérateurs et conditions",
+        "Boucles et listes",
+        "Fonctions, tuples, dictionnaires",
+        "Gestion des exceptions"
+      ],
+      "duree_heures": 30,
+      "duree_libelle": "30 heures",
+      "modalites": [
+        "Présentiel",
+        "E-learning tutoré"
+      ],
+      "certification": "Badge Cisco · prépare au PCEP (Python Institute)",
+      "public": "Débutants, étudiants, techniciens",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-CNA-PY2",
+      "theme": "CNA",
+      "titre": "Python Essentials 2",
+      "accroche": "Approfondir Python : modules, programmation orientée objet et fichiers.",
+      "objectifs": [
+        "Utiliser modules et paquets",
+        "Programmer en orienté objet",
+        "Gérer les exceptions avancées",
+        "Lire et écrire des fichiers"
+      ],
+      "programme": [
+        "Modules, paquets et pip",
+        "Chaînes de caractères et méthodes",
+        "Programmation orientée objet",
+        "Exceptions avancées",
+        "Générateurs, itérateurs et fermetures",
+        "Fichiers et flux"
+      ],
+      "duree_heures": 30,
+      "duree_libelle": "30 heures",
+      "modalites": [
+        "Présentiel",
+        "E-learning tutoré"
+      ],
+      "certification": "Badge Cisco · prépare au PCAP (Python Institute)",
+      "public": "Titulaires de Python Essentials 1",
+      "prerequis": "Python Essentials 1",
+      "evaluation": "Évaluations de chapitre et examen final sur la plateforme Cisco · Badge numérique et attestation",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-01",
+      "theme": "SYS",
+      "titre": "Microsoft Azure Fundamentals (AZ-900)",
+      "accroche": "Comprendre les concepts du cloud et les principaux services de Microsoft Azure.",
+      "objectifs": [
+        "Comprendre les modèles de cloud et de services",
+        "Identifier les services Azure de calcul, réseau et stockage",
+        "Connaître sécurité, identité et gouvernance dans Azure",
+        "Comprendre la tarification et le support"
+      ],
+      "programme": [
+        "Concepts du cloud : IaaS, PaaS, SaaS",
+        "Architecture d'Azure : régions, zones, abonnements",
+        "Services de calcul et de réseau",
+        "Stockage et bases de données",
+        "Identité, accès et sécurité",
+        "Gestion des coûts, gouvernance et conformité"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Microsoft Azure Fundamentals (AZ-900)",
+      "public": "Décideurs, techniciens, commerciaux IT",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-02",
+      "theme": "SYS",
+      "titre": "Administrateur Microsoft Azure (AZ-104)",
+      "accroche": "Gérer identités, ressources, réseaux et stockage dans un abonnement Azure.",
+      "objectifs": [
+        "Gérer identités et gouvernance avec Microsoft Entra ID",
+        "Déployer et gérer des machines virtuelles",
+        "Configurer réseaux virtuels et stockage",
+        "Superviser et sauvegarder les ressources"
+      ],
+      "programme": [
+        "Microsoft Entra ID, utilisateurs, groupes, rôles",
+        "Abonnements, stratégies et gouvernance",
+        "Stockage Azure",
+        "Machines virtuelles et applications",
+        "Réseaux virtuels, connectivité et sécurité",
+        "Supervision et sauvegarde"
+      ],
+      "duree_heures": 28,
+      "duree_libelle": "4 jours (28 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Microsoft Azure Administrator Associate (AZ-104)",
+      "public": "Administrateurs systèmes",
+      "prerequis": "AZ-900 ou expérience équivalente",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-03",
+      "theme": "SYS",
+      "titre": "Administrer Windows Server (AZ-802)",
+      "accroche": "Installer, configurer et sécuriser Windows Server en environnement local et hybride.",
+      "objectifs": [
+        "Déployer et gérer Active Directory",
+        "Configurer DNS, DHCP et services de fichiers",
+        "Sécuriser et mettre à jour les serveurs",
+        "Relier l'infrastructure locale à Azure"
+      ],
+      "programme": [
+        "Installation et outils d'administration",
+        "Active Directory, stratégies de groupe",
+        "DNS, DHCP et stockage",
+        "Hyper-V et virtualisation",
+        "Sécurité et mises à jour",
+        "Haute disponibilité et reprise après sinistre",
+        "Services hybrides avec Azure"
+      ],
+      "duree_heures": 35,
+      "duree_libelle": "5 jours (35 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Microsoft Windows Server Administrator Associate (AZ-802)",
+      "public": "Administrateurs systèmes",
+      "prerequis": "Bases réseau et Windows",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-04",
+      "theme": "SYS",
+      "titre": "Administrer les postes de travail avec Intune (MD-102)",
+      "accroche": "Déployer, configurer, sécuriser et gérer un parc de postes et de mobiles avec Microsoft Intune.",
+      "objectifs": [
+        "Déployer Windows à grande échelle",
+        "Gérer les identités et la conformité",
+        "Gérer appareils et applications avec Intune",
+        "Protéger les postes et les données"
+      ],
+      "programme": [
+        "Stratégie de déploiement de Windows",
+        "Windows Autopilot",
+        "Inscription des appareils dans Intune",
+        "Profils de configuration et conformité",
+        "Déploiement et gestion des applications",
+        "Sécurité des terminaux"
+      ],
+      "duree_heures": 35,
+      "duree_libelle": "5 jours (35 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Microsoft 365 Endpoint Administrator Associate (MD-102)",
+      "public": "Administrateurs postes de travail",
+      "prerequis": "Expérience de Windows et Microsoft 365",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-05",
+      "theme": "SYS",
+      "titre": "Administrer Microsoft 365 au quotidien",
+      "accroche": "Prendre en charge l'administration courante d'un environnement Microsoft 365 : comptes, messagerie, Teams et SharePoint.",
+      "objectifs": [
+        "Gérer utilisateurs, licences et groupes",
+        "Administrer Exchange Online",
+        "Administrer Teams et SharePoint Online",
+        "Sécuriser l'environnement Microsoft 365"
+      ],
+      "programme": [
+        "Centre d'administration et rôles",
+        "Utilisateurs, groupes et licences",
+        "Exchange Online : boîtes, règles, protection",
+        "Teams : stratégies, réunions, téléphonie",
+        "SharePoint et OneDrive : sites et partage",
+        "Authentification multifacteur et accès conditionnel"
+      ],
+      "duree_heures": 28,
+      "duree_libelle": "4 jours (28 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Prépare au Teams Administrator (MS-700)",
+      "public": "Administrateurs et techniciens support",
+      "prerequis": "Expérience de Microsoft 365",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-06",
+      "theme": "SYS",
+      "titre": "Linux – Les essentiels",
+      "accroche": "Découvrir Linux et la ligne de commande pour intégrer des serveurs Linux dans son infrastructure.",
+      "objectifs": [
+        "Naviguer dans le système de fichiers",
+        "Utiliser les commandes essentielles",
+        "Gérer utilisateurs, droits et paquets",
+        "Écrire des scripts shell simples"
+      ],
+      "programme": [
+        "Distributions et philosophie Linux",
+        "Ligne de commande et système de fichiers",
+        "Fichiers, archives et redirections",
+        "Utilisateurs, groupes et permissions",
+        "Paquets et services",
+        "Premiers scripts Bash"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "E-learning"
+      ],
+      "certification": "Prépare au Linux Essentials (LPI)",
+      "public": "Techniciens et administrateurs débutants sous Linux",
+      "prerequis": "Connaissances informatiques générales",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SYS-07",
+      "theme": "SYS",
+      "titre": "Administrateur Linux LPIC-1 (101 et 102)",
+      "accroche": "Préparer la certification LPIC-1 : administration d'un système Linux en production.",
+      "objectifs": [
+        "Installer et configurer un système Linux",
+        "Gérer paquets, processus et systèmes de fichiers",
+        "Administrer utilisateurs, réseau et services",
+        "Sécuriser le système et automatiser les tâches"
+      ],
+      "programme": [
+        "Architecture système et démarrage",
+        "Installation et gestion des paquets",
+        "Commandes GNU et Unix",
+        "Périphériques et systèmes de fichiers",
+        "Shell et scripts",
+        "Tâches d'administration et services essentiels",
+        "Réseau et sécurité"
+      ],
+      "duree_heures": 70,
+      "duree_libelle": "10 jours (70 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "LPIC-1 (examens 101-500 et 102-500)",
+      "public": "Administrateurs systèmes",
+      "prerequis": "Linux – Les essentiels ou expérience équivalente",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SEC-01",
+      "theme": "SEC",
+      "titre": "Administrer un pare-feu Fortinet FortiGate",
+      "accroche": "Configurer et exploiter un pare-feu FortiGate dans un réseau d'entreprise.",
+      "objectifs": [
+        "Déployer un FortiGate et ses politiques de pare-feu",
+        "Mettre en œuvre filtrage web, antivirus et IPS",
+        "Configurer VPN IPsec et SSL",
+        "Superviser et dépanner le pare-feu"
+      ],
+      "programme": [
+        "Installation et configuration initiale",
+        "Politiques de pare-feu et NAT",
+        "Authentification des utilisateurs",
+        "Filtrage web, contrôle applicatif, antivirus, IPS",
+        "VPN IPsec site à site et accès distant",
+        "SD-WAN, haute disponibilité, journaux et diagnostic"
+      ],
+      "duree_heures": 28,
+      "duree_libelle": "4 jours (28 h)",
+      "modalites": [
+        "Présentiel"
+      ],
+      "certification": "Prépare à la certification Fortinet FortiGate Administrator",
+      "public": "Administrateurs réseau et sécurité",
+      "prerequis": "Bases réseau TCP/IP",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SEC-02",
+      "theme": "SEC",
+      "titre": "Administrer ESET PROTECT",
+      "accroche": "Par le partenaire officiel ESET au Gabon : déployer et administrer la protection ESET d'un parc informatique.",
+      "objectifs": [
+        "Installer la console ESET PROTECT",
+        "Déployer les agents et les protections",
+        "Définir des politiques de sécurité",
+        "Traiter les alertes et produire des rapports"
+      ],
+      "programme": [
+        "Architecture de la gamme ESET PROTECT",
+        "Console cloud ou locale",
+        "Déploiement des agents et des produits",
+        "Politiques, tâches et groupes dynamiques",
+        "Détections, quarantaine et réponse",
+        "Rapports et bonnes pratiques"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Attestation NEO VISION",
+      "public": "Administrateurs systèmes et sécurité",
+      "prerequis": "Administration Windows de base",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-SEC-03",
+      "theme": "SEC",
+      "titre": "Sensibilisation à la cybersécurité",
+      "accroche": "Rendre chaque collaborateur acteur de la sécurité de son entreprise.",
+      "objectifs": [
+        "Reconnaître les principales menaces",
+        "Déjouer hameçonnage et ingénierie sociale",
+        "Protéger ses mots de passe et ses appareils",
+        "Savoir réagir face à un incident"
+      ],
+      "programme": [
+        "Panorama des cybermenaces",
+        "Hameçonnage : exercices de reconnaissance",
+        "Mots de passe et double authentification",
+        "Postes, mobiles, clés USB et Wi-Fi public",
+        "Protection des données et confidentialité",
+        "Que faire en cas d'incident ?"
+      ],
+      "duree_heures": 7,
+      "duree_libelle": "1 jour (7 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel",
+        "Intra-entreprise"
+      ],
+      "certification": null,
+      "public": "Tous les collaborateurs",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-DAT-01",
+      "theme": "DAT",
+      "titre": "Analyste de données Power BI (PL-300)",
+      "accroche": "Préparer, modéliser et visualiser des données pour construire des rapports Power BI fiables.",
+      "objectifs": [
+        "Se connecter à des sources de données et les préparer",
+        "Construire un modèle de données performant",
+        "Créer des mesures DAX",
+        "Concevoir et publier des rapports interactifs"
+      ],
+      "programme": [
+        "Power BI Desktop et service Power BI",
+        "Power Query : préparation des données",
+        "Modélisation : relations et schéma en étoile",
+        "DAX : colonnes calculées et mesures",
+        "Visualisations et narration",
+        "Publication, partage et actualisation",
+        "Sécurité au niveau des lignes"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Microsoft Power BI Data Analyst Associate (PL-300)",
+      "public": "Analystes, contrôleurs, managers",
+      "prerequis": "Bonne pratique d'Excel",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-DAT-02",
+      "theme": "DAT",
+      "titre": "L'IA générative au travail",
+      "accroche": "Utiliser Microsoft 365 Copilot et les assistants IA pour rédiger, analyser et synthétiser plus vite.",
+      "objectifs": [
+        "Comprendre le fonctionnement de l'IA générative",
+        "Rédiger des instructions (prompts) efficaces",
+        "Utiliser l'IA dans Word, Excel, PowerPoint, Outlook et Teams",
+        "Connaître les limites et les règles d'usage"
+      ],
+      "programme": [
+        "IA générative : principes et usages",
+        "L'art de formuler une demande",
+        "Rédaction et synthèse de documents",
+        "Analyse de données et présentations",
+        "Réunions et messagerie augmentées",
+        "Confidentialité, fiabilité et charte d'usage"
+      ],
+      "duree_heures": 7,
+      "duree_libelle": "1 jour (7 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": null,
+      "public": "Tous les collaborateurs et managers",
+      "prerequis": "Utilisation courante de Microsoft 365",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-GOV-01",
+      "theme": "GOV",
+      "titre": "ITIL® 4 Foundation",
+      "accroche": "Comprendre le cadre ITIL 4 de gestion des services numériques et préparer la certification.",
+      "objectifs": [
+        "Comprendre les concepts clés de la gestion des services",
+        "Connaître le système de valeur des services",
+        "Appliquer les principes directeurs ITIL",
+        "Connaître les pratiques ITIL essentielles"
+      ],
+      "programme": [
+        "Concepts clés de la gestion des services",
+        "Les 4 dimensions de la gestion des services",
+        "Système de valeur des services et chaîne de valeur",
+        "Principes directeurs",
+        "Pratiques ITIL : incidents, demandes, changements…",
+        "Préparation à l'examen"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "ITIL® 4 Foundation (PeopleCert)",
+      "public": "Personnel des DSI, support, managers IT",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-GOV-02",
+      "theme": "GOV",
+      "titre": "COBIT® 2019 Foundation",
+      "accroche": "Mettre en place une gouvernance de l'information et des technologies alignée sur la stratégie.",
+      "objectifs": [
+        "Comprendre les principes de la gouvernance des SI",
+        "Connaître les composants du système de gouvernance",
+        "Utiliser les facteurs de conception",
+        "Mesurer la performance des processus"
+      ],
+      "programme": [
+        "Gouvernance et management des I&T",
+        "Principes de COBIT 2019",
+        "Objectifs de gouvernance et de management",
+        "Facteurs de conception",
+        "Gestion de la performance",
+        "Mise en œuvre et préparation à l'examen"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "COBIT® 2019 Foundation (ISACA)",
+      "public": "DSI, auditeurs, responsables conformité",
+      "prerequis": "Connaissance du fonctionnement d'une DSI",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-GOV-03",
+      "theme": "GOV",
+      "titre": "ISO/IEC 27001 Foundation",
+      "accroche": "Découvrir la norme de référence du système de management de la sécurité de l'information (SMSI).",
+      "objectifs": [
+        "Comprendre les exigences de la norme ISO/IEC 27001",
+        "Connaître les mesures de sécurité de l'annexe A",
+        "Comprendre la démarche de certification",
+        "Identifier les rôles dans un SMSI"
+      ],
+      "programme": [
+        "Sécurité de l'information : concepts clés",
+        "Structure de la norme ISO/IEC 27001",
+        "Analyse et traitement des risques",
+        "Mesures de sécurité (ISO/IEC 27002)",
+        "Audit et certification",
+        "Préparation à l'examen"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "ISO/IEC 27001 Foundation (organisme accrédité)",
+      "public": "Responsables SI, sécurité, qualité",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-GOV-04",
+      "theme": "GOV",
+      "titre": "ISO/IEC 27001 Lead Implementer",
+      "accroche": "Piloter la mise en œuvre d'un SMSI conforme à la norme ISO/IEC 27001.",
+      "objectifs": [
+        "Planifier un projet de SMSI",
+        "Conduire l'analyse des risques",
+        "Mettre en œuvre et exploiter les mesures",
+        "Préparer l'audit de certification"
+      ],
+      "programme": [
+        "Initialisation du projet de SMSI",
+        "Contexte, périmètre et politique",
+        "Appréciation et traitement des risques",
+        "Déclaration d'applicabilité et mesures",
+        "Surveillance, audit interne, revue de direction",
+        "Amélioration continue et préparation à l'examen"
+      ],
+      "duree_heures": 35,
+      "duree_libelle": "5 jours (35 h)",
+      "modalites": [
+        "Présentiel"
+      ],
+      "certification": "ISO/IEC 27001 Lead Implementer (organisme accrédité)",
+      "public": "Responsables sécurité, chefs de projet",
+      "prerequis": "ISO/IEC 27001 Foundation conseillé",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-GOV-05",
+      "theme": "GOV",
+      "titre": "CISA – Auditeur des systèmes d'information",
+      "accroche": "Préparer la certification internationale de référence de l'audit des systèmes d'information.",
+      "objectifs": [
+        "Maîtriser le processus d'audit des SI",
+        "Évaluer la gouvernance et la gestion des SI",
+        "Auditer acquisition, exploitation et sécurité des SI",
+        "Se préparer efficacement à l'examen"
+      ],
+      "programme": [
+        "Domaine 1 : processus d'audit des SI",
+        "Domaine 2 : gouvernance et gestion des TI",
+        "Domaine 3 : acquisition, développement, mise en œuvre",
+        "Domaine 4 : exploitation et résilience",
+        "Domaine 5 : protection des actifs informationnels",
+        "Examens blancs commentés"
+      ],
+      "duree_heures": 35,
+      "duree_libelle": "5 jours (35 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "CISA (ISACA)",
+      "public": "Auditeurs, contrôleurs internes, DSI",
+      "prerequis": "Expérience en audit, contrôle ou sécurité des SI",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-GOV-06",
+      "theme": "GOV",
+      "titre": "CISM – Manager de la sécurité de l'information",
+      "accroche": "Préparer la certification des responsables de la sécurité de l'information.",
+      "objectifs": [
+        "Bâtir une gouvernance de la sécurité",
+        "Gérer les risques liés à l'information",
+        "Construire un programme de sécurité",
+        "Piloter la gestion des incidents"
+      ],
+      "programme": [
+        "Gouvernance de la sécurité de l'information",
+        "Gestion des risques de sécurité",
+        "Programme de sécurité de l'information",
+        "Gestion des incidents de sécurité",
+        "Examens blancs commentés"
+      ],
+      "duree_heures": 35,
+      "duree_libelle": "5 jours (35 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "CISM (ISACA)",
+      "public": "RSSI, responsables sécurité, managers IT",
+      "prerequis": "Expérience en management de la sécurité",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-PRJ-01",
+      "theme": "PRJ",
+      "titre": "PRINCE2® Foundation",
+      "accroche": "Découvrir la méthode PRINCE2 (7e édition) et préparer la certification Foundation.",
+      "objectifs": [
+        "Comprendre les principes, pratiques et processus PRINCE2",
+        "Connaître les rôles et responsabilités",
+        "Adapter la méthode au contexte du projet",
+        "Réussir l'examen Foundation"
+      ],
+      "programme": [
+        "Les 7 principes PRINCE2",
+        "Les personnes et le contexte du projet",
+        "Les 7 pratiques : business case, organisation, plans…",
+        "Les 7 processus du cycle de vie",
+        "Adaptation au contexte",
+        "Préparation à l'examen"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "PRINCE2® Foundation (PeopleCert)",
+      "public": "Chefs de projet, membres d'équipe projet",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-PRJ-02",
+      "theme": "PRJ",
+      "titre": "PRINCE2® Practitioner",
+      "accroche": "Appliquer PRINCE2 à des situations réelles de projet et obtenir le niveau Practitioner.",
+      "objectifs": [
+        "Appliquer la méthode à un scénario de projet",
+        "Adapter PRINCE2 à l'environnement",
+        "Analyser et corriger l'application de la méthode",
+        "Réussir l'examen Practitioner"
+      ],
+      "programme": [
+        "Rappels des fondamentaux",
+        "Étude de cas fil rouge",
+        "Application des pratiques et processus",
+        "Adaptation et intégration",
+        "Examens blancs commentés"
+      ],
+      "duree_heures": 14,
+      "duree_libelle": "2 jours (14 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "PRINCE2® Practitioner (PeopleCert)",
+      "public": "Titulaires du PRINCE2 Foundation",
+      "prerequis": "PRINCE2® Foundation",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-PRJ-03",
+      "theme": "PRJ",
+      "titre": "Préparation à la certification PMP®",
+      "accroche": "Préparer la certification Project Management Professional du PMI, approches prédictives, agiles et hybrides.",
+      "objectifs": [
+        "Maîtriser les domaines Personnes, Processus et Environnement",
+        "Combiner approches prédictives et agiles",
+        "Constituer son dossier de candidature",
+        "Se préparer à l'examen"
+      ],
+      "programme": [
+        "Le référentiel du PMI et l'examen PMP",
+        "Domaine Personnes : leadership et équipe",
+        "Domaine Processus : planifier, exécuter, maîtriser",
+        "Domaine Environnement des affaires",
+        "Approches agiles et hybrides",
+        "Examens blancs commentés"
+      ],
+      "duree_heures": 35,
+      "duree_libelle": "5 jours (35 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "PMP® (PMI)",
+      "public": "Chefs de projet expérimentés",
+      "prerequis": "Expérience de gestion de projet exigée par le PMI",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-PRJ-04",
+      "theme": "PRJ",
+      "titre": "Agilité et Scrum – préparation PSM I",
+      "accroche": "Comprendre l'agilité et pratiquer Scrum pour livrer de la valeur plus tôt et plus souvent.",
+      "objectifs": [
+        "Comprendre les valeurs et principes agiles",
+        "Maîtriser le cadre Scrum",
+        "Tenir les rôles de Scrum Master et Product Owner",
+        "Se préparer à la certification PSM I"
+      ],
+      "programme": [
+        "Manifeste agile et principes",
+        "Le cadre Scrum : responsabilités, événements, artefacts",
+        "Backlog, user stories et estimation",
+        "Sprints, revues et rétrospectives",
+        "Kanban et passage à l'échelle",
+        "Préparation à l'examen"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": "Professional Scrum Master I (Scrum.org)",
+      "public": "Chefs de projet, équipes, managers",
+      "prerequis": "Aucun",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-PRJ-05",
+      "theme": "PRJ",
+      "titre": "Microsoft Project – Planifier et suivre un projet",
+      "accroche": "Construire, optimiser et suivre le planning d'un projet avec Microsoft Project.",
+      "objectifs": [
+        "Créer un planning et ses dépendances",
+        "Affecter ressources et coûts",
+        "Suivre l'avancement et les écarts",
+        "Produire des rapports de pilotage"
+      ],
+      "programme": [
+        "Paramétrage du projet et du calendrier",
+        "Tâches, jalons et liens",
+        "Ressources, affectations et nivellement",
+        "Coûts et budget",
+        "Planification de référence et suivi",
+        "Rapports et tableaux de bord"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Distanciel"
+      ],
+      "certification": null,
+      "public": "Chefs de projet, planificateurs",
+      "prerequis": "Notions de gestion de projet",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-MET-01",
+      "theme": "MET",
+      "titre": "Odoo – Prise en main utilisateur",
+      "accroche": "Utiliser Odoo au quotidien : ventes, achats, stocks et facturation dans une base unique.",
+      "objectifs": [
+        "Naviguer dans Odoo et personnaliser ses vues",
+        "Gérer devis, commandes et factures",
+        "Gérer achats et mouvements de stock",
+        "Suivre son activité avec les rapports"
+      ],
+      "programme": [
+        "Interface, recherche, filtres et vues",
+        "CRM et ventes : du devis à la facture",
+        "Achats et réception fournisseurs",
+        "Inventaire et mouvements de stock",
+        "Facturation et paiements",
+        "Rapports et tableaux de bord"
+      ],
+      "duree_heures": 21,
+      "duree_libelle": "3 jours (21 h)",
+      "modalites": [
+        "Présentiel",
+        "Intra-entreprise"
+      ],
+      "certification": "Attestation NEO VISION",
+      "public": "Utilisateurs d'Odoo",
+      "prerequis": "Utilisation courante d'un ordinateur",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    },
+    {
+      "code": "NV-MET-02",
+      "theme": "MET",
+      "titre": "Alfresco – Utilisateur et gestionnaire documentaire",
+      "accroche": "Classer, retrouver et faire circuler les documents de l'organisation avec Alfresco.",
+      "objectifs": [
+        "Déposer et classer des documents",
+        "Utiliser métadonnées et recherche",
+        "Gérer versions et droits d'accès",
+        "Utiliser les circuits de validation"
+      ],
+      "programme": [
+        "Espaces, sites et bibliothèques",
+        "Dépôt, classement et métadonnées",
+        "Recherche simple et avancée",
+        "Versions, verrouillage et partage",
+        "Circuits de validation",
+        "Bonnes pratiques d'archivage"
+      ],
+      "duree_heures": 7,
+      "duree_libelle": "1 jour (7 h)",
+      "modalites": [
+        "Présentiel",
+        "Intra-entreprise"
+      ],
+      "certification": "Attestation NEO VISION",
+      "public": "Utilisateurs et gestionnaires documentaires",
+      "prerequis": "Utilisation courante d'un ordinateur",
+      "evaluation": "Évaluation continue (exercices, QCM) · Questionnaire de satisfaction · Attestation NEO VISION",
+      "tarif": null
+    }
+  ]
+}

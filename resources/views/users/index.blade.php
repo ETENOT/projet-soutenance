@@ -871,12 +871,6 @@ document.addEventListener('DOMContentLoaded', function () {
             o.disabled = modif && d.admin === '1' && o.value !== d.role;
         });
 
-        // Mots de passe : jamais pré-remplis, et masqués par défaut
-        ['champMotDePasse', 'champConfirmation'].forEach(function (id) {
-            champ(id).value = '';
-            champ(id).type = 'password';
-        });
-
         if (modif) {
             champ('champAction').value = d.action;
             form.action = d.action;
